@@ -7,6 +7,11 @@ on:
 
 jobs:
   versioning:
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+  
     runs-on: ubuntu-latest
 
     steps:
@@ -79,6 +84,18 @@ jobs:
        # Step 7: Update RELEASE_NOTES.md
       - name: Update RELEASE_NOTES.md and CHANGELOG.md
         run: |
+         # Check if RELEASE_NOTES.md exists; create it if missing
+            if [ ! -f RELEASE_NOTES.md ]; then
+              echo "Creating missing RELEASE_NOTES.md"
+              touch RELEASE_NOTES.md
+            fi
+        
+            # Check if CHANGELOG.md exists; create it if missing
+            if [ ! -f CHANGELOG.md ]; then
+              echo "Creating missing CHANGELOG.md"
+              touch CHANGELOG.md
+            fi
+        
           PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "v0.0.0")
           COMMITS=$(git log --pretty=format:"* %s" ${PREVIOUS_TAG}..HEAD)
       
