@@ -21,50 +21,46 @@ jobs:
         run: git fetch --tags
 
       # Step 3: Get the latest tag or default to v0.0.0
+      - name: Get latest tag
+        id: tag
+        run: |
+          TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "Latest tag: $TAG"
+          echo "latest_tag=$TAG" >> $GITHUB_ENV
+
+      # Step 4: Determine version bump based on commit messages
       - name: Analyze commits for version bump
         id: bump
         run: |
-          # Pega a última tag ou define uma versão inicial
           TAG=${{ env.latest_tag }}
           VERSION=${TAG#v}  # Remove 'v' prefix
           IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
 
-          # Se não houver tag, faz um versionamento inicial
-          if [ "$TAG" == "v0.0.0" ]; then
-            echo "No tag found, starting from v0.1.0"
-            MAJOR=0
-            MINOR=1
-            PATCH=0
-          else
-            COMMITS=$(git log --pretty=%B ${TAG}..HEAD)
+          COMMITS=$(git log --pretty=%B ${TAG}..HEAD)
 
-            # Inicializa a variável de bump
+          BUMP="patch"
+          if echo "$COMMITS" | grep -q "BREAKING CHANGE"; then
+            BUMP="major"
+          elif echo "$COMMITS" | grep -q "^feat:"; then
+            BUMP="minor"
+          elif echo "$COMMITS" | grep -q "^fix:"; then
             BUMP="patch"
-            if echo "$COMMITS" | grep -q "BREAKING CHANGE"; then
-              BUMP="major"
-            elif echo "$COMMITS" | grep -q "^feat:"; then
-              BUMP="minor"
-            elif echo "$COMMITS" | grep -q "^fix:"; then
-              BUMP="patch"
-            fi
+          fi
 
-            # Atualiza os números de versão conforme o tipo de commit
-            if [ "$BUMP" = "major" ]; then
-              MAJOR=$((MAJOR + 1))
-              MINOR=0
-              PATCH=0
-            elif [ "$BUMP" = "minor" ]; then
-              MINOR=$((MINOR + 1))
-              PATCH=0
-            elif [ "$BUMP" = "patch" ]; then
-              PATCH=$((PATCH + 1))
-            fi
+          if [ "$BUMP" = "major" ]; then
+            MAJOR=$((MAJOR + 1))
+            MINOR=0
+            PATCH=0
+          elif [ "$BUMP" = "minor" ]; then
+            MINOR=$((MINOR + 1))
+            PATCH=0
+          elif [ "$BUMP" = "patch" ]; then
+            PATCH=$((PATCH + 1))
           fi
 
           NEW_VERSION="v$MAJOR.$MINOR.$PATCH"
           echo "New version: $NEW_VERSION"
           echo "new_version=$NEW_VERSION" >> $GITHUB_ENV
-
 
       # Step 5: Create and push the new tag
       - name: Create and push new tag
