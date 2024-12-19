@@ -9,6 +9,8 @@
 
         // Defina os DbSets para as suas entidades
         public DbSet<User> Users { get; set; }
+
+        public DbSet<Quizz> Quizzs { get; set; }
         //public DbSet<Quiz> Quizzes { get; set; }
         // Adicione outras entidades aqui
     }
