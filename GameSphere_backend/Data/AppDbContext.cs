@@ -1,6 +1,6 @@
 ﻿namespace GameSphere_backend.Data
 {
-    using GameSphere_backend.Models;
+    using GameSphere_backend.Models.BackendModels;
     using Microsoft.EntityFrameworkCore;
 
     public class AppDbContext : DbContext
