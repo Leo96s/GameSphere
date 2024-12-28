@@ -7,7 +7,6 @@
         public string NameOfAchievment { get; set; }
 
         public int UserId { get; set; }
-        public string[] RequirementsForUnlock { get; set; }
 
         public DateTime Date {get; set; }
 
