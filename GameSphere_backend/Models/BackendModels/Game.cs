@@ -17,8 +17,6 @@ namespace GameSphere_backend.Models.BackendModels
         [Required(ErrorMessage = "The field 'description' is required.")]
         public string Description { get; set; }
 
-        public ICollection<GlobalRanking> GlobalRankings { get; set; }
-
         public ICollection<Score> Scores { get; set; }
     }
 }

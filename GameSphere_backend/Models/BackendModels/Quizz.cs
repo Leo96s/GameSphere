@@ -26,8 +26,6 @@ namespace GameSphere_backend.Models.BackendModels
 
         public ICollection<Question> Questions { get; set; }
 
-        public ICollection<GlobalRanking> GlobalRanking { get; set; }
-
         public ICollection<Score> Scores { get; set; }
     }
 }
