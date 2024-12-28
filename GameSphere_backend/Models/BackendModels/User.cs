@@ -1,8 +1,5 @@
 ﻿using GameSphere_backend.Enums;
-using Microsoft.Win32;
-using System;
 using System.ComponentModel.DataAnnotations;
-using System.Reflection;
 
 namespace GameSphere_backend.Models.BackendModels
 {
@@ -11,7 +8,7 @@ namespace GameSphere_backend.Models.BackendModels
         [Key]
         public int Id { get; set; }
 
-        public string? HashedPassword { get; set; }
+        public string HashedPassword { get; set; }
 
         public int? ExternalId { get; set; }
 
@@ -35,7 +32,6 @@ namespace GameSphere_backend.Models.BackendModels
 
         [Required(ErrorMessage = "The field 'Image' is required.")]
         public byte[] Image { get; set; }
-
 
         public int Level { get; set; }
 

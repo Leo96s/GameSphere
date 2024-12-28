@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GameSphere_backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20241221165359_adicionado_restantes_classes")]
-    partial class adicionado_restantes_classes
+    [Migration("20241228124036_init_database")]
+    partial class init_database
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -39,9 +39,6 @@ namespace GameSphere_backend.Migrations
                     b.Property<string>("NameOfAchievement")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<int>("RequirementsForUnlock")
-                        .HasColumnType("integer");
 
                     b.Property<int>("UserId")
                         .HasColumnType("integer");
@@ -79,7 +76,41 @@ namespace GameSphere_backend.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Game");
+                    b.ToTable("Games");
+                });
+
+            modelBuilder.Entity("GameSphere_backend.Models.BackendModels.GlobalRanking", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<float>("BestPontuation")
+                        .HasColumnType("real");
+
+                    b.Property<int?>("GameId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PositionOnRanking")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("QuizzId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GameId");
+
+                    b.HasIndex("QuizzId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("GlobalRanking");
                 });
 
             modelBuilder.Entity("GameSphere_backend.Models.BackendModels.Question", b =>
@@ -147,6 +178,62 @@ namespace GameSphere_backend.Migrations
                     b.ToTable("Quizzs");
                 });
 
+            modelBuilder.Entity("GameSphere_backend.Models.BackendModels.Requirement", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AchievementId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AchievementId");
+
+                    b.ToTable("Requirements");
+                });
+
+            modelBuilder.Entity("GameSphere_backend.Models.BackendModels.Score", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("GameId")
+                        .HasColumnType("integer");
+
+                    b.Property<float>("Points")
+                        .HasColumnType("real");
+
+                    b.Property<int?>("QuizzId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GameId");
+
+                    b.HasIndex("QuizzId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Scores");
+                });
+
             modelBuilder.Entity("GameSphere_backend.Models.BackendModels.User", b =>
                 {
                     b.Property<int>("Id")
@@ -171,6 +258,7 @@ namespace GameSphere_backend.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("HashedPassword")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<byte[]>("Image")
@@ -210,8 +298,31 @@ namespace GameSphere_backend.Migrations
             modelBuilder.Entity("GameSphere_backend.Models.BackendModels.Game", b =>
                 {
                     b.HasOne("GameSphere_backend.Models.BackendModels.User", null)
-                        .WithMany("Game")
+                        .WithMany("Games")
                         .HasForeignKey("UserId");
+                });
+
+            modelBuilder.Entity("GameSphere_backend.Models.BackendModels.GlobalRanking", b =>
+                {
+                    b.HasOne("GameSphere_backend.Models.BackendModels.Game", "Game")
+                        .WithMany("GlobalRankings")
+                        .HasForeignKey("GameId");
+
+                    b.HasOne("GameSphere_backend.Models.BackendModels.Quizz", "Quizz")
+                        .WithMany("GlobalRanking")
+                        .HasForeignKey("QuizzId");
+
+                    b.HasOne("GameSphere_backend.Models.BackendModels.User", "User")
+                        .WithMany("GlobalRanking")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Game");
+
+                    b.Navigation("Quizz");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("GameSphere_backend.Models.BackendModels.Question", b =>
@@ -228,7 +339,7 @@ namespace GameSphere_backend.Migrations
             modelBuilder.Entity("GameSphere_backend.Models.BackendModels.Quizz", b =>
                 {
                     b.HasOne("GameSphere_backend.Models.BackendModels.User", "User")
-                        .WithMany("Quizz")
+                        .WithMany("Quizzs")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -236,18 +347,72 @@ namespace GameSphere_backend.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("GameSphere_backend.Models.BackendModels.Requirement", b =>
+                {
+                    b.HasOne("GameSphere_backend.Models.BackendModels.Achievements", "Achievement")
+                        .WithMany("RequirementsForUnlock")
+                        .HasForeignKey("AchievementId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Achievement");
+                });
+
+            modelBuilder.Entity("GameSphere_backend.Models.BackendModels.Score", b =>
+                {
+                    b.HasOne("GameSphere_backend.Models.BackendModels.Game", "Game")
+                        .WithMany("Scores")
+                        .HasForeignKey("GameId");
+
+                    b.HasOne("GameSphere_backend.Models.BackendModels.Quizz", "Quizz")
+                        .WithMany("Scores")
+                        .HasForeignKey("QuizzId");
+
+                    b.HasOne("GameSphere_backend.Models.BackendModels.User", "User")
+                        .WithMany("Scores")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Game");
+
+                    b.Navigation("Quizz");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("GameSphere_backend.Models.BackendModels.Achievements", b =>
+                {
+                    b.Navigation("RequirementsForUnlock");
+                });
+
+            modelBuilder.Entity("GameSphere_backend.Models.BackendModels.Game", b =>
+                {
+                    b.Navigation("GlobalRankings");
+
+                    b.Navigation("Scores");
+                });
+
             modelBuilder.Entity("GameSphere_backend.Models.BackendModels.Quizz", b =>
                 {
+                    b.Navigation("GlobalRanking");
+
                     b.Navigation("Questions");
+
+                    b.Navigation("Scores");
                 });
 
             modelBuilder.Entity("GameSphere_backend.Models.BackendModels.User", b =>
                 {
                     b.Navigation("Achievements");
 
-                    b.Navigation("Game");
+                    b.Navigation("Games");
 
-                    b.Navigation("Quizz");
+                    b.Navigation("GlobalRanking");
+
+                    b.Navigation("Quizzs");
+
+                    b.Navigation("Scores");
                 });
 #pragma warning restore 612, 618
         }

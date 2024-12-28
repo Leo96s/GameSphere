@@ -11,9 +11,6 @@ namespace GameSphere_backend.Models.BackendModels
         [Required(ErrorMessage = "The field 'nameOfAchievement' is required.")]
         public string NameOfAchievement { get; set; }
 
-        [Required(ErrorMessage = "The field 'requirementsForUnlock' is required.")]
-        public int RequirementsForUnlock { get; set; }
-
         [ForeignKey("User")]
         public int UserId;
 
@@ -21,6 +18,8 @@ namespace GameSphere_backend.Models.BackendModels
 
         [Required(ErrorMessage = "The field 'date' is required.")]
         public DateTime Date { get; set; }
+
+        public virtual ICollection<Requirement> RequirementsForUnlock { get; set; }
 
 
 

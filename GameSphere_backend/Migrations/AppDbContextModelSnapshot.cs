@@ -37,9 +37,6 @@ namespace GameSphere_backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("RequirementsForUnlock")
-                        .HasColumnType("integer");
-
                     b.Property<int>("UserId")
                         .HasColumnType("integer");
 
@@ -76,7 +73,7 @@ namespace GameSphere_backend.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Game");
+                    b.ToTable("Games");
                 });
 
             modelBuilder.Entity("GameSphere_backend.Models.BackendModels.GlobalRanking", b =>
@@ -178,6 +175,28 @@ namespace GameSphere_backend.Migrations
                     b.ToTable("Quizzs");
                 });
 
+            modelBuilder.Entity("GameSphere_backend.Models.BackendModels.Requirement", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AchievementId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AchievementId");
+
+                    b.ToTable("Requirements");
+                });
+
             modelBuilder.Entity("GameSphere_backend.Models.BackendModels.Score", b =>
                 {
                     b.Property<int>("Id")
@@ -209,7 +228,7 @@ namespace GameSphere_backend.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Score");
+                    b.ToTable("Scores");
                 });
 
             modelBuilder.Entity("GameSphere_backend.Models.BackendModels.User", b =>
@@ -236,6 +255,7 @@ namespace GameSphere_backend.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("HashedPassword")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<byte[]>("Image")
@@ -324,6 +344,17 @@ namespace GameSphere_backend.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("GameSphere_backend.Models.BackendModels.Requirement", b =>
+                {
+                    b.HasOne("GameSphere_backend.Models.BackendModels.Achievements", "Achievement")
+                        .WithMany("RequirementsForUnlock")
+                        .HasForeignKey("AchievementId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Achievement");
+                });
+
             modelBuilder.Entity("GameSphere_backend.Models.BackendModels.Score", b =>
                 {
                     b.HasOne("GameSphere_backend.Models.BackendModels.Game", "Game")
@@ -345,6 +376,11 @@ namespace GameSphere_backend.Migrations
                     b.Navigation("Quizz");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("GameSphere_backend.Models.BackendModels.Achievements", b =>
+                {
+                    b.Navigation("RequirementsForUnlock");
                 });
 
             modelBuilder.Entity("GameSphere_backend.Models.BackendModels.Game", b =>
