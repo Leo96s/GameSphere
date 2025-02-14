@@ -8,8 +8,6 @@ namespace GameSphere_backend.Models.FrontendModels
 
         public string HashedPassword { get; set; }
 
-        public int? ExternalId { get; set; }
-
         public string FirstName { get; set; }
 
         public string LastName { get; set; }
@@ -18,11 +16,17 @@ namespace GameSphere_backend.Models.FrontendModels
 
         public Gender Gender { get; set; }
 
-        public byte[] Image { get; set; }
+        public string? Image { get; set; }
 
         public int Level { get; set; }
 
         public long TotalPoints { get; set; }
+
+        public bool isActive { get; set; }
+
+        public string? Token { get; set; }
+
+        public DateTime? TokenExpDate { get; set; }
 
         public DateTime RegistrationDate { get; set; }
 

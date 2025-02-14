@@ -10,8 +10,6 @@ namespace GameSphere_backend.Models.BackendModels
 
         public string HashedPassword { get; set; }
 
-        public int? ExternalId { get; set; }
-
         [Required(ErrorMessage = "The field 'FirstName' is required.")]
         [MaxLength(100, ErrorMessage = "The field 'FirstName' has to be less than 100 characters.")]
         public string FirstName { get; set; }
@@ -30,19 +28,23 @@ namespace GameSphere_backend.Models.BackendModels
         [Required(ErrorMessage = "The field 'Gender' is required.")]
         public Gender Gender { get; set; }
 
-        [Required(ErrorMessage = "The field 'Image' is required.")]
-        public byte[] Image { get; set; }
+        public string? Image { get; set; }
 
         public int Level { get; set; }
 
         public long TotalPoints { get; set; }
+
+        public bool isActive { get; set; }
+
+        public string? Token { get; set; }
+
+        public DateTime? TokenExpDate { get; set; }
 
         public ICollection<Quizz> Quizzs { get; set; }
 
         public ICollection<Game> Games { get; set; }
 
         public ICollection<Achievements> Achievements { get; set; }
-
 
         public ICollection<Score> Scores { get; set; }
 

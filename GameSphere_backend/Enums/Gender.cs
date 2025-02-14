@@ -5,6 +5,5 @@
         MASCULINO,
         FEMININO,
         OUTRO,
-        NAO_ESPECIFICADO
     }
 }
