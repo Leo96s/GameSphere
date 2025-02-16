@@ -14,7 +14,7 @@
                 <button class="btn btn-neutral btn-icon mb-2">
                   <img src="@/assets/logos/facebook.png" alt="Facebook" class="icon">
                 </button>
-                <button class="btn btn-neutral btn-icon">
+                <button @click="registerWithGoogle" class="btn btn-neutral btn-icon" >
                   <img src="@/assets/logos/google.png" alt="Google" class="icon">
                 </button>
                 <button class="btn btn-neutral btn-icon">
@@ -129,6 +129,7 @@ import {createUser} from "@/services/userServices";
 import User from "@/models/User";
 import {Gender} from "@/enums/Gender";
 import { useRouter } from 'vue-router';
+import { auth, provider, signInWithPopup } from "@/services/firebase";
 
 export default {
   name: "RegisterSection",
@@ -188,7 +189,39 @@ export default {
         this.error = err.response?.data?.message || "An error occurred during registration.";
         console.error(err);
       }
-    }
+    },
+    async registerWithGoogle(){
+      try{
+        const result = await signInWithPopup(auth, provider);
+        const googleUser = result.user;
+
+        const newUser = new User({
+          firstName: googleUser.displayName.split(" ")[0],
+          lastName: googleUser.displayName.split(" ")[1] || "",
+          email: googleUser.email,
+          gender: googleUser.gender,
+          password: googleUser.password
+        });
+
+        // Enviar os dados ao backend
+        const response = await createUser(newUser);
+        // Exibir mensagem de sucesso
+        this.success = "Account created successfully!";
+        console.log("User created:", response);
+
+        const router = useRouter();
+
+        setTimeout(() => {
+          console.log("Redirecionando para /login");
+          router.push("/login");
+        },2000);
+
+      }catch (err) {
+        // Exibir mensagem de erro
+        this.error = err.response?.data?.message || "An error occurred during registration.";
+        console.error(err);
+      }
+    },
   },
 };
 </script>
