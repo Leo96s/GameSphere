@@ -9,8 +9,8 @@
           <b-navbar-nav>
             <b-nav-item href="#">Quizzes</b-nav-item>
             <b-nav-item href="#" disabled>Disabled</b-nav-item>
-            <b-nav-item href="/login" v-if="user">Sign-in</b-nav-item>
-            <b-nav-item href="/register" v-if="user">Register</b-nav-item>
+            <b-nav-item href="/login" v-if="user == null">Sign-in</b-nav-item>
+            <b-nav-item href="/register" v-if="user == null">Register</b-nav-item>
           </b-navbar-nav>
 
           <!-- Right aligned nav items -->
@@ -33,7 +33,7 @@
                 <em>User</em>
               </template>
               <b-dropdown-item href="/profile">Profile</b-dropdown-item>
-              <b-dropdown-item href="#">Sign Out</b-dropdown-item>
+              <b-dropdown-item href="/signOut" v-if="user">Sign Out</b-dropdown-item>
             </b-nav-item-dropdown>
           </b-navbar-nav>
         </b-collapse>

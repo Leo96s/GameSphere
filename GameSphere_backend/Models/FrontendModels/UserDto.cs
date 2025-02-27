@@ -6,6 +6,8 @@ namespace GameSphere_backend.Models.FrontendModels
     {
         public int Id { get; set; }
 
+        public string UID { get; set; }
+
         public string HashedPassword { get; set; }
 
         public string FirstName { get; set; }

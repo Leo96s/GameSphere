@@ -8,6 +8,8 @@ namespace GameSphere_backend.Models.BackendModels
         [Key]
         public int Id { get; set; }
 
+        public string UID { get; set; }
+
         public string HashedPassword { get; set; }
 
         [Required(ErrorMessage = "The field 'FirstName' is required.")]

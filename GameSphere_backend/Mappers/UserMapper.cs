@@ -15,6 +15,7 @@ namespace GameSphere_backend.Mappers
             return new UserDto
             {
                 Id = user.Id,
+                UID = user.UID,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 Email = user.Email,
@@ -37,6 +38,7 @@ namespace GameSphere_backend.Mappers
             var userModel = new User
             {
                 Id = user.Id,
+                UID = user.UID,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 Email = user.Email,

@@ -93,12 +93,13 @@ namespace GameSphere_backend.Services
                 return response;
             }
 
-            string passwordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(user.HashedPassword, 13);
+            try { 
 
-            var u = UserMapper.UserToModel(user);
+                string passwordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(user.HashedPassword, 13);
+            
 
-            try
-            {
+                var u = UserMapper.UserToModel(user);
+
 
                 if (u == null)
                 {
@@ -109,7 +110,8 @@ namespace GameSphere_backend.Services
                 }
 
                 u.HashedPassword = passwordHash;
-
+                
+                
                 await _context.Users.AddAsync(u);
                 await _context.SaveChangesAsync();
 

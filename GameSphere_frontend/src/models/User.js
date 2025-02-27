@@ -4,13 +4,14 @@ import {Gender} from "@/enums/Gender";
 export default class User {
   constructor({firstName, lastName, email, gender, password }) {
     this.id = 0; // O backend irá gerar um novo ID
+    this.uid = "";
     this.hashedPassword = password;
     this.firstName = firstName;
     this.lastName = lastName;
     this.email = email;
-    this.gender = Gender[gender]; // Converte para o formato esperado
+    this.gender = Number(Gender[gender] ?? Gender.Other); // Converte para o formato esperado
     this.image = ""; // Pode ser preenchido com um avatar padrão
-    this.level = 1; // Nível inicial do usuário
+    this.level = 0; // Nível inicial do usuário
     this.totalPoints = 0; // Pontos iniciais
     this.isActive = true; // Define o utilizador como ativo
     this.token = ""; // O backend pode preencher este campo após o login

@@ -14,7 +14,7 @@
                 <button class="btn btn-neutral btn-icon mb-2">
                   <img src="@/assets/logos/facebook.png" alt="Facebook" class="icon">
                 </button>
-                <button @click="registerWithGoogle" class="btn btn-neutral btn-icon" >
+                <button @click="registerWithGoogle" class="btn btn-neutral btn-icon">
                   <img src="@/assets/logos/google.png" alt="Google" class="icon">
                 </button>
                 <button class="btn btn-neutral btn-icon">
@@ -32,30 +32,16 @@
                 <div class="form-group mb-3">
                   <!-- Name Input -->
                   <div class="input-group input-group-alternative py-3">
-                    <input
-                      type="text"
-                      class="form-control"
-                      placeholder="firstName"
-                      aria-label="firstName"
-                      v-model="firstName"
-                    />
+                    <input type="text" class="form-control" placeholder="firstName" aria-label="firstName"
+                      v-model="firstName" />
                   </div>
                   <div class="input-group input-group-alternative py-3">
-                    <input
-                      type="text"
-                      class="form-control"
-                      placeholder="lastName"
-                      aria-label="lastName"
-                      v-model="lastName"
-                    />
+                    <input type="text" class="form-control" placeholder="lastName" aria-label="lastName"
+                      v-model="lastName" />
                   </div>
 
                   <div class="input-group input-group-alternative py-3">
-                    <select
-                      class="form-control"
-                      aria-label="gender"
-                      v-model="gender"
-                    >
+                    <select class="form-control" aria-label="gender" v-model="gender">
                       <option value="" disabled selected>Gender</option>
                       <option :value="Gender.Male">Male</option>
                       <option :value="Gender.Female">Female</option>
@@ -65,24 +51,13 @@
 
                   <!-- Email Input -->
                   <div class="input-group input-group-alternative py-2">
-                    <input
-                      type="email"
-                      class="form-control"
-                      placeholder="Email"
-                      aria-label="Email"
-                      v-model="email"
-                    />
+                    <input type="email" class="form-control" placeholder="Email" aria-label="Email" v-model="email" />
                   </div>
 
                   <!-- Password Input -->
                   <div class="input-group input-group-alternative py-2">
-                    <input
-                      type="password"
-                      class="form-control"
-                      placeholder="Password"
-                      aria-label="Password"
-                      v-model="password"
-                    />
+                    <input type="password" class="form-control" placeholder="Password" aria-label="Password"
+                      v-model="password" />
                   </div>
 
                   <!-- Password Strength -->
@@ -95,7 +70,7 @@
 
                   <!-- Privacy Policy Checkbox -->
                   <div class="form-check mt-3">
-                    <input type="checkbox" class="form-check-input" id="privacyPolicy" v-model="acceptedPolicy"/>
+                    <input type="checkbox" class="form-check-input" id="privacyPolicy" v-model="acceptedPolicy" />
                     <label class="form-check-label" for="privacyPolicy">
                       I agree with the <a href="#">Privacy Policy</a>
                     </label>
@@ -111,10 +86,10 @@
               </form>
               <!-- Feedback Messages -->
               <div v-if="error" class="alert alert-danger text-center">
-                {{error}}
+                {{ error }}
               </div>
               <div v-if="success" class="alert alert-success text-center">
-                {{success}}
+                {{ success }}
               </div>
             </div>
           </div>
@@ -125,17 +100,16 @@
 </template>
 
 <script>
-import {createUser} from "@/services/userServices";
+import { createUser } from "@/services/userServices";
 import User from "@/models/User";
-import {Gender} from "@/enums/Gender";
-import { useRouter } from 'vue-router';
+import { Gender } from "@/enums/Gender";
 import { auth, provider, signInWithPopup } from "@/services/firebase";
 
 export default {
   name: "RegisterSection",
   computed: {
     Gender() {
-      return Gender
+      return Gender;
     }
   },
   data() {
@@ -156,12 +130,12 @@ export default {
         // Zera mensagens anteriores
         this.error = null;
         this.success = null;
-        console.log(this.firstName, this.lastName, this.gender, this.email, this.password)
+        console.log(this.firstName, this.lastName, this.gender, this.email, this.password);
+        
         // Valida os campos obrigatórios
-
-        if (!this.firstName || !this.lastName || this.gender || !this.email || !this.password) {
+        if (!this.firstName || !this.lastName || !this.gender || !this.email || !this.password) {
           this.error = "All fields are required.";
-          return ;
+          return;
         }
 
         // Criar objeto `User` com todos os campos necessários
@@ -178,45 +152,57 @@ export default {
         this.success = "Account created successfully!";
         console.log("User created:", response);
 
-        const router = useRouter();
-
         setTimeout(() => {
           console.log("Redirecionando para /login");
-          router.push("/login");
-        },2000);
+          this.$router.push("/login");
+        }, 2000);
       } catch (err) {
         // Exibir mensagem de erro
         this.error = err.response?.data?.message || "An error occurred during registration.";
         console.error(err);
       }
     },
-    async registerWithGoogle(){
-      try{
+
+    async registerWithGoogle() {
+      try {
         const result = await signInWithPopup(auth, provider);
         const googleUser = result.user;
 
-        const newUser = new User({
+        // Gerar senha aleatória
+        // eslint-disable-next-line no-inner-declarations
+        function generateRandomPassword(length = 16) {
+          const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+";
+          const randomValues = new Uint8Array(length);
+          window.crypto.getRandomValues(randomValues);
+
+          return Array.from(randomValues, (byte) => charset[byte % charset.length]).join("");
+        }
+
+        const newGoogleUser = new User({
           firstName: googleUser.displayName.split(" ")[0],
           lastName: googleUser.displayName.split(" ")[1] || "",
           email: googleUser.email,
-          gender: googleUser.gender,
-          password: googleUser.password
+          gender: Gender.Other,
+          password: generateRandomPassword(),
         });
 
+        newGoogleUser.uid = googleUser.uid;
+
+        console.log(newGoogleUser);
+
         // Enviar os dados ao backend
-        const response = await createUser(newUser);
+        const response = await createUser(newGoogleUser);
         // Exibir mensagem de sucesso
         this.success = "Account created successfully!";
         console.log("User created:", response);
 
-        const router = useRouter();
+        
 
         setTimeout(() => {
           console.log("Redirecionando para /login");
-          router.push("/login");
-        },2000);
-
-      }catch (err) {
+          this.$router.push("/login");
+        }, 2000);
+      } catch (err) {
         // Exibir mensagem de erro
         this.error = err.response?.data?.message || "An error occurred during registration.";
         console.error(err);
@@ -226,10 +212,12 @@ export default {
 };
 </script>
 
+
 <style>
 .section {
   padding-top: 50px;
 }
+
 .shape {
   position: absolute;
   width: 100%;
