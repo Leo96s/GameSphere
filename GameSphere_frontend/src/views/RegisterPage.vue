@@ -10,16 +10,22 @@
               <div class="text-muted text-center mb-3">
                 <small>Register with</small>
               </div>
-              <div class="btn-wrapper text-center">
-                <button class="btn btn-neutral btn-icon mb-2">
-                  <img src="@/assets/logos/facebook.png" alt="Facebook" class="icon">
-                </button>
-                <button @click="registerWithGoogle" class="btn btn-neutral btn-icon">
-                  <img src="@/assets/logos/google.png" alt="Google" class="icon">
-                </button>
-                <button class="btn btn-neutral btn-icon">
-                  <img src="@/assets/logos/microsoft.png" alt="Microsoft" class="icon">
-                </button>
+              <div class="btn-wrapper text-center space-x-4">
+                <div class="text-center my-3">
+                  <b-button @click="registerWithGoogle" v-b-popover.hover.top="'I am popover directive content!'"
+                    title="Popover Title" class="btn-icon mx-2" variant="light">
+                    <img src="@/assets/logos/google.png" alt="Google" class="icon-img">
+                  </b-button>
+
+                  <b-button id="popover-target-1" class="btn-icon" variant="dark">
+                    <img src="@/assets/logos/github.png" alt="Github" class="icon-img">
+                  </b-button>
+
+                  <b-popover target="popover-target-1" triggers="hover" placement="top">
+                    <template #title>Popover Title</template>
+                    I am popover <b>component</b> content!
+                  </b-popover>
+                </div>
               </div>
             </div>
 
@@ -131,7 +137,7 @@ export default {
         this.error = null;
         this.success = null;
         console.log(this.firstName, this.lastName, this.gender, this.email, this.password);
-        
+
         // Valida os campos obrigatórios
         if (!this.firstName || !this.lastName || !this.gender || !this.email || !this.password) {
           this.error = "All fields are required.";
@@ -196,7 +202,7 @@ export default {
         this.success = "Account created successfully!";
         console.log("User created:", response);
 
-        
+
 
         setTimeout(() => {
           console.log("Redirecionando para /login");
@@ -235,6 +241,22 @@ export default {
 .card {
   border-radius: 0.375rem;
 }
+
+.btn-icon {
+  width: 200px;  /* Define um tamanho fixo para os botões */
+  height: 50px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 100%;  /* Torna os botões arredondados */
+  padding: 5px;
+  background-color: #f1f1f1;
+}
+
+.icon-img {
+  width: 24px;  /* Define um tamanho menor para os ícones */
+  height: 24px;
+}
+
 
 .btn-neutral {
   background-color: #f6f9fc;
