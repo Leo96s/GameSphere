@@ -12,19 +12,14 @@
               </div>
               <div class="btn-wrapper text-center space-x-4">
                 <div class="text-center my-3">
-                  <b-button @click="registerWithGoogle" v-b-popover.hover.top="'I am popover directive content!'"
-                    title="Popover Title" class="btn-icon mx-2" variant="light">
+                  <b-button @click="registerWithGoogle"
+                    title="Google" class="btn-icon mx-2" variant="light">
                     <img src="@/assets/logos/google.png" alt="Google" class="icon-img">
                   </b-button>
 
-                  <b-button id="popover-target-1" class="btn-icon" variant="dark">
+                  <b-button @click="registerWithGithub" class="btn-icon" variant="dark" title="Github">
                     <img src="@/assets/logos/github.png" alt="Github" class="icon-img">
                   </b-button>
-
-                  <b-popover target="popover-target-1" triggers="hover" placement="top">
-                    <template #title>Popover Title</template>
-                    I am popover <b>component</b> content!
-                  </b-popover>
                 </div>
               </div>
             </div>
@@ -109,7 +104,7 @@
 import { createUser } from "@/services/userServices";
 import User from "@/models/User";
 import { Gender } from "@/enums/Gender";
-import { auth, provider, signInWithPopup } from "@/services/firebase";
+import { auth, githubProvider, googleProvider, signInWithPopup } from "@/services/firebase";
 
 export default {
   name: "RegisterSection",
@@ -171,25 +166,15 @@ export default {
 
     async registerWithGoogle() {
       try {
-        const result = await signInWithPopup(auth, provider);
+        const result = await signInWithPopup(auth, googleProvider);
         const googleUser = result.user;
-
-        // Gerar senha aleatória
-        // eslint-disable-next-line no-inner-declarations
-        function generateRandomPassword(length = 16) {
-          const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+";
-          const randomValues = new Uint8Array(length);
-          window.crypto.getRandomValues(randomValues);
-
-          return Array.from(randomValues, (byte) => charset[byte % charset.length]).join("");
-        }
 
         const newGoogleUser = new User({
           firstName: googleUser.displayName.split(" ")[0],
           lastName: googleUser.displayName.split(" ")[1] || "",
           email: googleUser.email,
           gender: Gender.Other,
-          password: generateRandomPassword(),
+          password:  Math.random().toString(36).slice(-8),
         });
 
         newGoogleUser.uid = googleUser.uid;
@@ -202,8 +187,6 @@ export default {
         this.success = "Account created successfully!";
         console.log("User created:", response);
 
-
-
         setTimeout(() => {
           console.log("Redirecionando para /login");
           this.$router.push("/login");
@@ -211,6 +194,39 @@ export default {
       } catch (err) {
         // Exibir mensagem de erro
         this.error = err.response?.data?.message || "An error occurred during registration.";
+        console.error(err);
+      }
+    },
+    async registerWithGithub() {
+      try {
+        const result = await signInWithPopup(auth, githubProvider);
+        const githubUser = result.user;
+
+        // Criar um usuário com os dados do GitHub
+        const newGithubUser = new User({
+          firstName: githubUser.displayName?.split(" ")[0] || "GitHub",
+          lastName: githubUser.displayName?.split(" ")[1] || "User",
+          email: githubUser.email,
+          gender: Gender.Other,
+          password: Math.random().toString(36).slice(-8) // Senha aleatória
+        });
+
+        newGithubUser.uid = githubUser.uid;
+
+        console.log("Novo utilizador GitHub:", newGithubUser);
+
+        // Enviar os dados ao backend (caso tenha API para cadastro)
+        const response = await createUser(newGithubUser);
+
+        // Exibir mensagem de sucesso
+        this.success = "Conta criada com sucesso!";
+        console.log("Utilizador registrado:", response);
+
+        setTimeout(() => {
+          this.$router.push("/login");
+        }, 2000);
+      } catch (err) {
+        this.error = err.response?.data?.message || "Ocorreu um erro ao fazer login com GitHub.";
         console.error(err);
       }
     },
@@ -243,17 +259,20 @@ export default {
 }
 
 .btn-icon {
-  width: 200px;  /* Define um tamanho fixo para os botões */
+  width: 200px;
+  /* Define um tamanho fixo para os botões */
   height: 50px;
   align-items: center;
   justify-content: center;
-  border-radius: 100%;  /* Torna os botões arredondados */
+  border-radius: 100%;
+  /* Torna os botões arredondados */
   padding: 5px;
   background-color: #f1f1f1;
 }
 
 .icon-img {
-  width: 24px;  /* Define um tamanho menor para os ícones */
+  width: 24px;
+  /* Define um tamanho menor para os ícones */
   height: 24px;
 }
 

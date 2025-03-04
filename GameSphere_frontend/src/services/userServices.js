@@ -5,8 +5,8 @@ export const getUsers = async () => {
     return response.data;
 };
 
-export const getUser = async (userData) => {
-    const response = await api.get('/User', userData);
+export const getUser = async (id) => {
+    const response = await api.get(`/User/by-id/${id}`);
     return response.data;
 };
 
@@ -37,7 +37,25 @@ export const deleteUser = async (userId) =>{
     return response.data;
 };
 
-export const loginUser = async (userData) => {
-    const response = await api.post("/User/login", userData);
-    return response.data;
+export const checkUserExist = async (uid, email) => {
+    try {
+        const encodedEmail = encodeURIComponent(email);  // 🔥 Codifica corretamente o email
+        const response = await api.get(`/User/user-exist/${uid}/${encodedEmail}`);
+        return response.data;
+    } catch (error) {
+        console.error("Erro ao verificar usuário:", error.response?.data || error.message);
+        throw error;
+    }
+};
+
+export const getUserByEmail = async (email) => {
+    try{
+        const encodedEmail = encodeURIComponent(email); 
+        const response = await api.get(`/User/by-email/${encodedEmail}`);
+        return response.data;
+
+    }catch(error){
+        console.error("Erro ao criar usuário:", error.response?.data || error.message);
+        throw error;
+    }
 }

@@ -63,5 +63,9 @@ namespace GameSphere_backend.Interfaces
         /// if something is wrong or a response.Sucess=true and a mensage informing the user
         /// about his choice of email availability accordingly </returns>
         Task<ServiceResponse<bool>> CheckEmailAvailabilityAsync(string email);
+
+        Task<ServiceResponse<bool>> CheckExistsUserExtern(string uid, string email);
+
+        Task<ServiceResponse<UserDto>> GetUserByEmailAsync(string email);
     }
 }

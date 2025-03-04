@@ -13,19 +13,14 @@
               </div>
               <div class="btn-wrapper text-center space-x-4">
                 <div class="text-center my-3">
-                  <b-button @click="registerWithGoogle" v-b-popover.hover.top="'I am popover directive content!'"
-                    title="Popover Title" class="btn-icon mx-2" variant="light">
+                  <b-button @click="signinWithGoogle"
+                    title="Google" class="btn-icon mx-2" variant="light">
                     <img src="@/assets/logos/google.png" alt="Google" class="icon-img">
                   </b-button>
 
-                  <b-button id="popover-target-1" class="btn-icon" variant="dark">
+                  <b-button @click="signinWithGithub" title="Github" class="btn-icon" variant="dark">
                     <img src="@/assets/logos/github.png" alt="Github" class="icon-img">
                   </b-button>
-
-                  <b-popover target="popover-target-1" triggers="hover" placement="top">
-                    <template #title>Popover Title</template>
-                    I am popover <b>component</b> content!
-                  </b-popover>
                 </div>
               </div>
             </div>
@@ -95,6 +90,10 @@
 
 <script>
 import { login } from "@/services/authService";
+import { auth, githubProvider, googleProvider, signInWithPopup } from "@/services/firebase";
+import ResponseLogin from "@/models/ResponseLogin";
+import { checkUserExist, getUserByEmail } from "@/services/userServices";
+
 export default {
   name: "LoginCard",
   data() {
@@ -137,7 +136,74 @@ export default {
         this.error = err.response?.data?.message || "An error occurred during registration.";
         console.error(err);
       }
-    }
+    },
+    async signinWithGoogle() {
+      try {
+        const result = await signInWithPopup(auth, googleProvider);
+        const googleUser = result.user;
+
+        const GoogleUser = new ResponseLogin({
+          uid: googleUser.uid,
+          email: googleUser.email,
+        });
+
+        console.log(GoogleUser.uid, GoogleUser.email);
+
+        // Enviar os dados ao backend
+        const response = await checkUserExist(GoogleUser.uid, GoogleUser.email);
+
+        if (response == true) {
+          const userFromGoogle = await getUserByEmail(googleUser.email);
+          localStorage.setItem("user", JSON.stringify(userFromGoogle));
+        } else {
+          console.error("Erro: Nenhum dado recebido do login.");
+        }
+        // Exibir mensagem de sucesso
+        this.success = "Account created successfully!";
+        console.log("User sign-in:", response);
+
+        setTimeout(() => {
+          console.log("Redirecionando para /profile");
+          this.$router.push("/profile");
+        }, 2000);
+      } catch (err) {
+        // Exibir mensagem de erro
+        this.error = err.response?.data?.message || "An error occurred during registration.";
+        console.error(err);
+      }
+    },
+
+    async signinWithGithub() {
+      try {
+        const result = await signInWithPopup(auth, githubProvider);
+        const githubUser = result.user;
+
+        // Criar um usuário com os dados do GitHub
+        const GithubUser = new ResponseLogin({
+          uid: githubUser.uid,
+          email: githubUser.email,
+        });
+
+        console.log(GithubUser);
+
+        // Enviar os dados ao backend
+        const response = await checkUserExist(GithubUser.uid, GithubUser.email);
+
+        if (response == true) {
+          const userFromGithub = await getUserByEmail(githubUser.email);
+          localStorage.setItem("user", JSON.stringify(userFromGithub));
+        } else {
+          console.error("Erro: Nenhum dado recebido do login.");
+        }
+
+        setTimeout(() => {
+          this.$router.push("/profile");
+        }, 2000);
+      } catch (err) {
+        this.error = err.response?.data?.message || "Ocorreu um erro ao fazer login com GitHub.";
+        console.error(err);
+      }
+    },
   },
 };
 

@@ -26,7 +26,7 @@ namespace GameSphere_backend.Controllers
         /// </summary>
         /// <param name="id"></param>
         /// <returns>Returns NotFound() if is not sucessefully or OK() with the User Dto if it is</returns>
-        [HttpGet("{id}")]
+        [HttpGet("by-id/{id}")]
         public override async Task<IActionResult> GetEntityById(int id)
         {
             var serviceResponse = await _userService.GetUserByIdAsync(id);
@@ -119,5 +119,23 @@ namespace GameSphere_backend.Controllers
 
             return HandleResponse(serviceResponse);
         }
+
+        [HttpGet("user-exist/{uid}/{email}")]
+        public async Task<IActionResult> GetUserExist(string uid, string email)
+        {
+            var serviceResponse = await _userService.CheckExistsUserExtern(uid,email);
+
+            return HandleResponse(serviceResponse);
+        }
+
+        [HttpGet("by-email/{email}")]
+        public async Task<IActionResult> GetEntityByEmail(string email)
+        {
+            var serviceResponse = await _userService.GetUserByEmailAsync(email);
+
+            return HandleResponse(serviceResponse);
+        }
+
+
     }
 }

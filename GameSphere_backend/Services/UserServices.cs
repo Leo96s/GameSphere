@@ -154,6 +154,15 @@ namespace GameSphere_backend.Services
             return !await _context.Users.AnyAsync(user => user.Email == email);
         }
 
+        private async Task<Boolean> UserExist(string uid, string email)
+        {
+            if (string.IsNullOrWhiteSpace(uid)) return false;
+
+            if (string.IsNullOrWhiteSpace(email)) return false;
+
+            return await _context.Users.AnyAsync(user => (user.Email == email && user.UID == uid));
+        }
+
         /// <summary>
         /// Function that exists with the purpose of informing the user if his email is already registered
         /// on the plataform
@@ -440,6 +449,78 @@ namespace GameSphere_backend.Services
             }
 
             return response;
+        }
+        public async Task<ServiceResponse<bool>> CheckExistsUserExtern(string uid, string email)
+
+        {
+            var response = new ServiceResponse<bool>();
+
+            try
+            {
+                if (_context == null)
+                {
+                    response.Success = false;
+                    response.Message = "DB context is missing.";
+                    response.Type = "NotFound";
+                    return response;
+                }
+
+                if (string.IsNullOrWhiteSpace(email))
+                {
+                    response.Success = false;
+                    response.Message = "Email cannot be null or empty.";
+                    response.Type = "BadRequest";
+                    return response;
+                }
+
+                // Verifica a disponibilidade do email
+                var emailAvailable = await UserExist(uid, email);
+
+                response.Data = emailAvailable;
+                response.Success = true;
+                response.Message = emailAvailable
+                ? "User exist"
+                : "User not exist";
+                response.Type = "Ok";
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = "An error occurred while checking email availability.";
+                response.Type = "BadRequest";
+            }
+
+            return response;
+        }
+
+        public async Task<ServiceResponse<UserDto>> GetUserByEmailAsync(string email)
+        {
+            if (_context == null)
+                return new ServiceResponse<UserDto>
+                {
+                    Success = false,
+                    Message = "DB context is Missing",
+                    Type = "NotFound"
+                };
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+            if (user == null)
+                return new ServiceResponse<UserDto>
+                {
+                    Success = false,
+                    Message = "User was not found!",
+                    Type = "NotFound"
+                };
+
+            var u = UserMapper.UserToDto(user);
+
+            return new ServiceResponse<UserDto>
+            {
+                Success = true,
+                Data = u,
+                Type = "Ok"
+            };
         }
     }
 }
