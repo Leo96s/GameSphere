@@ -13,11 +13,13 @@ namespace GameSphere_backend.Services
     public class UserServices : IUserService
     {
         private readonly AppDbContext _context;
-        private readonly IAuthService authService;
-        public UserServices(AppDbContext context, IAuthService authService)
+        private readonly IAuthService _authService;
+        private readonly IEmailService _emailService;
+        public UserServices(AppDbContext context, IAuthService authService, IEmailService emailService)
         {
             this._context = context;
-            this.authService = authService ?? throw new ArgumentNullException(nameof(authService));
+            this._authService = authService ?? throw new ArgumentNullException(nameof(_authService));
+            this._emailService = emailService ?? throw new ArgumentNullException(nameof(_emailService));
         }
 
         public async Task<ServiceResponse<UserDto>> GetUserByIdAsync(int id)
@@ -521,6 +523,122 @@ namespace GameSphere_backend.Services
                 Data = u,
                 Type = "Ok"
             };
+        }
+
+        public async Task<ServiceResponse<bool>> SendPasswordResetCode(string email)
+        {
+            var response = new ServiceResponse<bool>();
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if(user == null)
+            {
+                response.Success = false;
+                response.Message = "User not found!";
+                response.Type = "Not Found";
+                return response;
+            }
+
+            var resetCode = new Random().Next(100000, 999999).ToString();
+
+            user.ResetCode = resetCode;
+            user.ResetCodeExpiration = DateTime.UtcNow.AddMinutes(15);
+
+            await _context.SaveChangesAsync();
+
+            string emailBody = $"<h3>Redefinição de Senha</h3>" +
+                       $"<p>Seu código de recuperação é: <strong>{resetCode}</strong></p>" +
+                       $"<p>Este código expira em 15 minutos.</p>";
+
+            // Enviar o e-mail
+            bool emailSent = await _emailService.SendEmailAsync(email, "Redefinição de Senha", emailBody);
+
+            if (!emailSent)
+            {
+                response.Success = false;
+                response.Message = "Failed to send email.";
+                response.Type = "BadRequest";
+                return response;
+            }
+
+            response.Success = true;
+            response.Message = "Reset code sent successfully!";
+            response.Type = "Ok";
+            return response;
+        }
+
+        public async Task<ServiceResponse<bool>> ValidateResetCode(string email, string resetCode)
+        {
+            var response = new ServiceResponse<bool>();
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null)
+            {
+                response.Success = false;
+                response.Message = "User not found!";
+                response.Type = "NotFound";
+                return response;
+            }
+
+            if (user.ResetCode != resetCode || user.ResetCodeExpiration < DateTime.UtcNow)
+            {
+                response.Success = false;
+                response.Message = "Invalid or expired reset code!";
+                response.Type = "BadRequest";
+                return response;
+            }
+
+            response.Success = true;
+            response.Message = "Valid reset code!";
+            response.Type = "Ok";
+            return response;
+        }
+
+        public async Task<ServiceResponse<bool>> ResetPassword(string email, string resetCode, string newPassword)
+        {
+            var response = new ServiceResponse<bool>();
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null)
+            {
+                response.Success = false;
+                response.Message = "User not found!";
+                response.Type = "NotFound";
+                return response;
+            }
+
+            if (user.ResetCode != resetCode || user.ResetCodeExpiration > DateTime.UtcNow)
+            {
+                response.Success = false;
+                response.Message = "Invalid or expired reset code!";
+                response.Type = "BadRequest";
+                return response;
+            }
+
+            user.HashedPassword = BCrypt.Net.BCrypt.HashPassword(newPassword);
+
+            user.ResetCode = null;
+            user.ResetCodeExpiration = null;
+
+            await _context.SaveChangesAsync();
+
+            string emailBody = $"<h3>Senha alterada</h3>" +
+                       $"<p>A sua senha foi altera se não foi você redefine a senha o mais depressa possível.</p>";
+
+            // Enviar o e-mail
+            bool emailSent = await _emailService.SendEmailAsync(email, "Aviso de Senha alterada", emailBody);
+
+            if (!emailSent)
+            {
+                response.Success = false;
+                response.Message = "Failed to send email.";
+                response.Type = "BadRequest";
+                return response;
+            }
+
+            response.Success = true;
+            response.Message = "Password reset successfully!";
+            response.Type = "Ok";
+            return response;
         }
     }
 }

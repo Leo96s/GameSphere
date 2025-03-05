@@ -67,5 +67,11 @@ namespace GameSphere_backend.Interfaces
         Task<ServiceResponse<bool>> CheckExistsUserExtern(string uid, string email);
 
         Task<ServiceResponse<UserDto>> GetUserByEmailAsync(string email);
+
+        Task<ServiceResponse<bool>> SendPasswordResetCode(string email);
+
+        Task<ServiceResponse<bool>> ValidateResetCode(string email, string resetCode);
+
+        Task<ServiceResponse<bool>> ResetPassword(string email, string resetCode, string newPassword);
     }
 }

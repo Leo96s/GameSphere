@@ -40,6 +40,10 @@ namespace GameSphere_backend.Models.BackendModels
 
         public string? Token { get; set; }
 
+        public string? ResetCode { get; set; }
+
+        public DateTime? ResetCodeExpiration { get; set; }
+
         public DateTime? TokenExpDate { get; set; }
 
         public ICollection<Quizz> Quizzs { get; set; }

@@ -1,7 +1,6 @@
 ﻿using GameSphere_backend.Interfaces;
 using GameSphere_backend.Models.BackendModels;
 using GameSphere_backend.Models.FrontendModels;
-using GameSphere_backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
@@ -136,6 +135,26 @@ namespace GameSphere_backend.Controllers
             return HandleResponse(serviceResponse);
         }
 
+        [HttpPost("send-reset-code")]
+        public async Task<IActionResult> SendResetCode([FromBody] string email)
+        {
+            var response = await _userService.SendPasswordResetCode(email);
+            return HandleResponse(response);
+        }
+
+        [HttpPost("validate-reset-code")]
+        public async Task<IActionResult> ValidateResetCode([FromBody] ValidateResetCodeRequest request)
+        {
+            var response = await _userService.ValidateResetCode(request.Email, request.ResetCode);
+            return HandleResponse(response);
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] Models.FrontendModels.ResetPasswordRequest request)
+        {
+            var response = await _userService.ResetPassword(request.Email, request.ResetCode, request.NewPassword);
+            return HandleResponse(response);
+        }
 
     }
 }
