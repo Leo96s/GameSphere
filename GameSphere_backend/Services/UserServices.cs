@@ -420,6 +420,7 @@ namespace GameSphere_backend.Services
                 }
 
                 var authenticatedUserDTO = UserMapper.UserToDto(user);
+
                 if (authenticatedUserDTO == null)
                 {
                     response.Success = false;
@@ -428,9 +429,11 @@ namespace GameSphere_backend.Services
                     return response;
                 }
 
+                var token = _authService.GenerateToken(authenticatedUserDTO.Id.ToString(), authenticatedUserDTO.Email);
 
                 response.Data = new LoginResponse
                 {
+                    token = token,
                     user = authenticatedUserDTO
                 };
                 response.Success = true;

@@ -4,7 +4,7 @@ namespace GameSphere_backend.Interfaces
 {
     public interface IAuthService
     {
-        string GenerateToken(User user);
+        string GenerateToken(string userId, string email);
 
     }
 }

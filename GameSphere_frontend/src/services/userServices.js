@@ -1,7 +1,13 @@
 import api from './api';
 
+// Função auxiliar para obter o token
+const getAuthHeader = () => {
+    const token = localStorage.getItem("token");  // Busca o token salvo
+    return token ? { Authorization: `Bearer ${token}` } : {}; // Adiciona ao header se existir
+};
+
 export const getUsers = async () => {
-    const response = await api.get('/User');
+    const response = await api.get('/User', { headers: getAuthHeader() });
     return response.data;
 };
 
@@ -28,19 +34,19 @@ export const createUser = async (userData) => {
 };
 
 export const editUser = async (userId, userData) => {
-    const response = await api.put(`/User/${userId}`, userData);
+    const response = await api.put(`/User/${userId}`, userData,  { headers: getAuthHeader() });
     return response.data;
 };
 
 export const deleteUser = async (userId) =>{
-    const response = await api.delete(`/User/${userId}`);
+    const response = await api.delete(`/User/${userId}`,  { headers: getAuthHeader() });
     return response.data;
 };
 
 export const checkUserExist = async (uid, email) => {
     try {
         const encodedEmail = encodeURIComponent(email);  // 🔥 Codifica corretamente o email
-        const response = await api.get(`/User/user-exist/${uid}/${encodedEmail}`);
+        const response = await api.get(`/User/user-exist/${uid}/${encodedEmail}`,  { headers: getAuthHeader() });
         return response.data;
     } catch (error) {
         console.error("Erro ao verificar usuário:", error.response?.data || error.message);
@@ -51,7 +57,7 @@ export const checkUserExist = async (uid, email) => {
 export const getUserByEmail = async (email) => {
     try{
         const encodedEmail = encodeURIComponent(email); 
-        const response = await api.get(`/User/by-email/${encodedEmail}`);
+        const response = await api.get(`/User/by-email/${encodedEmail}`,  { headers: getAuthHeader() });
         return response.data;
 
     }catch(error){

@@ -25,6 +25,7 @@ namespace GameSphere_backend.Controllers
         /// </summary>
         /// <param name="id"></param>
         /// <returns>Returns NotFound() if is not sucessefully or OK() with the User Dto if it is</returns>
+        [Authorize]
         [HttpGet("by-id/{id}")]
         public override async Task<IActionResult> GetEntityById(int id)
         {
@@ -60,6 +61,7 @@ namespace GameSphere_backend.Controllers
         /// <returns>Returns BadRequest() if userService responds "BadRequest", 
         /// NotFound() if userService responds "NotFound", or NoContent() if
         /// user is correctly deleted from the system</returns>
+        [Authorize]
         [HttpDelete("{id}")]
         [Authorize]
         public override async Task<IActionResult> DeleteEntity(int id)
@@ -79,6 +81,7 @@ namespace GameSphere_backend.Controllers
         /// <returns>Returns BadRequest() if userService responds "BadRequest", 
         /// NotFound() if userService responds "NotFound", or Ok() with
         /// updated User dto if updated correctly</returns>
+        [Authorize]
         [HttpPut("{id}")]
         [Authorize]
         public override async Task<IActionResult> UpdateEntity(int id, UserDto updatedUser)
@@ -111,6 +114,7 @@ namespace GameSphere_backend.Controllers
         /// <returns>Returns BadRequest() if userService responds "BadRequest", 
         /// NotFound() if userService responds "NotFound", or Ok() with
         /// a message according with if the user's email is already registered or not</returns>
+        [Authorize]
         [HttpGet("get-email-availability/{email}")]
         public async Task<IActionResult> GetEmailAvailability(string email)
         {
@@ -119,6 +123,7 @@ namespace GameSphere_backend.Controllers
             return HandleResponse(serviceResponse);
         }
 
+        [Authorize]
         [HttpGet("user-exist/{uid}/{email}")]
         public async Task<IActionResult> GetUserExist(string uid, string email)
         {
@@ -127,6 +132,7 @@ namespace GameSphere_backend.Controllers
             return HandleResponse(serviceResponse);
         }
 
+        [Authorize]
         [HttpGet("by-email/{email}")]
         public async Task<IActionResult> GetEntityByEmail(string email)
         {

@@ -9,34 +9,43 @@ namespace GameSphere_backend.Services
 {
     public class AuthService : IAuthService
     {
+        private readonly IConfiguration _config;
+
+        public AuthService(IConfiguration config)
+        {
+            _config = config;
+        }
 
         /// Function that generates a Jwt Token with a expiration date
         /// </summary>
         /// <param name="user"></param>
         /// <returns>Returns the token as a string</returns>
-        public string GenerateToken(User user)
+        public string GenerateToken(string userId, string email)
         {
-            var handler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET")!);
-            var credentials = new SigningCredentials(
-                new SymmetricSecurityKey(key),
-                SecurityAlgorithms.HmacSha256Signature);
+            var secretKey = _config["JwtSettings:SecretKey"];
+            var issuer = _config["JwtSettings:Issuer"];
+            var audience = _config["JwtSettings:Audience"];
+            var expiration = int.Parse(_config["JwtSettings:ExpirationMinutes"]);
 
-            var claims = new List<Claim>
-    {
-        new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-        new(ClaimTypes.Email, user.Email),
-    };
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var tokenDescriptor = new SecurityTokenDescriptor
+            var claims = new[]
             {
-                Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddDays(7),
-                SigningCredentials = credentials,
-            };
+            new Claim(JwtRegisteredClaimNames.Sub, userId),
+            new Claim(JwtRegisteredClaimNames.Email, email),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()) // Identificador único
+        };
 
-            var token = handler.CreateToken(tokenDescriptor);
-            return handler.WriteToken(token);
+            var token = new JwtSecurityToken(
+                issuer,
+                audience,
+                claims,
+                expires: DateTime.UtcNow.AddMinutes(expiration),
+                signingCredentials: credentials
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
 
