@@ -5,6 +5,7 @@ using GameSphere_backend.Mappers;
 using GameSphere_backend.Models.FrontendModels;
 using GameSphere_backend.ServicesResponses;
 using Microsoft.AspNetCore.Identity.Data;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
@@ -641,6 +642,91 @@ namespace GameSphere_backend.Services
             response.Success = true;
             response.Message = "Password reset successfully!";
             response.Type = "Ok";
+            return response;
+        }
+
+        public async Task<ServiceResponse<LoginResponse>> SocialLoginAsync(string uid, string email)
+        {
+            var response = new ServiceResponse<LoginResponse>();
+
+            try
+            {
+                if (_context == null)
+                {
+                    response.Success = false;
+                    response.Message = "DB context is missing.";
+                    response.Type = "NotFound";
+                    return response;
+                }
+
+                if (string.IsNullOrWhiteSpace(email))
+                {
+                    response.Success = false;
+                    response.Message = "Email is required.";
+                    response.Type = "BadRequest";
+                    return response;
+                }
+
+                if (string.IsNullOrWhiteSpace(uid))
+                {
+                    response.Success = false;
+                    response.Message = "Password is required.";
+                    response.Type = "BadRequest";
+                    return response;
+                }
+
+                var user = await _context.Users.SingleOrDefaultAsync(u => (u.Email == email && u.UID == uid));
+
+                if (user == null)
+                {
+                    response.Success = false;
+                    response.Message = "User dont exist!";
+                    response.Type = "NotFound";
+                    return response;
+                }
+
+                if (!user.isActive)
+                {
+                    response.Success = false;
+                    response.Message = "Account is deactivated. Please check your email for the activation link.";
+                    response.Type = "BadRequest";
+                    return response;
+                }
+
+                var authenticatedUserDTO = UserMapper.UserToDto(user);
+
+                if (authenticatedUserDTO == null)
+                {
+                    response.Success = false;
+                    response.Message = "Error while mapping the UserDTO.";
+                    response.Type = "BadRequest";
+                    return response;
+                }
+
+                var token = _authService.GenerateToken(authenticatedUserDTO.Id.ToString(), authenticatedUserDTO.Email);
+
+                response.Data = new LoginResponse
+                {
+                    token = token,
+                    user = authenticatedUserDTO
+                };
+                response.Success = true;
+                response.Message = "Login successful.";
+                response.Type = "Ok";
+            }
+            catch (ValidationException ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+                response.Type = "BadRequest";
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = "An error occurred during login.";
+                response.Type = "BadRequest";
+            }
+
             return response;
         }
     }

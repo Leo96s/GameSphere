@@ -123,7 +123,6 @@ namespace GameSphere_backend.Controllers
             return HandleResponse(serviceResponse);
         }
 
-        [Authorize]
         [HttpGet("user-exist/{uid}/{email}")]
         public async Task<IActionResult> GetUserExist(string uid, string email)
         {
@@ -160,6 +159,14 @@ namespace GameSphere_backend.Controllers
         {
             var response = await _userService.ResetPassword(request.Email, request.ResetCode, request.NewPassword);
             return HandleResponse(response);
+        }
+
+        [HttpPost("social-login/{uid}/{email}")]
+        public async Task<IActionResult> SocialLogin(string uid, string email)
+        {
+            var serviceResponse = await _userService.SocialLoginAsync(uid, email);
+
+            return HandleResponse(serviceResponse);
         }
 
     }

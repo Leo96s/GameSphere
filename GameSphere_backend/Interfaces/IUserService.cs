@@ -73,5 +73,7 @@ namespace GameSphere_backend.Interfaces
         Task<ServiceResponse<bool>> ValidateResetCode(string email, string resetCode);
 
         Task<ServiceResponse<bool>> ResetPassword(string email, string resetCode, string newPassword);
+
+        Task<ServiceResponse<LoginResponse>> SocialLoginAsync(string uid, string email);
     }
 }

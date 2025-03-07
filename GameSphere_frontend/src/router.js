@@ -5,6 +5,7 @@ import Landing from "./views/LandingPage.vue";
 import Login from "./views/Sign-InPage.vue";
 import RegisterPage from "./views/RegisterPage.vue";
 import Profile from "./views/ProfilePage.vue";
+import SentCodePage from './views/SentCodePage.vue';
 
 const routes = [
   {
@@ -40,8 +41,18 @@ const routes = [
     components: {
       header: AppHeader,
       default: Profile,
-      footer: AppFooter
-    }
+      footer: AppFooter,
+    },
+    meta: { requiresAuth: true } 
+  },
+  {
+    path: "/forgetPassword/sentCode",
+    name: "sentCode",
+    components: {
+      header: AppHeader,
+      default: SentCodePage,
+      footer: AppFooter,
+    },
   }
 ];
 
@@ -56,6 +67,23 @@ const router = createRouter({
     } else {
       return { x: 0, y: 0 };
     }
+  }
+});
+
+// Guard de rota global
+router.beforeEach((to, from, next) => {
+  const isAuthenticated = localStorage.getItem('token'); // Aqui você verifica se o usuário está autenticado (pode ser uma variável global, Vuex, etc.)
+
+  if (to.matched.some(record => record.meta.requiresAuth)) {
+    // Se a rota exigir autenticação e o usuário não estiver autenticado
+    if (!isAuthenticated) {
+      // Redireciona para a página de landing (nome correto)
+      next({ name: 'landing' });
+    } else {
+      next();  // Permite o acesso à rota
+    }
+  } else {
+    next(); // Permite o acesso a rotas públicas
   }
 });
 
