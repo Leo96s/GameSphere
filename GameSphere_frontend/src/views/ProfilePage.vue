@@ -54,7 +54,7 @@
             <div v-if="user" class="text-center mt-5">
               <h3>
                 {{ user.firstName }} {{ user.lastName }}
-                <span class="font-weight-light"> Pertence ao site há {{ timeSinceRegistration }}.</span>
+                <span class="font-weight-light"> {{ timeSinceRegistration }}.</span>
               </h3>
               <div class="h6 font-weight-300">
                 <i class="ni location_pin mr-2"></i>{{ user.location || "Location not provided" }}
@@ -101,7 +101,7 @@ export default {
     const storedUser = localStorage.getItem("user");
     console.log("Utilizador recuperado do localStorage:", storedUser);
     if (storedUser) {
-      this.user = JSON.parse(storedUser).user;
+      this.user = JSON.parse(storedUser);
     }
   },
   computed: {
@@ -126,11 +126,11 @@ export default {
 
       // Retorna o tempo no formato correto
       if (years > 0) {
-        return `Pertence ao site há ${years} ${years === 1 ? "ano" : "anos"}`;
+        return `pertence ao site há ${years} ${years === 1 ? "ano" : "anos"}`;
       } else if (months > 0) {
-        return `Pertence ao site há ${months} ${months === 1 ? "mês" : "meses"}`;
+        return `pertence ao site há ${months} ${months === 1 ? "mês" : "meses"}`;
       } else {
-        return `Pertence ao site há ${days} ${days === 1 ? "dia" : "dias"}`;
+        return `pertence ao site há ${days} ${days === 1 ? "dia" : "dias"}`;
       }
     }
   }

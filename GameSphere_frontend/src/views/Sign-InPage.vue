@@ -49,7 +49,7 @@
                       Remember me
                     </label>
 
-                    <a href="" class="forget-password">forget your password?</a>
+                    <a href="/forgetPassword/sentCode" class="forget-password">forget your password?</a>
                   </div>
 
                   <!-- Submit Button -->
@@ -89,10 +89,8 @@
 </template>
 
 <script>
-import { login } from "@/services/authService";
+import { login, social_login } from "@/services/authService";
 import { auth, githubProvider, googleProvider, signInWithPopup } from "@/services/firebase";
-import ResponseLogin from "@/models/ResponseLogin";
-import { checkUserExist, getUserByEmail } from "@/services/userServices";
 
 export default {
   name: "LoginCard",
@@ -125,12 +123,14 @@ export default {
           console.error("Erro: Nenhum dado recebido do login.");
         }
 
-        this.success = "Account created successfully!";
+        this.success = "Login successfully!";
         console.log("User login-in:", response);
 
         setTimeout(() => {
-          this.$router.push('/profile')
-        }, 2000);
+          this.$router.push('/profile').then(() => {
+            location.reload();
+          });
+        }, 500);
       } catch (err) {
         // Exibir mensagem de erro
         this.error = err.response?.data?.message || "An error occurred during registration.";
@@ -142,30 +142,26 @@ export default {
         const result = await signInWithPopup(auth, googleProvider);
         const googleUser = result.user;
 
-        const GoogleUser = new ResponseLogin({
-          uid: googleUser.uid,
-          email: googleUser.email,
-        });
-
-        console.log(GoogleUser.uid, GoogleUser.email);
-
         // Enviar os dados ao backend
-        const response = await checkUserExist(GoogleUser.uid, GoogleUser.email);
+        const response = await social_login(googleUser.uid, googleUser.email);
 
-        if (response == true) {
-          const userFromGoogle = await getUserByEmail(googleUser.email);
-          localStorage.setItem("user", JSON.stringify(userFromGoogle));
+        if (response) {
+          localStorage.setItem("user", JSON.stringify(response.user));
+
+          this.user = response.user;
         } else {
           console.error("Erro: Nenhum dado recebido do login.");
         }
         // Exibir mensagem de sucesso
-        this.success = "Account created successfully!";
+        this.success = "Login successfully!";
         console.log("User sign-in:", response);
 
         setTimeout(() => {
           console.log("Redirecionando para /profile");
-          this.$router.push("/profile");
-        }, 2000);
+          this.$router.push("/profile").then(() => {
+            location.reload();
+          });
+        }, 500);
       } catch (err) {
         // Exibir mensagem de erro
         this.error = err.response?.data?.message || "An error occurred during registration.";
@@ -179,26 +175,24 @@ export default {
         const githubUser = result.user;
 
         // Criar um usuário com os dados do GitHub
-        const GithubUser = new ResponseLogin({
-          uid: githubUser.uid,
-          email: githubUser.email,
-        });
+        const response = await social_login(githubUser.uid, githubUser.email);
 
-        console.log(GithubUser);
+        if (response) {
+          localStorage.setItem("user", JSON.stringify(response.user));
 
-        // Enviar os dados ao backend
-        const response = await checkUserExist(GithubUser.uid, GithubUser.email);
-
-        if (response == true) {
-          const userFromGithub = await getUserByEmail(githubUser.email);
-          localStorage.setItem("user", JSON.stringify(userFromGithub));
+          this.user = response.user;
         } else {
           console.error("Erro: Nenhum dado recebido do login.");
         }
 
+        // Exibir mensagem de sucesso
+        this.success = "Login successfully!";
+
         setTimeout(() => {
-          this.$router.push("/profile");
-        }, 2000);
+          this.$router.push("/profile").then(() => {
+            location.reload();
+          });
+        }, 500);
       } catch (err) {
         this.error = err.response?.data?.message || "Ocorreu um erro ao fazer login com GitHub.";
         console.error(err);
