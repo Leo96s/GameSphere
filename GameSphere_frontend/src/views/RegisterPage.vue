@@ -12,13 +12,12 @@
               </div>
               <div class="btn-wrapper text-center space-x-4">
                 <div class="text-center my-3">
-                  <b-button @click="registerWithGoogle"
-                    title="Google" class="btn-icon mx-2" variant="light">
-                    <img src="@/assets/logos/google.png" alt="Google" class="icon-img">
+                  <b-button @click="registerWithGoogle" title="Google" class="btn-icon mx-2" variant="light">
+                    <img src="@/assets/logos/google.png" alt="Google" class="icon-img" />
                   </b-button>
 
                   <b-button @click="registerWithGithub" class="btn-icon" variant="dark" title="Github">
-                    <img src="@/assets/logos/github.png" alt="Github" class="icon-img">
+                    <img src="@/assets/logos/github.png" alt="Github" class="icon-img" />
                   </b-button>
                 </div>
               </div>
@@ -30,62 +29,42 @@
                 <small>Or register with your credentials</small>
               </div>
               <form @submit.prevent="handleRegister">
+                <CustomField label="First Name" type="text" placeholder="First Name" v-model="firstName" />
+                <CustomField label="Last Name" type="text" placeholder="Last Name" v-model="lastName" />
+                
                 <div class="form-group mb-3">
-                  <!-- Name Input -->
-                  <div class="input-group input-group-alternative py-3">
-                    <input type="text" class="form-control" placeholder="firstName" aria-label="firstName"
-                      v-model="firstName" />
-                  </div>
-                  <div class="input-group input-group-alternative py-3">
-                    <input type="text" class="form-control" placeholder="lastName" aria-label="lastName"
-                      v-model="lastName" />
-                  </div>
+                  <label>Gender</label>
+                  <select class="form-control" v-model="gender">
+                    <option value="" disabled selected>Gender</option>
+                    <option :value="Gender.Male">Male</option>
+                    <option :value="Gender.Female">Female</option>
+                    <option :value="Gender.Other">Other</option>
+                  </select>
+                </div>
+                
+                <CustomField label="Email" type="email" placeholder="Email" v-model="email" />
+                <CustomField label="Password" type="password" placeholder="Password" v-model="password" />
 
-                  <div class="input-group input-group-alternative py-3">
-                    <select class="form-control" aria-label="gender" v-model="gender">
-                      <option value="" disabled selected>Gender</option>
-                      <option :value="Gender.Male">Male</option>
-                      <option :value="Gender.Female">Female</option>
-                      <option :value="Gender.Other">Other</option>
-                    </select>
-                  </div>
+                <div class="text-muted font-italic">
+                  <small>
+                    password strength: <span class="text-success font-weight-700">strong</span>
+                  </small>
+                </div>
 
-                  <!-- Email Input -->
-                  <div class="input-group input-group-alternative py-2">
-                    <input type="email" class="form-control" placeholder="Email" aria-label="Email" v-model="email" />
-                  </div>
+                <div class="form-check mt-3">
+                  <input type="checkbox" class="form-check-input" id="privacyPolicy" v-model="acceptedPolicy" />
+                  <label class="form-check-label" for="privacyPolicy">
+                    I agree with the <a href="#">Privacy Policy</a>
+                  </label>
+                </div>
 
-                  <!-- Password Input -->
-                  <div class="input-group input-group-alternative py-2">
-                    <input type="password" class="form-control" placeholder="Password" aria-label="Password"
-                      v-model="password" />
-                  </div>
-
-                  <!-- Password Strength -->
-                  <div class="text-muted font-italic">
-                    <small>
-                      password strength:
-                      <span class="text-success font-weight-700">strong</span>
-                    </small>
-                  </div>
-
-                  <!-- Privacy Policy Checkbox -->
-                  <div class="form-check mt-3">
-                    <input type="checkbox" class="form-check-input" id="privacyPolicy" v-model="acceptedPolicy" />
-                    <label class="form-check-label" for="privacyPolicy">
-                      I agree with the <a href="#">Privacy Policy</a>
-                    </label>
-                  </div>
-
-                  <!-- Submit Button -->
-                  <div class="text-center">
-                    <button type="submit" class="btn btn-primary my-4" :disabled="!acceptedPolicy">
-                      Create account
-                    </button>
-                  </div>
+                <div class="text-center">
+                  <button type="submit" class="btn btn-primary my-4" :disabled="!acceptedPolicy">
+                    Create account
+                  </button>
                 </div>
               </form>
-              <!-- Feedback Messages -->
+
               <div v-if="error" class="alert alert-danger text-center">
                 {{ error }}
               </div>
@@ -101,6 +80,7 @@
 </template>
 
 <script>
+import CustomField from "@/views/components/CustomField.vue";
 import { createUser } from "@/services/userServices";
 import User from "@/models/User";
 import { Gender } from "@/enums/Gender";
@@ -108,6 +88,7 @@ import { auth, githubProvider, googleProvider, signInWithPopup } from "@/service
 
 export default {
   name: "RegisterSection",
+  components: { CustomField },
   computed: {
     Gender() {
       return Gender;
