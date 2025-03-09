@@ -1,11 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'; // Alteração aqui
 import AppHeader from "./layout/AppHeader";
 import AppFooter from "./layout/AppFooter";
-import Landing from "./views/LandingPage.vue";
-import Login from "./views/Sign-InPage.vue";
-import RegisterPage from "./views/RegisterPage.vue";
-import Profile from "./views/ProfilePage.vue";
-import SentCodePage from './views/SentCodePage.vue';
+import Landing from "./views/Landing/LandingPage.vue";
+import Login from "./views/Login/Sign-InPage.vue";
+import RegisterPage from "./views/Register/RegisterPage.vue";
+import Profile from "./views/Profile/ProfilePage.vue";
+import SentCodePage from './views/Login/SentCodePage.vue';
+import ResetPassword from './views/Login/ResetPassword.vue';
 
 const routes = [
   {
@@ -51,6 +52,15 @@ const routes = [
     components: {
       header: AppHeader,
       default: SentCodePage,
+      footer: AppFooter,
+    },
+  },
+  {
+    path: "/forgetPassword/resetPassword",
+    name: "resetPassword",
+    components: {
+      header: AppHeader,
+      default: ResetPassword,
       footer: AppFooter,
     },
   }

@@ -47,7 +47,7 @@ export const logout = () => {
 
 export const sentResetCode = async (email) => {
   try {
-    const response = await api.post("/User/sent-reset-code", { email });
+    const response = await api.post("/User/send-reset-code", { email });
 
     if(response){
       return response;
@@ -62,6 +62,24 @@ export const sentResetCode = async (email) => {
     throw error;
   }
 };
+
+export const validateResetCodeRequest = async (email, resetCode) =>{
+  try {
+    const response = await api.post("/User/validate-reset-code", { email, resetCode });
+
+    if(response){
+      return response;
+    }else{
+      throw new Error("Erro ao enviar código de recuperação");
+    }
+  }catch (error) {
+    console.error(
+      "Erro ao fazer login:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+}
 
 export const resetPassword = async (email, resetCode, newPassword) =>{
   try {
