@@ -54,6 +54,13 @@ export default {
     CustomField,
     CustomButton
   },
+  mounted() {
+    const storedEmail= localStorage.getItem("email");
+    console.log("Email recuperado do localStorage:", storedEmail);
+    if (storedEmail) {
+      this.email = JSON.parse(storedEmail);
+    }
+  },
   data() {
     return {
       code: "",
@@ -85,11 +92,12 @@ export default {
           this.isSubmitting = false;
           return;
         }
+        console.log(this.email, this.code);
 
         // Verifica o código de redefinição
         const verifyCode = await validateResetCodeRequest(this.email, this.code);
 
-        if (!verifyCode) {
+        if (verifyCode != false) {
           this.error = "Invalid or expired reset code.";
           this.isSubmitting = false;
           return;
@@ -98,7 +106,7 @@ export default {
         // Realiza a redefinição da senha
         const response = await resetPassword(this.email, this.code, this.password);
 
-        if (!response) {
+        if (response != false) {
           this.error = "Error resetting password.";
         } else {
           this.success = "Password successfully changed.";

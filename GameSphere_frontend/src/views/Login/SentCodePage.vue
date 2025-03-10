@@ -74,7 +74,7 @@ export default {
         localStorage.setItem("email", JSON.stringify(this.email))
 
         setTimeout(() => {
-          this.$router.push('/resetPassword').then(() => {
+          this.$router.push('/forgetPassword/resetPassword').then(() => {
             location.reload();
           });
         }, 500);

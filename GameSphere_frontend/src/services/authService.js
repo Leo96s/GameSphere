@@ -22,7 +22,10 @@ export const login = async (email, password) => {
 
 export const social_login = async (uid, email) => {
   try {
-    const response = await api.post(`/User/social-login/${uid}/${email}`, { uid, email });
+    const response = await api.post(`/User/social-login/${uid}/${email}`, {
+      uid,
+      email,
+    });
 
     if (response.data && response.data.token) {
       // Se o backend retornou um token
@@ -41,20 +44,70 @@ export const social_login = async (uid, email) => {
 };
 
 export const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
 };
 
 export const sentResetCode = async (email) => {
   try {
-    const response = await api.post("/User/send-reset-code", { email });
+    const response = await api.post("/User/send-reset-code", email, {
+      headers: { "Content-Type": "application/json" },
+    });
 
-    if(response){
+    if (response) {
       return response;
-    }else{
+    } else {
       throw new Error("Erro ao enviar código de recuperação");
     }
-  }catch (error) {
+  } catch (error) {
+    console.error(
+      "Erro ao enviar o código:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
+
+export const validateResetCodeRequest = async (email, resetCode) => {
+  try {
+    const response = await api.post(
+      "/User/validate-reset-code",
+      { email, resetCode },
+      {
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+
+    if (response) {
+      return response;
+    } else {
+      throw new Error("Erro ao enviar código de recuperação");
+    }
+  } catch (error) {
+    console.error(
+      "Erro ao validar o código:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
+
+export const resetPassword = async (email, resetCode, newPassword) => {
+  try {
+    const response = await api.post(
+      "/User/reset-password",
+      { email, resetCode, newPassword },
+      {
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+
+    if (response) {
+      return response;
+    } else {
+      throw new Error("Erro ao enviar código de recuperação");
+    }
+  } catch (error) {
     console.error(
       "Erro ao fazer login:",
       error.response?.data || error.message
@@ -62,39 +115,3 @@ export const sentResetCode = async (email) => {
     throw error;
   }
 };
-
-export const validateResetCodeRequest = async (email, resetCode) =>{
-  try {
-    const response = await api.post("/User/validate-reset-code", { email, resetCode });
-
-    if(response){
-      return response;
-    }else{
-      throw new Error("Erro ao enviar código de recuperação");
-    }
-  }catch (error) {
-    console.error(
-      "Erro ao fazer login:",
-      error.response?.data || error.message
-    );
-    throw error;
-  }
-}
-
-export const resetPassword = async (email, resetCode, newPassword) =>{
-  try {
-    const response = await api.post("/User/reset-password", { email, resetCode, newPassword });
-
-    if(response){
-      return response;
-    }else{
-      throw new Error("Erro ao enviar código de recuperação");
-    }
-  }catch (error) {
-    console.error(
-      "Erro ao fazer login:",
-      error.response?.data || error.message
-    );
-    throw error;
-  }
-}
