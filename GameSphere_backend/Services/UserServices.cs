@@ -11,11 +11,23 @@ using System.ComponentModel.DataAnnotations;
 
 namespace GameSphere_backend.Services
 {
+    /// <summary>
+    /// Service class for handling user-related operations including creation, retrieval, 
+    /// updating, deletion, authentication, and password management
+    /// </summary>
     public class UserServices : IUserService
     {
         private readonly AppDbContext _context;
         private readonly IAuthService _authService;
         private readonly IEmailService _emailService;
+
+        /// <summary>
+        /// Initializes a new instance of the UserServices class.
+        /// </summary>
+        /// <param name="context">The database context for user data access</param>
+        /// <param name="authService">The authentication service for token generation</param>
+        /// <param name="emailService">The email service for sending notifications</param>
+        /// <exception cref="ArgumentNullException">Thrown when authService or emailService is null</exception>
         public UserServices(AppDbContext context, IAuthService authService, IEmailService emailService)
         {
             this._context = context;
@@ -23,6 +35,11 @@ namespace GameSphere_backend.Services
             this._emailService = emailService ?? throw new ArgumentNullException(nameof(_emailService));
         }
 
+        /// <summary>
+        /// Retrives a user by their unique identifier
+        /// </summary>
+        /// <param name="id">The ID of the user to retrieve</param>
+        /// <returns>A ServiceResponse containing the UserDto if found, or an error message if not.</returns>
         public async Task<ServiceResponse<UserDto>> GetUserByIdAsync(int id)
         {
             if (_context == null)
@@ -53,6 +70,11 @@ namespace GameSphere_backend.Services
             };
         }
 
+        /// <summary>
+        /// Creates a new user in the system.
+        /// </summary>
+        /// <param name="user">The UserDto containing user information to create.</param>
+        /// <returns>A ServiceResponse indicating success or failure of the operation, including the created user if successful.</returns>
         public async Task<ServiceResponse<UserDto>> CreateNewUserAsync(UserDto user)
         {
             var response = new ServiceResponse<UserDto>();
@@ -143,11 +165,10 @@ namespace GameSphere_backend.Services
         }
 
         /// <summary>
-        /// Function that checks if an email is available to use, that is, is not present in the DB
+        /// Checks if an email address is available for registration.
         /// </summary>
-        /// <param name="email"></param>
-        /// <returns>Returns false if already exists a similar email on the DB or the email parameter
-        /// is null or empty or returns true if the email doesn't exist on the DB</returns>
+        /// <param name="email">The email address to check.</param>
+        /// <returns>True if the email is available, false if already in use or invalid.</returns>
         private async Task<Boolean> IsEmailAvailable(string email)
         {
 
@@ -157,6 +178,12 @@ namespace GameSphere_backend.Services
             return !await _context.Users.AnyAsync(user => user.Email == email);
         }
 
+        /// <summary>
+        /// Checks if a user exists with the specified UID and email.
+        /// </summary>
+        /// <param name="uid">The unique identifier from the external authentication provider.</param>
+        /// <param name="email">The email address to check.</param>
+        /// <returns>True if a matching user exists, false otherwise.</returns>
         private async Task<Boolean> UserExist(string uid, string email)
         {
             if (string.IsNullOrWhiteSpace(uid)) return false;
@@ -167,13 +194,10 @@ namespace GameSphere_backend.Services
         }
 
         /// <summary>
-        /// Function that exists with the purpose of informing the user if his email is already registered
-        /// on the plataform
+        /// Verifies the availability of an email address for registration.
         /// </summary>
-        /// <param name="email"></param>
-        /// <returns>Returns a ServiceResponse with a response.Sucess=false and a message 
-        /// if something is wrong or a response.Sucess=true and a mensage informing the user
-        /// about his choice of email availability accordingly </returns>
+        /// <param name="email">The email address to check.</param>
+        /// <returns>A ServiceResponse indicating whether the email is available, with appropriate messages.</returns>
         public async Task<ServiceResponse<bool>> CheckEmailAvailabilityAsync(string email)
 
         {
@@ -216,12 +240,12 @@ namespace GameSphere_backend.Services
 
             return response;
         }
+
         /// <summary>
-        /// Function that deletes the user from the DB by his id
+        /// Deletes a user from the system by their ID.
         /// </summary>
-        /// <param name="id"></param>
-        /// <returns>Returns a ServiceResponse with a response.Sucess=false and a message 
-        /// if something is wrong or a response.Sucess=true and a sucess mensage</returns>
+        /// <param name="id">The ID of the user to delete.</param>
+        /// <returns>A ServiceResponse indicating success or failure of the deletion operation.</returns>
         public async Task<ServiceResponse<string>> DeleteUserAsync(int id)
         {
             var response = new ServiceResponse<string>();
@@ -266,12 +290,11 @@ namespace GameSphere_backend.Services
         }
 
         /// <summary>
-        /// Function that updates the user based on the updatedUser dto that it receives
+        /// Updates an existing user's information.
         /// </summary>
-        /// <param name="id"></param>
-        /// <param name="updatedUser"></param>
-        /// <returns>Returns a ServiceResponse with a response.Sucess=false and a message 
-        /// if something is wrong or a response.Sucess=true and a sucess mensage</returns>
+        /// <param name="id">The ID of the user to update.</param>
+        /// <param name="updatedUser">The UserDto containing updated user information.</param>
+        /// <returns>A ServiceResponse containing the updated UserDto if successful, or error information if failed.</returns>
         public async Task<ServiceResponse<UserDto>> EditUserAsync(int id, UserDto updatedUser)
         {
             var response = new ServiceResponse<UserDto>();
@@ -366,12 +389,10 @@ namespace GameSphere_backend.Services
         }
 
         /// <summary>
-        /// Function that makes the User login
+        /// Authenticates a user with email and password credentials.
         /// </summary>
-        /// <param name="request"></param>
-        /// <returns>Returns a ServiceResponse with a response.Sucess=false and a message 
-        /// if something is wrong or a response.Sucess=true with a sucess mensage and a
-        /// LoginResponse with a jwt token and the user dto it belongs to</returns>
+        /// <param name="request">The LoginRequest containing user credentials.</param>
+        /// <returns>A ServiceResponse containing a LoginResponse with JWT token and user data if authentication succeeds.</returns>
         public async Task<ServiceResponse<LoginResponse>> LoginAsync(LoginRequest request)
         {
             var response = new ServiceResponse<LoginResponse>();
@@ -456,6 +477,13 @@ namespace GameSphere_backend.Services
 
             return response;
         }
+
+        /// <summary>
+        /// Checks if a user exists with the specified external provider UID and email.
+        /// </summary>
+        /// <param name="uid">The unique identifier from the external authentication provider.</param>
+        /// <param name="email">The email address to check.</param>
+        /// <returns>A ServiceResponse indicating whether the user exists.</returns>
         public async Task<ServiceResponse<bool>> CheckExistsUserExtern(string uid, string email)
 
         {
@@ -499,6 +527,11 @@ namespace GameSphere_backend.Services
             return response;
         }
 
+        /// <summary>
+        /// Retrieves a user by their email address.
+        /// </summary>
+        /// <param name="email">The email address of the user to retrieve.</param>
+        /// <returns>A ServiceResponse containing the UserDto if found, or an error message if not.</returns>
         public async Task<ServiceResponse<UserDto>> GetUserByEmailAsync(string email)
         {
             if (_context == null)
@@ -529,6 +562,11 @@ namespace GameSphere_backend.Services
             };
         }
 
+        /// <summary>
+        /// Sends a password reset code to the specified email address.
+        /// </summary>
+        /// <param name="email">The email address to send the reset code to.</param>
+        /// <returns>A ServiceResponse indicating success or failure of the operation.</returns>
         public async Task<ServiceResponse<bool>> SendPasswordResetCode(string email)
         {
             var response = new ServiceResponse<bool>();
@@ -570,6 +608,12 @@ namespace GameSphere_backend.Services
             return response;
         }
 
+        /// <summary>
+        /// Validates a password reset code for a user.
+        /// </summary>
+        /// <param name="email">The email address of the user.</param>
+        /// <param name="resetCode">The reset code to validate.</param>
+        /// <returns>A ServiceResponse indicating whether the reset code is valid.</returns>
         public async Task<ServiceResponse<bool>> ValidateResetCode(string email, string resetCode)
         {
             var response = new ServiceResponse<bool>();
@@ -597,6 +641,13 @@ namespace GameSphere_backend.Services
             return response;
         }
 
+        /// <summary>
+        /// Resets a user's password using a valid reset code.
+        /// </summary>
+        /// <param name="email">The email address of the user.</param>
+        /// <param name="resetCode">The valid reset code.</param>
+        /// <param name="newPassword">The new password to set.</param>
+        /// <returns>A ServiceResponse indicating success or failure of the password reset.</returns>
         public async Task<ServiceResponse<bool>> ResetPassword(string email, string resetCode, string newPassword)
         {
             var response = new ServiceResponse<bool>();
@@ -645,6 +696,12 @@ namespace GameSphere_backend.Services
             return response;
         }
 
+        /// <summary>
+        /// Authenticates a user using external provider credentials (UID and email).
+        /// </summary>
+        /// <param name="uid">The unique identifier from the external authentication provider.</param>
+        /// <param name="email">The email address associated with the external account.</param>
+        /// <returns>A ServiceResponse containing a LoginResponse with JWT token and user data if authentication succeeds.</returns>
         public async Task<ServiceResponse<LoginResponse>> SocialLoginAsync(string uid, string email)
         {
             var response = new ServiceResponse<LoginResponse>();
