@@ -3,18 +3,16 @@
     using GameSphere_backend.Models.BackendModels;
     using Microsoft.EntityFrameworkCore;
 
+    /// <summary>
+    /// Represents the session with the database and provides access to entity sets.
+    /// </summary>
+    /// <remarks>
+    /// This class serves as the main data access point for the GameSphere application,
+    /// inheriting from Microsoft.EntityFrameworkCore.DbContext. It contains DbSet properties
+    /// for each entity that should be persisted to the database.
+    /// </remarks>
     public class AppDbContext : DbContext
-    {
-        /// <summary>
-        /// Represents the session with the database and provides access to entity sets.
-        /// </summary>
-        /// <remarks>
-        /// This class serves as the main data access point for the GameSphere application,
-        /// inheriting from Microsoft.EntityFrameworkCore.DbContext. It contains DbSet properties
-        /// for each entity that should be persisted to the database.
-        /// </remarks>
-        public class AppDbContext : DbContext
-        {
+    {   
             /// <summary>
             /// Initializes a new instance of the AppDbContext class.
             /// </summary>
@@ -80,6 +78,5 @@
             // Additional DbSets can be added here as the application grows
             // public DbSet<NewEntity> NewEntities { get; set; }
 
-        }
     }
 }

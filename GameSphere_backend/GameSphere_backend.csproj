@@ -28,4 +28,15 @@
     <Folder Include="Migrations\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="Documentantio.csproj" />
+  </ItemGroup>
+
+	<PropertyGroup>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<NoWarn>1591</NoWarn>
+		<!-- (Opcional) Esconde warnings de falta de comentários -->
+	</PropertyGroup>
+
+
 </Project>

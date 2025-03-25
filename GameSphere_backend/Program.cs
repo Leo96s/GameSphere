@@ -72,7 +72,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "GameSphere API", Version = "v1" });
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "GameSphere API", Version = "v1.3", Description = "Backend endpoints of GameSphere" });
 
     var securityScheme = new OpenApiSecurityScheme
     {
@@ -102,6 +102,11 @@ builder.Services.AddSwaggerGen(c =>
     };
 
     c.AddSecurityRequirement(securityRequirement);
+
+    // Inclui os comentários XML se estiverem ativados
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    c.IncludeXmlComments(xmlPath);
 });
 
 var app = builder.Build();
@@ -113,7 +118,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "GameSphere v1");
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "GameSphere v1.3");
     });
 }
 
