@@ -575,6 +575,7 @@ namespace GameSphere_backend.Services
             if(user == null)
             {
                 response.Success = false;
+                response.Data = false;
                 response.Message = "User not found!";
                 response.Type = "Not Found";
                 return response;
@@ -597,12 +598,14 @@ namespace GameSphere_backend.Services
             if (!emailSent)
             {
                 response.Success = false;
+                response.Data = false;
                 response.Message = "Failed to send email.";
                 response.Type = "BadRequest";
                 return response;
             }
 
             response.Success = true;
+            response.Data = true;
             response.Message = "Reset code sent successfully!";
             response.Type = "Ok";
             return response;
@@ -622,6 +625,7 @@ namespace GameSphere_backend.Services
             if (user == null)
             {
                 response.Success = false;
+                response.Data = false;
                 response.Message = "User not found!";
                 response.Type = "NotFound";
                 return response;
@@ -630,12 +634,14 @@ namespace GameSphere_backend.Services
             if (user.ResetCode != resetCode || user.ResetCodeExpiration < DateTime.UtcNow)
             {
                 response.Success = false;
+                response.Data = false;
                 response.Message = "Invalid or expired reset code!";
                 response.Type = "BadRequest";
                 return response;
             }
 
             response.Success = true;
+            response.Data = true;
             response.Message = "Valid reset code!";
             response.Type = "Ok";
             return response;
@@ -656,19 +662,21 @@ namespace GameSphere_backend.Services
             if (user == null)
             {
                 response.Success = false;
+                response.Data = false;
                 response.Message = "User not found!";
                 response.Type = "NotFound";
                 return response;
             }
 
-            if (user.ResetCode != resetCode || user.ResetCodeExpiration > DateTime.UtcNow)
+            if (user.ResetCode != resetCode || user.ResetCodeExpiration < DateTime.UtcNow)
             {
                 response.Success = false;
+                response.Data = false;
                 response.Message = "Invalid or expired reset code!";
                 response.Type = "BadRequest";
                 return response;
             }
-
+            
             user.HashedPassword = BCrypt.Net.BCrypt.HashPassword(newPassword);
 
             user.ResetCode = null;
@@ -685,12 +693,14 @@ namespace GameSphere_backend.Services
             if (!emailSent)
             {
                 response.Success = false;
+                response.Data = false;
                 response.Message = "Failed to send email.";
                 response.Type = "BadRequest";
                 return response;
             }
 
             response.Success = true;
+            response.Data = true;
             response.Message = "Password reset successfully!";
             response.Type = "Ok";
             return response;

@@ -58,6 +58,10 @@ namespace GameSphere_backend.Services
                     Credentials = new NetworkCredential(_emailSettings.Username, _emailSettings.Password),
                     EnableSsl = _emailSettings.EnableSSL
                 };
+                
+                smtpClient.EnableSsl = _emailSettings.EnableSSL;
+                smtpClient.DeliveryMethod = SmtpDeliveryMethod.Network;
+                smtpClient.Timeout = 10000; // 10 segundos
 
                 var mailMessage = new MailMessage
                 {

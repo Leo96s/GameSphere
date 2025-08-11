@@ -38,10 +38,10 @@ builder.Services.AddCors(options =>
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-options.UseNpgsql(builder.Configuration.GetConnectionString("GameSphere"))
+options.UseNpgsql(builder.Configuration.GetConnectionString("GameSphereDB"))
 );
 
-// Adicionar os serviços MVC e outras configurações necessárias
+// Adicionar os serviï¿½os MVC e outras configuraï¿½ï¿½es necessï¿½rias
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -103,7 +103,7 @@ builder.Services.AddSwaggerGen(c =>
 
     c.AddSecurityRequirement(securityRequirement);
 
-    // Inclui os comentários XML se estiverem ativados
+    // Inclui os comentï¿½rios XML se estiverem ativados
     var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     c.IncludeXmlComments(xmlPath);

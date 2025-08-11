@@ -1,5 +1,5 @@
 {
-  "name": "gamesphere_frontend",
+  "name": "gamesphere",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -16,7 +16,6 @@
     "crypto-browserify": "^3.12.1",
     "firebase": "^11.3.1",
     "flatpickr": "^4.6.13",
-    "gamesphere_frontend": "file:",
     "nouislider": "^15.8.1",
     "register-service-worker": "^1.7.2",
     "vue": "^3.2.13",

@@ -77,11 +77,12 @@ export const validateResetCodeRequest = async (email, resetCode) => {
         headers: { "Content-Type": "application/json" },
       }
     );
+    console.log("Resposta do backend:", response.data);
 
-    if (response) {
-      return response;
+    if (response.data) {
+      return response.data;
     } else {
-      throw new Error("Erro ao enviar código de recuperação");
+      throw new Error(response.data?.message || "Erro ao validar código de recuperação");
     }
   } catch (error) {
     console.error(
@@ -102,8 +103,8 @@ export const resetPassword = async (email, resetCode, newPassword) => {
       }
     );
 
-    if (response) {
-      return response;
+    if (response.data) {
+      return response.data;
     } else {
       throw new Error("Erro ao enviar código de recuperação");
     }

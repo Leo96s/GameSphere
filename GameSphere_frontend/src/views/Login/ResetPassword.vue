@@ -97,7 +97,7 @@ export default {
         // Verifica o código de redefinição
         const verifyCode = await validateResetCodeRequest(this.email, this.code);
 
-        if (verifyCode != false) {
+        if (verifyCode != true) {
           this.error = "Invalid or expired reset code.";
           this.isSubmitting = false;
           return;
@@ -106,7 +106,7 @@ export default {
         // Realiza a redefinição da senha
         const response = await resetPassword(this.email, this.code, this.password);
 
-        if (response != false) {
+        if (response != true) {
           this.error = "Error resetting password.";
         } else {
           this.success = "Password successfully changed.";
