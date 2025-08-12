@@ -28,7 +28,7 @@ export const createUser = async (userData) => {
         
         return response.data;
     } catch (error) {
-        console.error("Erro ao criar usuário:", error.response?.data || error.message);
+        console.error("Erro ao criar utilizador:", error.response?.data || error.message);
         throw error;  // Repassa o erro para ser tratado no frontend
     }
 };
@@ -49,7 +49,7 @@ export const checkUserExist = async (uid, email) => {
         const response = await api.get(`/User/user-exist/${uid}/${encodedEmail}`,  { headers: getAuthHeader() });
         return response.data;
     } catch (error) {
-        console.error("Erro ao verificar usuário:", error.response?.data || error.message);
+        console.error("Erro ao verificar utilizador:", error.response?.data || error.message);
         throw error;
     }
 };
@@ -61,7 +61,7 @@ export const getUserByEmail = async (email) => {
         return response.data;
 
     }catch(error){
-        console.error("Erro ao criar usuário:", error.response?.data || error.message);
+        console.error("Erro ao criar utilizador:", error.response?.data || error.message);
         throw error;
     }
 }
