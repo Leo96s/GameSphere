@@ -3,6 +3,7 @@ using System;
 using GameSphere_backend.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GameSphere_backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241228124036_init_database")]
+    partial class init_database
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -74,6 +77,40 @@ namespace GameSphere_backend.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Games");
+                });
+
+            modelBuilder.Entity("GameSphere_backend.Models.BackendModels.GlobalRanking", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<float>("BestPontuation")
+                        .HasColumnType("real");
+
+                    b.Property<int?>("GameId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PositionOnRanking")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("QuizzId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GameId");
+
+                    b.HasIndex("QuizzId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("GlobalRanking");
                 });
 
             modelBuilder.Entity("GameSphere_backend.Models.BackendModels.Question", b =>
@@ -209,6 +246,9 @@ namespace GameSphere_backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int?>("ExternalId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -221,8 +261,9 @@ namespace GameSphere_backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Image")
-                        .HasColumnType("text");
+                    b.Property<byte[]>("Image")
+                        .IsRequired()
+                        .HasColumnType("bytea");
 
                     b.Property<string>("LastName")
                         .IsRequired()
@@ -235,27 +276,8 @@ namespace GameSphere_backend.Migrations
                     b.Property<DateTime>("RegistrationDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("ResetCode")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("ResetCodeExpiration")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Token")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("TokenExpDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<long>("TotalPoints")
                         .HasColumnType("bigint");
-
-                    b.Property<string>("UID")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<bool>("isActive")
-                        .HasColumnType("boolean");
 
                     b.HasKey("Id");
 
@@ -278,6 +300,29 @@ namespace GameSphere_backend.Migrations
                     b.HasOne("GameSphere_backend.Models.BackendModels.User", null)
                         .WithMany("Games")
                         .HasForeignKey("UserId");
+                });
+
+            modelBuilder.Entity("GameSphere_backend.Models.BackendModels.GlobalRanking", b =>
+                {
+                    b.HasOne("GameSphere_backend.Models.BackendModels.Game", "Game")
+                        .WithMany("GlobalRankings")
+                        .HasForeignKey("GameId");
+
+                    b.HasOne("GameSphere_backend.Models.BackendModels.Quizz", "Quizz")
+                        .WithMany("GlobalRanking")
+                        .HasForeignKey("QuizzId");
+
+                    b.HasOne("GameSphere_backend.Models.BackendModels.User", "User")
+                        .WithMany("GlobalRanking")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Game");
+
+                    b.Navigation("Quizz");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("GameSphere_backend.Models.BackendModels.Question", b =>
@@ -343,11 +388,15 @@ namespace GameSphere_backend.Migrations
 
             modelBuilder.Entity("GameSphere_backend.Models.BackendModels.Game", b =>
                 {
+                    b.Navigation("GlobalRankings");
+
                     b.Navigation("Scores");
                 });
 
             modelBuilder.Entity("GameSphere_backend.Models.BackendModels.Quizz", b =>
                 {
+                    b.Navigation("GlobalRanking");
+
                     b.Navigation("Questions");
 
                     b.Navigation("Scores");
@@ -358,6 +407,8 @@ namespace GameSphere_backend.Migrations
                     b.Navigation("Achievements");
 
                     b.Navigation("Games");
+
+                    b.Navigation("GlobalRanking");
 
                     b.Navigation("Quizzs");
 
