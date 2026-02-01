@@ -1,3 +1,6 @@
+## v0.1.1 - 2026-02-01
+* ci: atualizado controlo de versões
+* chore: update release notes and changelog for v0.1.0
 ## v0.1.0 - 2025-08-12
 * Merge branch 'dev'
 * fix: corrigido bugs na recuperação de password
