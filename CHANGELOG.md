@@ -1,3 +1,5 @@
+## v0.1.3 - 2026-02-02
+* ci: corrigido uns erros no versioning
 ## v0.1.2 - 2026-02-01
 * ci: versão definitiva do versioning
 * chore(release): v0.1.1
