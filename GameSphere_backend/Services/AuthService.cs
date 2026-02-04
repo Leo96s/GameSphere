@@ -53,7 +53,10 @@ namespace GameSphere_backend.Services
             var secretKey = _config["JwtSettings:SecretKey"];
             var issuer = _config["JwtSettings:Issuer"];
             var audience = _config["JwtSettings:Audience"];
-            var expiration = int.Parse(_config["JwtSettings:ExpirationMinutes"]);
+            var expirationStr = _config["JwtSettings:ExpirationMinutes"]
+                ?? throw new Exception("JWT ExpirationMinutes is missing in config");
+
+            var expiration = int.Parse(expirationStr);
 
             // Create signing credentials
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
