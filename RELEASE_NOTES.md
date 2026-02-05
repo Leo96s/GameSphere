@@ -1,3 +1,5 @@
+## v0.1.5 - 2026-02-05
+* fix: corrigido vários erros
 ## v0.1.4 - 2026-02-04
 * fix: corrigido uns erros no JWT e upgrade para .dotnet 10.0
 ## v0.1.3 - 2026-02-02
