@@ -1,12 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'; // Alteração aqui
-import AppHeader from "./layout/AppHeader";
-import AppFooter from "./layout/AppFooter";
-import Landing from "./views/Landing/LandingPage.vue";
-import Login from "./views/Login/Sign-InPage.vue";
-import RegisterPage from "./views/Register/RegisterPage.vue";
-import Profile from "./views/Profile/ProfilePage.vue";
-import SentCodePage from './views/Login/SentCodePage.vue';
-import ResetPassword from './views/Login/ResetPassword.vue';
+import AppFooter from "@/layout/AppFooter.vue";
+import Landing from "@/views/Landing/LandingPage.vue";
+import Login from "@/views/Login/Sign-InPage.vue";
+import RegisterPage from "@/views/Register/RegisterPage.vue";
+import Profile from "@/views/Profile/ProfilePage.vue";
+import SentCodePage from '@/views/Login/SentCodePage.vue';
+import ResetPassword from '@/views/Login/ResetPassword.vue';
+import AppHeader from "@/layout/AppHeader.vue";
 
 const routes = [
   {
