@@ -1,11 +1,21 @@
 {
   "name": "gamesphere",
   "version": "0.1.6",
+  "type": "module",
+  "overrides": {
+    "vue": "$vue",
+    "@vue/compiler-sfc": "$vue"
+  },
   "private": true,
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.7.2",
@@ -27,7 +37,6 @@
     "reka-ui": "^2.8.0",
     "tailwind-merge": "^3.4.0",
     "vee-validate": "^4.15.1",
-    "vue": "^3.2.13",
     "vue-flatpickr-component": "^11.0.5",
     "vue-lazyload": "^3.0.0",
     "vue-router": "^4.5.0",
@@ -38,20 +47,38 @@
   "devDependencies": {
     "@babel/core": "^7.12.16",
     "@babel/eslint-parser": "^7.12.16",
+    "@chromatic-com/storybook": "^5.0.0",
+    "@storybook/addon-a11y": "^10.2.7",
+    "@storybook/addon-docs": "^10.2.7",
+    "@storybook/addon-onboarding": "^10.2.7",
+    "@storybook/addon-vitest": "^10.2.7",
+    "@storybook/test": "^9.0.0-alpha.2",
+    "@storybook/vue3-vite": "^10.2.7",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/node": "^25.2.0",
+    "@typescript-eslint/eslint-plugin": "^8.54.0",
+    "@typescript-eslint/parser": "^8.54.0",
     "@vitejs/plugin-vue": "^6.0.4",
     "@vitejs/plugin-vue-jsx": "^5.1.4",
+    "@vitest/browser-playwright": "^4.0.18",
+    "@vitest/coverage-v8": "^4.0.18",
     "autoprefixer": "^10.4.24",
-    "eslint": "^7.32.0",
-    "eslint-plugin-vue": "^8.0.3",
+    "eslint": "^9.39.2",
+    "eslint-plugin-storybook": "^10.2.7",
+    "eslint-plugin-vue": "^10.7.0",
+    "playwright": "^1.58.2",
     "postcss": "^8.5.6",
     "sass": "^1.83.4",
     "sass-loader": "^16.0.4",
+    "storybook": "^10.2.7",
+    "storybook-vue3-router": "^7.0.0",
     "tailwindcss": "^4.1.18",
     "tw-animate-css": "^1.4.0",
     "typescript": "^5.9.3",
-    "vite": "^7.3.1"
+    "vite": "^7.3.1",
+    "vitepress": "^1.6.4",
+    "vitest": "^4.0.18",
+    "vue": "^3.5.27"
   },
   "eslintConfig": {
     "root": true,
@@ -60,7 +87,8 @@
     },
     "extends": [
       "plugin:vue/vue3-essential",
-      "eslint:recommended"
+      "eslint:recommended",
+      "plugin:storybook/recommended"
     ],
     "parserOptions": {
       "parser": "@babel/eslint-parser"
