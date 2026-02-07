@@ -118,6 +118,14 @@ namespace GameSphere_backend.Services
                 return response;
             }
 
+            if (user.HashedPassword.Trim().Length < 8)
+            {
+                response.Success = false;
+                response.Message = "Password must have 8 characteres";
+                response.Type = "BadRequest";
+                return response;
+            }
+
             try { 
 
                 string passwordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(user.HashedPassword, 13);

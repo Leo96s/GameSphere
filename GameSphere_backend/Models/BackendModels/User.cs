@@ -30,6 +30,7 @@ namespace GameSphere_backend.Models.BackendModels
         /// Gets or sets the hashed password for the user.
         /// </summary>
         /// <value>BCrypt hashed password string.</value>
+        [MinLength(8, ErrorMessage = "The field 'HashedPassword' must be at least 8 characters long.")]
         public string HashedPassword { get; set; }
 
         /// <summary>

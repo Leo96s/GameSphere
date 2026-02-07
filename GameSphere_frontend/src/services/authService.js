@@ -54,17 +54,17 @@ export const sentResetCode = async (email) => {
       headers: { "Content-Type": "application/json" },
     });
 
-    if (response) {
-      return response;
-    } else {
-      throw new Error("Erro ao enviar código de recuperação");
+    if (response.data?.success === false) {
+      throw new Error(response.data.message || "Invalid email")
     }
+
+    return response
   } catch (error) {
     console.error(
       "Erro ao enviar o código:",
       error.response?.data || error.message
-    );
-    throw error;
+    )
+    throw error
   }
 };
 

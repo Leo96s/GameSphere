@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'; // Alteração aqui
 import AppFooter from "@/layout/AppFooter.vue";
 import Landing from "@/views/Landing/LandingPage.vue";
-import Login from "@/views/Login/Sign-InPage.vue";
+import Login from "@/views/Login/Login.vue";
 import RegisterPage from "@/views/Register/RegisterPage.vue";
 import Profile from "@/views/Profile/ProfilePage.vue";
 import SentCodePage from '@/views/Login/SentCodePage.vue';
