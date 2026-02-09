@@ -36,15 +36,24 @@
     </footer>
   </template>
 
-<script>
-export default {
-  name: 'app-footer',
-  data() {
-    return {
-      year: new Date().getFullYear()
+  <script>
+  /**
+   * AppFooter Component
+   * * The global footer for the GameSphere application.
+   * Features social media links, navigation shortcuts, and a dynamic copyright year.
+   * * @component
+   */
+  export default {
+    name: 'app-footer',
+    /**
+     * Component data
+     * @returns {Object}
+     * @property {number} year - The current full year for copyright display.
+     */
+    data() {
+      return {
+        year: new Date().getFullYear()
+      }
     }
-  }
-};
-</script>
-<style>
-</style>
+  };
+  </script>

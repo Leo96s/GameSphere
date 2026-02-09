@@ -135,42 +135,63 @@ import {
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 
+/**
+ * Vue Router instance for programmatic navigation.
+ */
 const router = useRouter();
+
+/**
+ * Reactive user object synchronized with localStorage.
+ * @type {import('vue').Ref<Object|null>}
+ */
 const user = ref(null);
+
+/**
+ * Controls the visibility of the mobile navigation menu.
+ * @type {import('vue').Ref<boolean>}
+ */
 const isOpen = ref(false);
 
+/**
+ * Validates and retrieves the user data from localStorage.
+ * Handles edge cases like "undefined" or "null" strings.
+ */
 const checkUser = () => {
   try {
     const storedUser = localStorage.getItem("user");
-    // Se existir e não for a string "undefined" ou "null"
     if (storedUser && storedUser !== "undefined" && storedUser !== "null") {
       user.value = JSON.parse(storedUser);
     } else {
       user.value = null;
     }
   } catch (e) {
-    console.error("Erro ao processar dados do utilizador:", e);
+    console.error("Error processing user data:", e);
     user.value = null;
   }
 };
 
+/**
+ * Handler for storage and custom login events to trigger user state refresh.
+ */
 const handleStorageUpdate = () => checkUser();
 
 onMounted(() => {
   checkUser();
-
-  // Ouve o evento de login manual que criámos
+  // Listen for the custom manual login event
   window.addEventListener('user-logged-in', handleStorageUpdate);
-  // Ouve mudanças feitas noutras janelas/abas
+  // Listen for storage changes from other tabs
   window.addEventListener('storage', handleStorageUpdate);
 });
 
-// ⚠️ ESSENCIAL PARA EVITAR O ERRO DE "FLAGS" E "JOB" NO HMR
 onUnmounted(() => {
+  // Cleanup listeners to prevent memory leaks and HMR issues
   window.removeEventListener('user-logged-in', handleStorageUpdate);
   window.removeEventListener('storage', handleStorageUpdate);
 });
 
+/**
+ * Clears user session and redirects to the login page.
+ */
 const handleLogout = () => {
   logout();
   user.value = null;

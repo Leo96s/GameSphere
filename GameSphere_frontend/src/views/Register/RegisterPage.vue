@@ -133,6 +133,17 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * @component RegisterView
+ * @description Handles the creation of new user accounts.
+ * Supports a hybrid registration model:
+ * 1. **Manual:** Full profile setup with Zod validation and password strength assessment.
+ * 2. **Social (OAuth):** Fast-track registration using Firebase (Google/GitHub),
+ * automatically generating a fallback password and mapping provider data to the internal `User` model.
+ * * @requires {@link User} Model for data structure consistency.
+ * @requires {@link createUser} Service for backend persistence.
+ */
+
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import * as z from 'zod'
@@ -155,9 +166,12 @@ import { useAppForm } from "@/composables/useAppForm";
 
 const router = useRouter()
 const isSubmitting = ref(false)
-
 const { success, showError, toastRef } = useToast();
 
+/**
+ * Zod validation schema for the registration form.
+ * Ensures data integrity before reaching the service layer.
+ */
 const registerSchema = z.object({
       firstName: z.string().min(1, "First name is required"),
       lastName: z.string().min(1, "Last name is required"),
@@ -169,6 +183,10 @@ const registerSchema = z.object({
 
 const { form, clearError } = useAppForm(registerSchema)
 
+/**
+ * Form submission handler for manual registration.
+ * Converts raw form values into a `User` class instance.
+ */
 const onSubmit = form.handleSubmit(async (values) => {
   isSubmitting.value = true
   try {
@@ -182,7 +200,10 @@ const onSubmit = form.handleSubmit(async (values) => {
   }
 })
 
-/* ✅ SOCIAL LOGIN */
+/**
+ * Triggers Firebase Google Auth popup.
+ * On success, creates an internal user record with mapped display names.
+ */
 async function registerWithGoogle() {
   try {
     const { user } = await signInWithPopup(auth, googleProvider)
@@ -201,6 +222,10 @@ async function registerWithGoogle() {
   }
 }
 
+/**
+ * Triggers Firebase GitHub Auth popup.
+ * Maps GitHub data to the internal schema (defaults lastName if unavailable).
+ */
 async function registerWithGithub() {
   try {
     const { user } = await signInWithPopup(auth, githubProvider)

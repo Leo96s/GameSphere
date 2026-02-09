@@ -79,6 +79,13 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * LoginView Component
+ * * Handles user authentication via email/password and social providers (Google/GitHub).
+ * Integrates with Firebase for social auth and a custom backend service for session management.
+ * Includes form validation using Zod and a custom `useAppForm` composable.
+ */
+
 import { ref } from "vue"
 import { useRouter, RouterLink } from "vue-router"
 import * as z from "zod"

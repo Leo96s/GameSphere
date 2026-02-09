@@ -62,8 +62,19 @@
 </template>
 
 <script setup>
+/**
+ * LandingPage View
+ * * The main entry point of the application. This component features
+ * a Hero section, a Features grid highlighting core services (Quizzes, Cloud, Security),
+ * and a Call to Action (CTA) to encourage user registration.
+ * * @component
+ */
+
 import { Button } from "@/components/ui/button";
-// Heroicons (Tailwind official icons)
+/**
+ * Icons imported from Heroicons (Vue 24 Outline set).
+ * @see {@link https://heroicons.com/}
+ */
 import { AcademicCapIcon, CloudIcon, ShieldCheckIcon } from '@heroicons/vue/24/outline';
 </script>
 

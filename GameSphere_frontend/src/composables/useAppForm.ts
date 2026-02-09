@@ -2,18 +2,35 @@ import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
 import * as z from 'zod'
 
-export function useAppForm<T extends z.ZodObject<any>>(schema: T) {
-  const shape = schema.shape;
+// Mudamos a tipagem para z.ZodAny ou z.Schema para aceitar ZodEffects (refine)
+export function useAppForm<T extends z.Schema<any>>(schema: T) {
 
-  // Criamos um objeto onde cada chave do Zod começa com uma string vazia (ou false se preferires)
-  const initialValues = Object.keys(shape).reduce((acc, key) => {
+  if (!schema) {
+    console.error("useAppForm: Schema is undefined!");
+    return { form: {} as any, clearError: () => {} };
+  }
+
+  // 1. Lógica robusta para extrair o 'shape'
+  // Se for um ZodEffects (refine), o shape está dentro de _def.schema.shape
+  // Se for um ZodObject, está em .shape
+  const internalSchema = (schema instanceof z.ZodEffects)
+    ? schema._def.schema
+    : schema;
+
+  const shape = (internalSchema as any).shape;
+
+  // 2. Fallback caso o shape ainda não exista (segurança extra)
+  if (!shape) {
+    console.warn("useAppForm: Could not extract shape from schema.");
+  }
+
+  const initialValues = shape ? Object.keys(shape).reduce((acc, key) => {
     let field = shape[key];
-  // ele torna-se um ZodEffects. Precisamos de extrair o esquema original.
+
     if (field instanceof z.ZodEffects) {
       field = field._def.schema;
     }
 
-    // Agora o instanceof z.ZodBoolean já vai funcionar!
     if (field instanceof z.ZodBoolean) {
       acc[key] = false;
     } else {
@@ -21,7 +38,7 @@ export function useAppForm<T extends z.ZodObject<any>>(schema: T) {
     }
 
     return acc;
-  }, {} as any);
+  }, {} as any) : {};
 
   const form = useForm({
     validationSchema: toTypedSchema(schema),
@@ -30,9 +47,8 @@ export function useAppForm<T extends z.ZodObject<any>>(schema: T) {
     validateOnChange: false,
   })
 
-  // Helper para limpar erro
-  const clearError = (fieldName: keyof z.infer<T>) => {
-    form.setFieldError(fieldName as string, undefined)
+  const clearError = (fieldName: string) => {
+    form.setFieldError(fieldName, undefined)
   }
 
   return { form, clearError }

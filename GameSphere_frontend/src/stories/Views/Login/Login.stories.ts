@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
-import Login from '../../views/Login/Login.vue';
+import Login from '../../../views/Login/Login.vue';
 import { userEvent, within, expect } from '@storybook/test';
 
 // Este decorator simula o ambiente do Router para que o <RouterLink> funcione

@@ -21,40 +21,67 @@
   </template>
 
   <script setup lang="ts">
-  import { ref, computed, defineExpose } from 'vue'
+import { ref, computed, defineExpose } from 'vue'
 
-  type ToastVariant = 'success' | 'error'
+/**
+ * Defines the supported visual styles for the Toast.
+ */
+type ToastVariant = 'success' | 'error'
 
-  const visible = ref(false)
-  const title = ref('')
-  const description = ref('')
-  const variant = ref<ToastVariant>('success')
+/** Controls the visibility of the toast. */
+const visible = ref(false)
+/** The main heading of the notification. */
+const title = ref('')
+/** Optional detailed message. */
+const description = ref('')
+/** The current active visual variant. */
+const variant = ref<ToastVariant>('success')
 
-  const variantClasses = computed(() => {
-    if (variant.value === 'success') {
-      return 'border-primary/30'
-    }
-    return 'border-destructive/40'
-  })
-
-  function showToast(
-    payload: {
-      title: string
-      description?: string
-      variant?: ToastVariant
-      duration?: number
-    }
-  ) {
-    title.value = payload.title
-    description.value = payload.description ?? ''
-    variant.value = payload.variant ?? 'success'
-    visible.value = true
-
-    setTimeout(() => {
-      visible.value = false
-    }, payload.duration ?? 4000)
+/**
+ * Computes dynamic Tailwind classes based on the active variant.
+ * @returns {string} Border classes for the toast container.
+ */
+const variantClasses = computed(() => {
+  if (variant.value === 'success') {
+    return 'border-primary/30'
   }
+  return 'border-destructive/40'
+})
 
+/**
+ * Displays the Toast notification with the specified parameters.
+ * @param {Object} payload - Configuration object for the toast.
+ * @param {string} payload.title - The headline message.
+ * @param {string} [payload.description] - Supporting text message.
+ * @param {ToastVariant} [payload.variant='success'] - Visual style (success | error).
+ * @param {number} [payload.duration=4000] - Time in ms before auto-closing.
+ * * @example
+ * toastRef.value.showToast({
+ * title: 'Changes Saved',
+ * variant: 'success'
+ * });
+ **/
+function showToast(
+  payload: {
+    title: string
+    description?: string
+    variant?: ToastVariant
+    duration?: number
+  }
+) {
+  title.value = payload.title
+  description.value = payload.description ?? ''
+  variant.value = payload.variant ?? 'success'
+  visible.value = true
+
+  setTimeout(() => {
+    visible.value = false
+  }, payload.duration ?? 4000)
+}
+
+/**
+ * Exposes the showToast method to parent components via template refs.
+ */
   defineExpose({ showToast })
   </script>
 

@@ -81,6 +81,13 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * ResetPasswordView Component
+ * * Final step in the password recovery flow. Users provide the 6-digit code
+ * sent to their email and choose a new password. Includes a real-time
+ * password strength meter.
+ */
+
 import { ref } from "vue"
 import { useRouter } from "vue-router"
 import * as z from "zod"
@@ -98,7 +105,7 @@ import {useAppForm} from "@/composables/useAppForm";
 
 const router = useRouter()
 const isSubmitting = ref(false)
-
+const passwordStrength = (pwd: string) => getPasswordStrength(pwd);
 const { success, showError, toastRef } = useToast();
 
 const resetPasswordSchema = z.object({

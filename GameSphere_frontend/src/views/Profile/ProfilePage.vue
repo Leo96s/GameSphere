@@ -90,6 +90,12 @@
 </template>
 
 <script>
+/**
+ * ProfilePage Component
+ * @description Displays the authenticated user's profile information,
+ * including dynamic registration tenure, social stats, and personal biography.
+ * Uses a negative margin layout to overlap the profile card onto the cover section.
+ */
 export default {
   name: "ProfilePage",
   data() {
@@ -98,6 +104,10 @@ export default {
     };
   },
   mounted() {
+    /**
+     * Logic: On mount, sync component state with LocalStorage.
+     * Note: This allows for page persistence without hitting the API on every refresh.
+     */
     const storedUser = localStorage.getItem("user");
     console.log("Utilizador recuperado do localStorage:", storedUser);
     if (storedUser) {
@@ -105,6 +115,11 @@ export default {
     }
   },
   computed: {
+    /**
+     * Calculates the duration since the user registered.
+     * Logic: Compares `registrationDate` with the current system time.
+     * @returns {string} A formatted string in Portuguese (e.g., "pertence ao site há 2 anos").
+     */
     timeSinceRegistration() {
       if (!this.user || !this.user.registrationDate) return "Data inválida";
 
