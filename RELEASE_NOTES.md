@@ -1,3 +1,5 @@
+## v0.2.3 - 2026-02-09
+* ci: corrigido erro na pipeline
 ## v0.1.6 - 2026-02-07
 * fix: corrigidos erros em geral e o layout do sistema, simplificado código e  aumentado a reutilização do código
 ## v0.1.5 - 2026-02-05
