@@ -87,22 +87,24 @@ jobs:
           VERSION=${{ env.new_version }}
           VERSION=${VERSION#v}
 
-          FILES=$(find . -name package.json)
+          # Encontra todos os package.json
+          FILES=$(find . -name package.json -not -path "*/node_modules/*")
 
           if [ -z "$FILES" ]; then
             echo "No package.json found."
             exit 0
           fi
 
-          sudo apt-get update && sudo apt-get install -y jq npm
-
           for FILE in $FILES; do
+            # O jq já vem pré-instalado no ubuntu-latest, não precisa de apt-get
             jq ".version=\"$VERSION\"" "$FILE" > tmp.json && mv tmp.json "$FILE"
             git add "$FILE"
 
             DIR=$(dirname "$FILE")
+
+            # Entra no diretório, atualiza apenas o lock sem disparar scripts de install
             cd "$DIR"
-            npm install --package-lock-only
+            npm install --package-lock-only --legacy-peer-deps
             git add package-lock.json
             cd - > /dev/null
           done
