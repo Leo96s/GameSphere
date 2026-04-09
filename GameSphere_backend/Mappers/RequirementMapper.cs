@@ -24,7 +24,7 @@ namespace GameSphere_backend.Mappers
             var requirementModel = new Requirement
             {
                 Id = requirement.Id,
-                Description = requirement.Description,
+                Description = requirement.Description ?? "",
                 AchievementId = requirement.AchievementId,
             };
 

@@ -12,7 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
 //DotNetEnv.Env.Load();
 
-var specificOrgins = "AppOrigins";
+//var specificOrgins = "AppOrigins";
 
 builder.Services.AddCors(options =>
 {
@@ -57,7 +57,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["JwtSettings:SecretKey"])),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["JwtSettings:SecretKey"]!)),
             ValidateIssuer = true,
             ValidIssuer = config["JwtSettings:Issuer"],
             ValidateAudience = true,
@@ -123,7 +123,7 @@ if (app.Environment.IsDevelopment())
 }
 
 var messageMode = "Development"; // Define manualmente para teste.
-builder.Configuration.AddInMemoryCollection(new Dictionary<string, string>
+builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
 {
     { "MessageMode", messageMode }
 });

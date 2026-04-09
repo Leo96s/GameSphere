@@ -62,6 +62,14 @@ namespace GameSphere_backend.Services
 
             var u = UserMapper.UserToDto(user);
 
+            if (u == null)
+                return new ServiceResponse<UserDto>
+                {
+                    Success = false,
+                    Message = "Error mapping user.",
+                    Type = "BadRequest"
+                };
+
             return new ServiceResponse<UserDto>
             {
                 Success = true,
@@ -242,7 +250,7 @@ namespace GameSphere_backend.Services
             catch (Exception ex)
             {
                 response.Success = false;
-                response.Message = "An error occurred while checking email availability.";
+                response.Message = ex.Message;
                 response.Type = "BadRequest";
             }
 
@@ -290,7 +298,7 @@ namespace GameSphere_backend.Services
             catch (Exception ex)
             {
                 response.Success = false;
-                response.Message = "An error occurred while deleting the user.";
+                response.Message = ex.Message;
                 response.Type = "BadRequest";
             }
 
@@ -389,7 +397,7 @@ namespace GameSphere_backend.Services
             catch (Exception ex)
             {
                 response.Success = false;
-                response.Message = "An error occurred while updating the user.";
+                response.Message = ex.Message;
                 response.Type = "BadRequest";
             }
 
@@ -528,7 +536,7 @@ namespace GameSphere_backend.Services
             catch (Exception ex)
             {
                 response.Success = false;
-                response.Message = "An error occurred while checking email availability.";
+                response.Message = ex.Message;
                 response.Type = "BadRequest";
             }
 

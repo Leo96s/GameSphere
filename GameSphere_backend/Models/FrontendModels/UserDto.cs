@@ -23,7 +23,7 @@ namespace GameSphere_backend.Models.FrontendModels
         /// <remarks>
         /// Used for social login integrations (Google, Facebook, etc.).
         /// </remarks>
-        public string UID { get; set; }
+        public string? UID { get; set; }
 
         /// <summary>
         /// Gets or sets the hashed password for the user.
@@ -31,17 +31,17 @@ namespace GameSphere_backend.Models.FrontendModels
         /// <remarks>
         /// Should always be hashed using a secure algorithm like BCrypt.
         /// </remarks>
-        public string HashedPassword { get; set; }
+        public string? HashedPassword { get; set; }
 
         /// <summary>
         /// Gets or sets the user's first name.
         /// </summary>
-        public string FirstName { get; set; }
+        public required string FirstName { get; set; }
 
         /// <summary>
         /// Gets or sets the user's last name.
         /// </summary>
-        public string LastName { get; set; }
+        public string? LastName { get; set; }
 
         /// <summary>
         /// Gets or sets the user's email address.
@@ -49,7 +49,7 @@ namespace GameSphere_backend.Models.FrontendModels
         /// <remarks>
         /// Used as the primary contact method and for authentication.
         /// </remarks>
-        public string Email { get; set; }
+        public required string Email { get; set; }
 
         /// <summary>
         /// Gets or sets the user's gender identity.

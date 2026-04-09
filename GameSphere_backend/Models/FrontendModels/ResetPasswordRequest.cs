@@ -20,7 +20,7 @@ namespace GameSphere_backend.Models.FrontendModels
         /// <example>user@example.com</example>
         [Required(ErrorMessage = "Email address is required")]
         [EmailAddress(ErrorMessage = "Invalid email address format")]
-        public string Email { get; set; }
+        public required string Email { get; set; }
 
         /// <summary>
         /// Gets or sets the verification code received by the user.
@@ -31,7 +31,7 @@ namespace GameSphere_backend.Models.FrontendModels
         /// <example>123456</example>
         [Required(ErrorMessage = "Reset code is required")]
         [StringLength(6, MinimumLength = 6, ErrorMessage = "Reset code must be 6 digits")]
-        public string ResetCode { get; set; }
+        public required string ResetCode { get; set; }
 
         /// <summary>
         /// Gets or sets the new password for the user account.
@@ -44,6 +44,6 @@ namespace GameSphere_backend.Models.FrontendModels
         [Required(ErrorMessage = "New password is required")]
         [MinLength(8, ErrorMessage = "Password must be at least 8 characters")]
         [DataType(DataType.Password)]
-        public string NewPassword { get; set; }
+        public required string NewPassword { get; set; }
     }
 }

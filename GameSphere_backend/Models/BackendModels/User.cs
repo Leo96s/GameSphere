@@ -24,14 +24,14 @@ namespace GameSphere_backend.Models.BackendModels
         /// Gets or sets the unique identifier from external authentication providers.
         /// </summary>
         /// <value>The UID provided by third-party authentication services.</value>
-        public string UID { get; set; }
+        public string? UID { get; set; }
 
         /// <summary>
         /// Gets or sets the hashed password for the user.
         /// </summary>
         /// <value>BCrypt hashed password string.</value>
         [MinLength(8, ErrorMessage = "The field 'HashedPassword' must be at least 8 characters long.")]
-        public string HashedPassword { get; set; }
+        public required string HashedPassword { get; set; }
 
         /// <summary>
         /// Gets or sets the first name of the user.
@@ -39,7 +39,7 @@ namespace GameSphere_backend.Models.BackendModels
         /// <value>The user's first name (100 character limit).</value>
         [Required(ErrorMessage = "The field 'FirstName' is required.")]
         [MaxLength(100, ErrorMessage = "The field 'FirstName' has to be less than 100 characters.")]
-        public string FirstName { get; set; }
+        public required string FirstName { get; set; }
 
         /// <summary>
         /// Gets or sets the last name of the user.
@@ -47,7 +47,7 @@ namespace GameSphere_backend.Models.BackendModels
         /// <value>The user's last name (100 character limit).</value>
         [Required(ErrorMessage = "The field 'LastName' is required.")]
         [MaxLength(100, ErrorMessage = "The field 'LastName' has to be less than 100 characters.")]
-        public string LastName { get; set; }
+        public string? LastName { get; set; }
 
         /// <summary>
         /// Gets or sets the email address of the user.
@@ -55,7 +55,7 @@ namespace GameSphere_backend.Models.BackendModels
         /// <value>The user's unique email address.</value>
         [Required(ErrorMessage = "The campo 'Email' is required.")]
         [EmailAddress(ErrorMessage = "The email has an invalid format.")]
-        public string Email { get; set; }
+        public required string Email { get; set; }
 
         /// <summary>
         /// Gets or sets the date when the user registered.
@@ -123,25 +123,25 @@ namespace GameSphere_backend.Models.BackendModels
         /// Gets or sets the collection of quizzes created by the user.
         /// </summary>
         /// <value>Collection of Quizz entities.</value>
-        public ICollection<Quizz> Quizzs { get; set; }
+        public ICollection<Quizz>? Quizzs { get; set; }
 
         /// <summary>
         /// Gets or sets the collection of games associated with the user.
         /// </summary>
         /// <value>Collection of Game entities.</value>
-        public ICollection<Game> Games { get; set; }
+        public ICollection<Game>? Games { get; set; }
 
         /// <summary>
         /// Gets or sets the collection of achievements earned by the user.
         /// </summary>
         /// <value>Collection of Achievements entities.</value>
-        public ICollection<Achievements> Achievements { get; set; }
+        public ICollection<Achievements>? Achievements { get; set; }
 
         /// <summary>
         /// Gets or sets the collection of scores achieved by the user.
         /// </summary>
         /// <value>Collection of Score entities.</value>
-        public ICollection<Score> Scores { get; set; }
+        public ICollection<Score>? Scores { get; set; }
 
     }
 }
