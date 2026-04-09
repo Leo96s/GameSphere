@@ -5,3 +5,4 @@ GameSphere_backend/appsettings.json
 /GameSphere_backend/bin
 GameSphere_backend/.env
 /GameSphere_backend/.vs
+/.history
