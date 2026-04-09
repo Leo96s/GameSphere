@@ -1,3 +1,5 @@
+## v0.2.5 - 2026-04-09
+* fix: corrigido bugs
 ## v0.2.4 - 2026-04-09
 * ci: corrigido um erro no ficheiro de versionamento
 ## v0.2.3 - 2026-02-09
