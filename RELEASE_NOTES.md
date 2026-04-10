@@ -1,3 +1,5 @@
+## v0.2.6 - 2026-04-10
+* fix: corrigido erros de negócio
 ## v0.2.5 - 2026-04-09
 * fix: corrigido bugs
 ## v0.2.4 - 2026-04-09
