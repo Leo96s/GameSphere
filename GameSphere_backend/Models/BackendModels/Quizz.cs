@@ -11,7 +11,7 @@ namespace GameSphere_backend.Models.BackendModels
 
         [Required(ErrorMessage = "The field 'title' is required.")]
         [MaxLength(100, ErrorMessage = "The field 'title' has to be less than 100 characters.")]
-        public string Title { get; set; }
+        public required string Title { get; set; }
 
         public Difficulty Difficulty { get; set; }
 
@@ -21,11 +21,11 @@ namespace GameSphere_backend.Models.BackendModels
         public DateTime RegistrationDate { get; set; }
 
         [ForeignKey("User")]
-        public int UserId { get; set; }
-        public virtual User User { get; set; }
+        public required int UserId { get; set; }
+        public virtual User? User { get; set; }
 
-        public ICollection<Question> Questions { get; set; }
+        public ICollection<Question>? Questions { get; set; }
 
-        public ICollection<Score> Scores { get; set; }
+        public ICollection<Score>? Scores { get; set; }
     }
 }

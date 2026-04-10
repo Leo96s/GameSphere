@@ -4,7 +4,7 @@
     {
         public int Id { get; set; }
 
-        public string NameOfAchievment { get; set; }
+        public required string NameOfAchievment { get; set; }
 
         public int UserId { get; set; }
 

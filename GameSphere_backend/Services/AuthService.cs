@@ -50,7 +50,7 @@ namespace GameSphere_backend.Services
         public string GenerateToken(string userId, string email)
         {
             // Retrieve JWT configuration from app settings
-            var secretKey = _config["JwtSettings:SecretKey"];
+            var secretKey = _config["JwtSettings:SecretKey"] ?? throw new Exception("JWT SecretKey is missing in config"); ;
             var issuer = _config["JwtSettings:Issuer"];
             var audience = _config["JwtSettings:Audience"];
             var expirationStr = _config["JwtSettings:ExpirationMinutes"]

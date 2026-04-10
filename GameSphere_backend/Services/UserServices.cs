@@ -487,7 +487,7 @@ namespace GameSphere_backend.Services
             catch (Exception ex)
             {
                 response.Success = false;
-                response.Message = "An error occurred during login.";
+                response.Message = ex.Message;
                 response.Type = "BadRequest";
             }
 

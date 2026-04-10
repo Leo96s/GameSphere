@@ -9,11 +9,11 @@ namespace GameSphere_backend.Models.BackendModels
         public int Id { get; set; }
 
         [Required(ErrorMessage = "The field 'description' is required.")]
-        public string Description { get; set; }
+        public required string Description { get; set; }
 
         [ForeignKey("Achievement")]
-        public int AchievementId { get; set; }
+        public required int AchievementId { get; set; }
 
-        public virtual Achievements Achievement { get; set; }
+        public virtual Achievements? Achievement { get; set; }
     }
 }

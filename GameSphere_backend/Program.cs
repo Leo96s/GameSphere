@@ -22,17 +22,16 @@ builder.Services.AddCors(options =>
                .AllowAnyMethod()
                .AllowAnyHeader();
     });
-    /**
-    options.AddPolicy(name: specificOrgins,
-        policy =>
-        {
-            policy.SetIsOriginAllowed(origin => new Uri(origin).Host == "").
-            SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost")
-                  .AllowAnyMethod()
-                  .AllowAnyHeader()
-                  .AllowCredentials();
-        });
-    */
+
+    // options.AddPolicy(name: specificOrgins,
+    // policy =>
+    // {
+    //     policy.SetIsOriginAllowed(origin => new Uri(origin).Host == "")
+    //     .SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost")
+    //     .AllowAnyMethod()
+    //     .AllowAnyHeader()
+    //     .AllowCredentials();
+    // });
 });
 // Add services to the container.
 builder.Services.AddControllersWithViews();

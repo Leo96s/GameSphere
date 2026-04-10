@@ -61,9 +61,6 @@ namespace GameSphere_backend.Mappers
         /// <returns>
         /// A validated User entity, or null if the input is null.
         /// </returns>
-        /// <exception cref="ValidationException">
-        /// Thrown if the resulting User entity fails validation.
-        /// </exception>
         /// <remarks>
         /// This method:
         /// - Handles null input gracefully
