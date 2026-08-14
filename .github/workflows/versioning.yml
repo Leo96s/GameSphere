@@ -5,6 +5,11 @@ on:
     branches:
       - main
       - dev
+  workflow_dispatch:
+
+concurrency:
+  group: semantic-versioning
+  cancel-in-progress: false
 
 jobs:
   versioning:
@@ -13,7 +18,7 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -54,6 +59,12 @@ jobs:
             MSG_LOWER=$(echo "$MSG" | tr '[:upper:]' '[:lower:]')
             NEW_VERSION=""
 
+            # Ignora os proprios commits de release do bot (chore(release): vX.Y.Z),
+            # para nao gerarem um bump extra so por conterem o prefixo "chore:"
+            if [[ "$MSG_LOWER" =~ ^chore\(release\): ]]; then
+              continue
+            fi
+
             if [[ "$MSG_LOWER" == *"breaking change"* ]]; then
               MAJOR=$((MAJOR+1)); MINOR=0; PATCH=0
               NEW_VERSION="v$MAJOR.$MINOR.$PATCH"
@@ -62,7 +73,7 @@ jobs:
               MINOR=$((MINOR+1)); PATCH=0
               NEW_VERSION="v$MAJOR.$MINOR.$PATCH"
 
-            elif [[ "$MSG_LOWER" =~ ^(fix|docs|style|test|ci)(\(.+\))?: ]]; then
+            elif [[ "$MSG_LOWER" =~ ^(fix|docs|style|test|ci|chore|refactor|perf|build|revert)(\(.+\))?: ]]; then
               PATCH=$((PATCH+1))
               NEW_VERSION="v$MAJOR.$MINOR.$PATCH"
             fi
@@ -102,8 +113,8 @@ jobs:
           VERSION=${{ env.new_version }}
           VERSION=${VERSION#v}
 
-          # Encontra todos os package.json
-          FILES=$(find . -name package.json -not -path "*/node_modules/*")
+          # Encontra todos os package.json rastreados pelo git (ignora node_modules e ficheiros não versionados)
+          FILES=$(git ls-files -- '*package.json' ':!:**/node_modules/**')
 
           if [ -z "$FILES" ]; then
             echo "No package.json found."
@@ -111,17 +122,59 @@ jobs:
           fi
 
           for FILE in $FILES; do
-            # O jq já vem pré-instalado no ubuntu-latest, não precisa de apt-get
-            jq ".version=\"$VERSION\"" "$FILE" > tmp.json && mv tmp.json "$FILE"
-            git add "$FILE"
-
             DIR=$(dirname "$FILE")
 
-            # Entra no diretório, atualiza apenas o lock sem disparar scripts de install
-            cd "$DIR"
-            npm install --package-lock-only --legacy-peer-deps
-            git add package-lock.json
-            cd - > /dev/null
+            # npm version atualiza package.json e package-lock.json de forma atómica,
+            # sem re-resolver todo o grafo de dependências
+            (cd "$DIR" && npm version "$VERSION" --no-git-tag-version --allow-same-version)
+            git add "$FILE" "$DIR/package-lock.json"
+          done
+
+      # Mesma ideia que o passo acima, mas para projetos Kotlin/Android
+      # (build.gradle.kts) e Flutter (pubspec.yaml) — só um de cada por
+      # repositório (mesma convenção do mobile-release.yml: procura na
+      # raiz e nas subpastas de primeiro nível, para na primeira que
+      # encontrar).
+      - name: Update Kotlin/Flutter version files
+        if: env.created_tags == '1'
+        run: |
+          VERSION=${{ env.new_version }}
+          VERSION=${VERSION#v}
+
+          shopt -s nullglob
+
+          for d in . */; do
+            d="${d%/}"
+            if [ -f "$d/gradlew" ]; then
+              GRADLE_FILE=$(find "$d" -maxdepth 3 \( -name "build.gradle.kts" -o -name "build.gradle" \) \
+                -not -path "*/build/*" -not -path "*/.gradle/*" \
+                -exec grep -l "versionCode" {} \; | head -1)
+
+              if [ -n "$GRADLE_FILE" ]; then
+                CURRENT_CODE=$(grep -oE 'versionCode = [0-9]+' "$GRADLE_FILE" | grep -oE '[0-9]+')
+                if [ -n "$CURRENT_CODE" ]; then
+                  NEW_CODE=$((CURRENT_CODE + 1))
+                  sed -i -E "s/versionCode = [0-9]+/versionCode = $NEW_CODE/" "$GRADLE_FILE"
+                fi
+                sed -i -E "s/versionName = \"[^\"]*\"/versionName = \"$VERSION\"/" "$GRADLE_FILE"
+                git add "$GRADLE_FILE"
+                echo "Updated $GRADLE_FILE (versionName=$VERSION)"
+              fi
+              break
+            fi
+          done
+
+          for d in . */; do
+            d="${d%/}"
+            PUBSPEC="$d/pubspec.yaml"
+            if [ -f "$PUBSPEC" ] && [ -d "$d/android" ] && grep -q "^flutter:" "$PUBSPEC"; then
+              CURRENT_BUILD=$(grep -oE '^version: [0-9]+\.[0-9]+\.[0-9]+\+[0-9]+' "$PUBSPEC" | grep -oE '[0-9]+$')
+              NEW_BUILD=$(( ${CURRENT_BUILD:-0} + 1 ))
+              sed -i -E "s/^version: .*/version: $VERSION+$NEW_BUILD/" "$PUBSPEC"
+              git add "$PUBSPEC"
+              echo "Updated $PUBSPEC (version=$VERSION+$NEW_BUILD)"
+              break
+            fi
           done
 
       # CHANGELOG LIMPO
@@ -142,7 +195,8 @@ jobs:
           LOG=$(git log $RANGE \
             --pretty=format:"%s" \
             --no-merges | \
-            grep -Ei "^(feat|fix|docs|style|test|ci)(\(.+\))?:|breaking change" || true)
+            grep -Ei "^(feat|fix|docs|style|test|ci|chore|refactor|perf|build|revert)(\(.+\))?:|breaking change" | \
+            grep -Eiv "^chore\(release\):" || true)
 
           if [ -z "$LOG" ]; then
             echo "No valid commits."
@@ -156,10 +210,9 @@ jobs:
           cat CHANGELOG.md >> tmp1.md
           mv tmp1.md CHANGELOG.md
 
-          echo "## $VERSION - $DATE" > tmp2.md
-          echo "$LOG_FORMATTED" >> tmp2.md
-          cat RELEASE_NOTES.md >> tmp2.md
-          mv tmp2.md RELEASE_NOTES.md
+          # RELEASE_NOTES.md contém apenas as notas desta versão (usado na GitHub Release)
+          echo "## $VERSION - $DATE" > RELEASE_NOTES.md
+          echo "$LOG_FORMATTED" >> RELEASE_NOTES.md
 
           git add CHANGELOG.md RELEASE_NOTES.md
 
@@ -168,8 +221,9 @@ jobs:
         if: env.created_tags == '1'
         run: |
           # 1. Faz commit das alterações nos ficheiros (package.json, changelog)
-          git diff --cached --quiet || git commit -m "chore(release): ${{ env.new_version }}"
-          
+          # [skip ci] evita que este commit volte a acionar o workflow
+          git diff --cached --quiet || git commit -m "chore(release): ${{ env.new_version }} [skip ci]"
+
           # 2. Empurra o commit para a branch (main/dev)
           git push origin HEAD
 
@@ -178,6 +232,16 @@ jobs:
           for tag in $(git tag --points-at HEAD); do
             git push origin "$tag" || echo "Tag $tag rejeitada (provavelmente contém alteração de workflow). Ignorando..."
           done
-          
+
           # Tenta empurrar as outras tags criadas no replay (opcional)
           git push origin --tags || echo "Algumas tags foram rejeitadas, mas o processo continuou."
+
+      # Publica a Release no GitHub com as notas da versão atual
+      - name: Create GitHub Release
+        if: env.created_tags == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ env.new_version }}" \
+            --title "${{ env.new_version }}" \
+            --notes-file RELEASE_NOTES.md
