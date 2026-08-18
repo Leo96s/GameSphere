@@ -21,7 +21,7 @@ namespace GameSphere_backend.ServicesResponses
         /// <remarks>
         /// O token JWT gerado para autenticação.
         /// </remarks>
-        public string token { get; set; }
+        public required string token { get; set; }
 
         /// <summary>
         /// Gets or sets the details of the authenticated user.
@@ -32,7 +32,7 @@ namespace GameSphere_backend.ServicesResponses
         /// <remarks>
         /// Os detalhes do utilizador autenticado.
         /// </remarks>
-        public UserDto user { get; set; }
+        public required UserDto user { get; set; }
     }
 
 }

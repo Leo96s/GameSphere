@@ -16,7 +16,7 @@
         /// The email address associated with the user account.
         /// </value>
         /// <example>user@example.com</example>
-        public string Email { get; set; }
+        public required string Email { get; set; }
 
         /// <summary>
         /// Gets or sets the reset code that was sent to the user's email.
@@ -25,6 +25,6 @@
         /// The 6-digit numeric code generated for password reset.
         /// </value>
         /// <example>123456</example>
-        public string ResetCode { get; set; }
+        public required string ResetCode { get; set; }
     }
 }

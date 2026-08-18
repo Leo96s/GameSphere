@@ -1,168 +1,246 @@
 <template>
-  <section class="section section-shaped section-lg my-0">
-    <div class="shape shape-style-1 bg-gradient-default"></div>
-    <div class="container pt-lg-md">
-      <div class="row justify-content-center">
-        <div class="col-lg-5">
-          <div class="card shadow border-0">
-            <!-- Card Header -->
-            <div class="card-header bg-white pb-5 text-center">
-              <div class="text-muted text-center mb-3">
-                <small>Register with</small>
-              </div>
-              <div class="btn-wrapper text-center space-x-4">
-                <div class="text-center my-3">
-                  <b-button @click="registerWithGoogle" title="Google" class="btn-icon mx-2" variant="light">
-                    <img src="@/assets/logos/google.png" alt="Google" class="icon-img" />
-                  </b-button>
+  <section class="min-h-screen flex items-center justify-center bg-gray-50 py-12">
+    <div class="w-full max-w-md">
+      <Card class="overflow-hidden shadow-lg">
 
-                  <b-button @click="registerWithGithub" class="btn-icon" variant="dark" title="Github">
-                    <img src="@/assets/logos/github.png" alt="Github" class="icon-img" />
-                  </b-button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Card Body -->
-            <div class="card-body px-lg-5">
-              <div class="text-center text-muted mb-4">
-                <small>Or register with your credentials</small>
-              </div>
-              <form @submit.prevent="handleRegister">
-                <CustomField label="First Name" type="text" placeholder="First Name" v-model="firstName" />
-                <CustomField label="Last Name" type="text" placeholder="Last Name" v-model="lastName" />
-
-                <CustomSelect label="Gender" v-model="gender" :options="[
-                  { label: 'Male', value: Gender.Male },
-                  { label: 'Female', value: Gender.Female },
-                  { label: 'Other', value: Gender.Other }
-                ]" />
-
-                <CustomField label="Email" type="email" placeholder="Email" v-model="email" />
-                <CustomField label="Password" type="password" placeholder="Password" v-model="password" />
-
-                <div class="text-muted font-italic">
-                  <small>
-                    Password strength:
-                    <span :class="passwordStrengthClass">
-                      {{ passwordStrength }}
-                    </span>
-                  </small>
-                </div>
-
-                <CustomCheckbox id="privacyPolicy" v-model="acceptedPolicy">
-                  I agree with the <a href="#">Privacy Policy</a>
-                </CustomCheckbox>
-
-                <CustomButton label="Create Account" type="submit" variant="primary"
-                  :disabled="isSubmitting || !acceptedPolicy"/>
-              </form>
-
-              <div v-if="error" class="alert alert-danger text-center">
-                {{ error }}
-              </div>
-              <div v-if="success" class="alert alert-success text-center">
-                {{ success }}
-              </div>
-            </div>
+        <div class="px-6 py-8 text-center">
+          <p class="text-gray-500 mb-4">Register with</p>
+          <div class="flex justify-center space-x-4 mb-6">
+            <Button variant="outline" size="icon" @click="registerWithGoogle">
+              <img src="@/assets/logos/google.png" class="w-6 h-6" alt="google" />
+            </Button>
+            <Button variant="outline" size="icon" @click="registerWithGithub">
+              <img src="@/assets/logos/github.png" class="w-6 h-6" alt="github" />
+            </Button>
           </div>
+          <p class="text-gray-400">Or create an account manually</p>
         </div>
+
+        <div class="px-6 pb-8">
+          <form @submit.prevent="onSubmit">
+
+            <div class="grid grid-cols-2 gap-4">
+              <FormField name="firstName" v-slot="{ componentField }">
+                <FormItem class="mb-4">
+                  <FormLabel>First Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="E.g., John" v-bind="componentField"
+                           @focus="clearError('firstName')"/>
+                  </FormControl>
+                  <FormMessage /> </FormItem>
+              </FormField>
+
+              <FormField name="lastName" v-slot="{ componentField }">
+                <FormItem class="mb-4">
+                  <FormLabel>Last Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="E.g., Doe" v-bind="componentField"
+                           @focus="clearError('lastName')"/>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              </FormField>
+            </div>
+
+            <FormField name="email" v-slot="{ componentField }">
+              <FormItem class="mb-4">
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input type="email" placeholder="your@email.com" v-bind="componentField"
+                         @focus="clearError('email')"/>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            </FormField>
+
+            <FormField name="password" v-slot="{ componentField, value }">
+              <FormItem class="mb-2">
+                <FormLabel>Password</FormLabel>
+                <FormControl>
+                  <Input type="password" placeholder="Minimum 8 characters" v-bind="componentField"
+                         @focus="clearError('password')"/>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+
+              <div v-if="value" class="w-full h-1.5 bg-gray-200 rounded mb-4">
+                <div
+                  class="h-1.5 rounded transition-all duration-300"
+                  :class="{
+                    'bg-red-500 w-1/3': getPasswordStrength(value) === 'Weak',
+                    'bg-yellow-500 w-2/3': getPasswordStrength(value) === 'Medium',
+                    'bg-green-600 w-full': getPasswordStrength(value) === 'Strong'
+                  }"
+                />
+              </div>
+            </FormField>
+
+            <FormField name="gender" v-slot="{ componentField }">
+              <FormItem class="mb-4">
+                <FormLabel>Gender</FormLabel>
+                <Select v-bind="componentField">
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select your gender" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="male">Male</SelectItem>
+                    <SelectItem value="female">Female</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            </FormField>
+
+            <FormField name="acceptedPolicy" v-slot="{ value, handleChange }">
+              <FormItem class="mb-6">
+                <div class="flex items-center space-x-2">
+                  <FormControl>
+                    <Checkbox :model-value="value"
+                              @update:model-value="handleChange" />
+                  </FormControl>
+                  <FormLabel class="!mt-0 cursor-pointer text-xs">
+                    I agree with the Privacy Policy
+                  </FormLabel>
+                </div>
+                <FormMessage />
+              </FormItem>
+            </FormField>
+
+            <Button
+              type="submit"
+              class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded"
+              :disabled="isSubmitting"
+            >
+              <span v-if="isSubmitting">Processing...</span>
+              <span v-else>Create Account</span>
+            </Button>
+          </form>
+        </div>
+      </Card>
+
+      <div class="flex justify-center mt-4 text-sm text-gray-500">
+        <RouterLink to="/login" class="hover:text-purple-600 transition-colors">
+          Already have an account? Log in
+        </RouterLink>
       </div>
     </div>
+
+    <Toast ref="toastRef" />
   </section>
 </template>
 
-<script>
-import CustomField from "@/views/components/CustomField.vue";
-import CustomSelect from "@/views/components/CustomSelect.vue";
-import CustomCheckbox from "@/views/components/CustomCheckbox.vue";
-import CustomButton from "@/views/components/CustomButton.vue";
+<script setup lang="ts">
+/**
+ * @component RegisterView
+ * @description Handles the creation of new user accounts.
+ * Supports a hybrid registration model:
+ * 1. **Manual:** Full profile setup with Zod validation and password strength assessment.
+ * 2. **Social (OAuth):** Fast-track registration using Firebase (Google/GitHub),
+ * automatically generating a fallback password and mapping provider data to the internal `User` model.
+ * * @requires {@link User} Model for data structure consistency.
+ * @requires {@link createUser} Service for backend persistence.
+ */
 
-import registerMethods from "@/views/Register/methods";
-import registerComputed from "@/views/Register/computed";
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import * as z from 'zod'
 
-export default {
-  name: "RegisterSection",
-  components: { CustomField, CustomSelect, CustomCheckbox, CustomButton },
-  data() {
-    return {
-      firstName: "",
-      lastName: "",
-      gender: "",
-      email: "",
-      password: "",
-      acceptedPolicy: false,
-      error: null,
-      success: null,
-    };
-  },
-  computed: registerComputed,
-  methods: registerMethods
-};
+import Toast from '@/components/ui/custom/Toast/Toast.vue'
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select'
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form'
+
+import User from '@/models/User'
+import { Gender } from '@/enums/Gender'
+import { createUser } from '@/services/userServices'
+import { auth, googleProvider, githubProvider, signInWithPopup } from '@/services/firebase'
+import { useToast } from '@/composables/useToast';
+import { getPasswordStrength } from '@/utils/passwordStrength'
+import { useAppForm } from "@/composables/useAppForm";
+
+const router = useRouter()
+const isSubmitting = ref(false)
+const { success, showError, toastRef } = useToast();
+
+/**
+ * Zod validation schema for the registration form.
+ * Ensures data integrity before reaching the service layer.
+ */
+const registerSchema = z.object({
+      firstName: z.string().min(1, "First name is required"),
+      lastName: z.string().min(1, "Last name is required"),
+      email: z.string().min(1, "Email is required").email("Invalid email format"),
+      password: z.string().min(8, "Minimum 8 characters"),
+      gender: z.string().min(1, "Select a gender"),
+      acceptedPolicy: z.boolean().refine(v => v, "You must accept the terms"),
+    });
+
+const { form, clearError } = useAppForm(registerSchema)
+
+/**
+ * Form submission handler for manual registration.
+ * Converts raw form values into a `User` class instance.
+ */
+const onSubmit = form.handleSubmit(async (values) => {
+  isSubmitting.value = true
+  try {
+    await createUser(new User(values))
+    success('Account created!', 'Redirecting...')
+    setTimeout(() => router.push('/login'), 1500)
+  } catch (err: any) {
+    showError('Error', err?.response?.data?.message || 'Failed to register')
+  } finally {
+    isSubmitting.value = false
+  }
+})
+
+/**
+ * Triggers Firebase Google Auth popup.
+ * On success, creates an internal user record with mapped display names.
+ */
+async function registerWithGoogle() {
+  try {
+    const { user } = await signInWithPopup(auth, googleProvider)
+    await createUser(new User({
+      firstName: user.displayName?.split(' ')[0],
+      lastName: user.displayName?.split(' ')[1] ?? '',
+      email: user.email,
+      gender: Gender.Other,
+      password: Math.random().toString(36).slice(-8),
+      uid: user.uid,
+    }))
+    success('Account created via Google!')
+    await router.push('/login')
+  } catch {
+    showError('Error registering with Google')
+  }
+}
+
+/**
+ * Triggers Firebase GitHub Auth popup.
+ * Maps GitHub data to the internal schema (defaults lastName if unavailable).
+ */
+async function registerWithGithub() {
+  try {
+    const { user } = await signInWithPopup(auth, githubProvider)
+    await createUser(new User({
+      firstName: 'GitHub',
+      lastName: 'User',
+      email: user.email,
+      gender: Gender.Other,
+      password: Math.random().toString(36).slice(-8),
+      uid: user.uid,
+    }))
+    success('Account created via GitHub!')
+    await router.push('/login')
+  } catch {
+    showError('Error registering with GitHub')
+  }
+}
 </script>
-
-
-
-<style>
-.section {
-  padding-top: 50px;
-}
-
-.shape {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-}
-
-.shape span {
-  display: block;
-  position: absolute;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.card {
-  border-radius: 0.375rem;
-}
-
-.btn-icon {
-  width: 200px;
-  /* Define um tamanho fixo para os botões */
-  height: 50px;
-  align-items: center;
-  justify-content: center;
-  border-radius: 100%;
-  /* Torna os botões arredondados */
-  padding: 5px;
-  background-color: #f1f1f1;
-}
-
-.icon-img {
-  width: 24px;
-  /* Define um tamanho menor para os ícones */
-  height: 24px;
-}
-
-
-.btn-neutral {
-  background-color: #f6f9fc;
-  border-color: #f6f9fc;
-  color: #5e72e4;
-  font-weight: 600;
-}
-
-.btn-neutral:hover {
-  background-color: #dae3ec;
-}
-
-.input-group-alternative .form-control {
-  border: 1px solid #cad1d7;
-  padding: 0.75rem 1rem;
-}
-
-.form-check-label a {
-  text-decoration: underline;
-  color: #5e72e4;
-}
-</style>

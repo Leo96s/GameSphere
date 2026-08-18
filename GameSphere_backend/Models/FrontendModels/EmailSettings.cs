@@ -16,7 +16,7 @@ namespace GameSphere_backend.Models.FrontendModels
         /// </summary>
         /// <example>smtp.gmail.com</example>
         [Required(ErrorMessage = "SMTP server address is required")]
-        public string SmtpServer { get; set; }
+        public required string SmtpServer { get; set; }
 
         /// <summary>
         /// Gets or sets the SMTP server port number.
@@ -24,7 +24,7 @@ namespace GameSphere_backend.Models.FrontendModels
         /// <example>587</example>
         [Required(ErrorMessage = "SMTP port is required")]
         [Range(1, 65535, ErrorMessage = "Port must be between 1 and 65535")]
-        public int SmtpPort { get; set; }
+        public required int SmtpPort { get; set; }
 
         /// <summary>
         /// Gets or sets the email address that will appear as the sender.
@@ -32,7 +32,7 @@ namespace GameSphere_backend.Models.FrontendModels
         /// <example>noreply@gamesphere.com</example>
         [Required(ErrorMessage = "Sender email is required")]
         [EmailAddress(ErrorMessage = "Invalid sender email format")]
-        public string SenderEmail { get; set; }
+        public required string SenderEmail { get; set; }
 
         /// <summary>
         /// Gets or sets the display name for the sender.
@@ -40,14 +40,14 @@ namespace GameSphere_backend.Models.FrontendModels
         /// <example>GameSphere Support</example>
         [Required(ErrorMessage = "Sender name is required")]
         [StringLength(100, ErrorMessage = "Sender name cannot exceed 100 characters")]
-        public string SenderName { get; set; }
+        public required string SenderName { get; set; }
 
         /// <summary>
         /// Gets or sets the username for SMTP authentication.
         /// </summary>
         /// <example>your-email@domain.com</example>
         [Required(ErrorMessage = "SMTP username is required")]
-        public string Username { get; set; }
+        public required string Username { get; set; }
 
         /// <summary>
         /// Gets or sets the password for SMTP authentication.
@@ -57,7 +57,7 @@ namespace GameSphere_backend.Models.FrontendModels
         /// </remarks>
         [Required(ErrorMessage = "SMTP password is required")]
         [DataType(DataType.Password)]
-        public string Password { get; set; }
+        public required string Password { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether SSL/TLS encryption should be used.
@@ -66,6 +66,6 @@ namespace GameSphere_backend.Models.FrontendModels
         /// Recommended to be true for production environments.
         /// </remarks>
         [Required(ErrorMessage = "SSL setting is required")]
-        public bool EnableSSL { get; set; }
+        public required bool EnableSSL { get; set; }
     }
 }

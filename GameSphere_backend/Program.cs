@@ -12,7 +12,17 @@ var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
 //DotNetEnv.Env.Load();
 
-var specificOrgins = "AppOrigins";
+var connectionString = GetRequiredConfiguration(config, "ConnectionStrings:GameSphereDB");
+var jwtSecret = GetRequiredConfiguration(config, "JwtSettings:SecretKey");
+var jwtIssuer = GetRequiredConfiguration(config, "JwtSettings:Issuer");
+var jwtAudience = GetRequiredConfiguration(config, "JwtSettings:Audience");
+
+if (Encoding.UTF8.GetByteCount(jwtSecret) < 32)
+{
+    throw new InvalidOperationException("Configuration key 'JwtSettings:SecretKey' must contain at least 32 bytes.");
+}
+
+//var specificOrgins = "AppOrigins";
 
 builder.Services.AddCors(options =>
 {
@@ -22,23 +32,22 @@ builder.Services.AddCors(options =>
                .AllowAnyMethod()
                .AllowAnyHeader();
     });
-    /**
-    options.AddPolicy(name: specificOrgins,
-        policy =>
-        {
-            policy.SetIsOriginAllowed(origin => new Uri(origin).Host == "").
-            SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost")
-                  .AllowAnyMethod()
-                  .AllowAnyHeader()
-                  .AllowCredentials();
-        });
-    */
+
+    // options.AddPolicy(name: specificOrgins,
+    // policy =>
+    // {
+    //     policy.SetIsOriginAllowed(origin => new Uri(origin).Host == "")
+    //     .SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost")
+    //     .AllowAnyMethod()
+    //     .AllowAnyHeader()
+    //     .AllowCredentials();
+    // });
 });
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-options.UseNpgsql(builder.Configuration.GetConnectionString("GameSphereDB"))
+options.UseNpgsql(connectionString)
 );
 
 // Adicionar os servi�os MVC e outras configura��es necess�rias
@@ -47,21 +56,23 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserServices>();
 
-builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddOptions<EmailSettings>()
+    .Bind(config.GetSection("EmailSettings"))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
 builder.Services.AddTransient<IEmailService, EmailService>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        var config = builder.Configuration;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["JwtSettings:SecretKey"])),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
             ValidateIssuer = true,
-            ValidIssuer = config["JwtSettings:Issuer"],
+            ValidIssuer = jwtIssuer,
             ValidateAudience = true,
-            ValidAudience = config["JwtSettings:Audience"],
+            ValidAudience = jwtAudience,
             ValidateLifetime = true,
             ClockSkew = TimeSpan.Zero // Expira no tempo exato
         };
@@ -123,7 +134,7 @@ if (app.Environment.IsDevelopment())
 }
 
 var messageMode = "Development"; // Define manualmente para teste.
-builder.Configuration.AddInMemoryCollection(new Dictionary<string, string>
+builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
 {
     { "MessageMode", messageMode }
 });
@@ -149,3 +160,15 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
+
+static string GetRequiredConfiguration(IConfiguration configuration, string key)
+{
+    var value = configuration[key];
+
+    if (string.IsNullOrWhiteSpace(value))
+    {
+        throw new InvalidOperationException($"Configuration key '{key}' is required.");
+    }
+
+    return value;
+}

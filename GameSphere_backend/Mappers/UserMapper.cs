@@ -61,9 +61,6 @@ namespace GameSphere_backend.Mappers
         /// <returns>
         /// A validated User entity, or null if the input is null.
         /// </returns>
-        /// <exception cref="ValidationException">
-        /// Thrown if the resulting User entity fails validation.
-        /// </exception>
         /// <remarks>
         /// This method:
         /// - Handles null input gracefully
@@ -83,11 +80,11 @@ namespace GameSphere_backend.Mappers
             var userModel = new User
             {
                 Id = user.Id,
-                UID = user.UID,
+                UID = user.UID ?? "",
                 FirstName = user.FirstName,
-                LastName = user.LastName,
+                LastName = user.LastName ?? "",
                 Email = user.Email,
-                HashedPassword = user.HashedPassword,
+                HashedPassword = user.HashedPassword ?? "",
                 RegistrationDate = user.RegistrationDate,
                 isActive = user.isActive,
                 Image = user.Image,

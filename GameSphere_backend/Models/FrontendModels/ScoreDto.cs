@@ -6,9 +6,9 @@
 
         public int UserId { get; set; }
 
-        public int? QuizzId { get; set; }
+        public int QuizzId { get; set; }
 
-        public int? GameId { get; set; }
+        public int GameId { get; set; }
 
         public float Points {  get; set; }
 

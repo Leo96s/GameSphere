@@ -6,11 +6,11 @@ namespace GameSphere_backend.Models.FrontendModels
     {
         public int Id { get; set; }
 
-        public string Name { get; set; }
+        public required string Name { get; set; }
 
         public TypoOfGame TypeOfGame { get; set; }
 
-        public string Description { get; set; }
+        public  required string Description { get; set; }
 
 
     }

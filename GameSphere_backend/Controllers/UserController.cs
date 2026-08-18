@@ -66,7 +66,7 @@ namespace GameSphere_backend.Controllers
         {
             var serviceResponse = await _userService.CreateNewUserAsync(user);
 
-            if (!serviceResponse.Success)
+            if (!serviceResponse.Success || serviceResponse.Data == null)
             {
                 return HandleResponse(serviceResponse);
             }

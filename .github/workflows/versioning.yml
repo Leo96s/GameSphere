@@ -1,138 +1,247 @@
-name: Automated Versioning with Tags Based on Commit Messages
+name: Semantic Versioning
 
 on:
   push:
     branches:
-      - main  # Trigger on pushes to the main branch
+      - main
+      - dev
+  workflow_dispatch:
+
+concurrency:
+  group: semantic-versioning
+  cancel-in-progress: false
 
 jobs:
   versioning:
+    runs-on: ubuntu-latest
     permissions:
       contents: write
-      issues: write
-      pull-requests: write
-  
-    runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Check out the repository
-      - name: Check out the code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v5
         with:
-          fetch-depth: 0  # Ensure full history is fetched
+          fetch-depth: 0
 
-      # Step 2: Fetch all tags
-      - name: Fetch tags
-        run: git fetch --tags
+      - run: git fetch --tags
 
-      # Step 3: Get the latest tag or default to v0.0.0
+      # Última tag
       - name: Get latest tag
-        id: tag
         run: |
-          TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
-          echo "Latest tag: $TAG"
+          TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "none")
           echo "latest_tag=$TAG" >> $GITHUB_ENV
 
-      # Step 4: Determine version bump based on commit messages
-      - name: Analyze commits for version bump
-        id: bump
+      - name: Git config
         run: |
-          TAG=${{ env.latest_tag }}
-          VERSION=${TAG#v}  # Remove 'v' prefix
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
 
-          COMMITS=$(git log --pretty=%B ${TAG}..HEAD)
+      # REPLAY REAL DAS VERSÕES (por commit)
+      - name: Replay versions per commit
+        run: |
+          CURRENT_TAG=${{ env.latest_tag }}
 
-          BUMP="patch"
-          if echo "$COMMITS" | grep -q "BREAKING CHANGE"; then
-            BUMP="major"
-          elif echo "$COMMITS" | grep -q "^feat:"; then
-            BUMP="minor"
-          elif echo "$COMMITS" | grep -q "^fix:"; then
-            BUMP="patch"
+          if [ "$CURRENT_TAG" = "none" ]; then
+            # Se não existe tag, começamos do 0.0.0 e pegamos TODO o histórico
+            MAJOR=0; MINOR=0; PATCH=0
+            RANGE="HEAD"
+          else
+
+            VERSION=${CURRENT_TAG#v}
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+            RANGE="$CURRENT_TAG..HEAD"
           fi
 
-          if [ "$BUMP" = "major" ]; then
-            MAJOR=$((MAJOR + 1))
-            MINOR=0
-            PATCH=0
-          elif [ "$BUMP" = "minor" ]; then
-            MINOR=$((MINOR + 1))
-            PATCH=0
-          elif [ "$BUMP" = "patch" ]; then
-            PATCH=$((PATCH + 1))
+          git log --reverse --pretty="%H|%s" $RANGE > commits.txt
+
+          CREATED_TAGS=0
+
+          while IFS='|' read -r SHA MSG; do
+            MSG_LOWER=$(echo "$MSG" | tr '[:upper:]' '[:lower:]')
+            NEW_VERSION=""
+
+            # Ignora os proprios commits de release do bot (chore(release): vX.Y.Z),
+            # para nao gerarem um bump extra so por conterem o prefixo "chore:"
+            if [[ "$MSG_LOWER" =~ ^chore\(release\): ]]; then
+              continue
+            fi
+
+            if [[ "$MSG_LOWER" == *"breaking change"* ]]; then
+              MAJOR=$((MAJOR+1)); MINOR=0; PATCH=0
+              NEW_VERSION="v$MAJOR.$MINOR.$PATCH"
+
+            elif [[ "$MSG_LOWER" =~ ^feat(\(.+\))?: ]]; then
+              MINOR=$((MINOR+1)); PATCH=0
+              NEW_VERSION="v$MAJOR.$MINOR.$PATCH"
+
+            elif [[ "$MSG_LOWER" =~ ^(fix|docs|style|test|ci|chore|refactor|perf|build|revert)(\(.+\))?: ]]; then
+              PATCH=$((PATCH+1))
+              NEW_VERSION="v$MAJOR.$MINOR.$PATCH"
+            fi
+
+            if [ -n "$NEW_VERSION" ]; then
+              if git rev-parse "$NEW_VERSION" >/dev/null 2>&1; then
+                echo "Tag $NEW_VERSION already exists"
+              else
+                echo "Tagging $SHA as $NEW_VERSION"
+                git tag "$NEW_VERSION" "$SHA"
+                CREATED_TAGS=1
+              fi
+            fi
+
+          done < commits.txt
+
+          # Caso seja o primeiro commit e não siga o padrão Conventional Commits,
+          if [ "$CURRENT_TAG" = "none" ] && [ "$CREATED_TAGS" = "0" ]; then
+             echo "Nenhum commit formatado encontrado. Criando v0.1.0 inicial..."
+             git tag "v0.1.0" HEAD
+             CREATED_TAGS=1
+             MAJOR=0; MINOR=1; PATCH=0
           fi
 
-          NEW_VERSION="v$MAJOR.$MINOR.$PATCH"
-          echo "New version: $NEW_VERSION"
-          echo "new_version=$NEW_VERSION" >> $GITHUB_ENV
+          FINAL_VERSION="v$MAJOR.$MINOR.$PATCH"
+          echo "new_version=$FINAL_VERSION" >> $GITHUB_ENV
+          echo "created_tags=$CREATED_TAGS" >> $GITHUB_ENV
 
-      # Step 5: Create and push the new tag
-      - name: Create and push new tag
+      - name: Stop if no new versions
+        if: env.created_tags == '0'
+        run: echo "No versionable commits."
+
+      #  package.json + lock com as versões atualizadas
+      - name: Update package.json files
+        if: env.created_tags == '1'
         run: |
-          git tag ${{ env.new_version }}
-          git push origin ${{ env.new_version }}
+          VERSION=${{ env.new_version }}
+          VERSION=${VERSION#v}
+
+          # Encontra todos os package.json rastreados pelo git (ignora node_modules e ficheiros não versionados)
+          FILES=$(git ls-files -- '*package.json' ':!:**/node_modules/**')
+
+          if [ -z "$FILES" ]; then
+            echo "No package.json found."
+            exit 0
+          fi
+
+          for FILE in $FILES; do
+            DIR=$(dirname "$FILE")
+
+            # npm version atualiza package.json e package-lock.json de forma atómica,
+            # sem re-resolver todo o grafo de dependências
+            (cd "$DIR" && npm version "$VERSION" --no-git-tag-version --allow-same-version)
+            git add "$FILE" "$DIR/package-lock.json"
+          done
+
+      # Mesma ideia que o passo acima, mas para projetos Kotlin/Android
+      # (build.gradle.kts) e Flutter (pubspec.yaml) — só um de cada por
+      # repositório (mesma convenção do mobile-release.yml: procura na
+      # raiz e nas subpastas de primeiro nível, para na primeira que
+      # encontrar).
+      - name: Update Kotlin/Flutter version files
+        if: env.created_tags == '1'
+        run: |
+          VERSION=${{ env.new_version }}
+          VERSION=${VERSION#v}
+
+          shopt -s nullglob
+
+          for d in . */; do
+            d="${d%/}"
+            if [ -f "$d/gradlew" ]; then
+              GRADLE_FILE=$(find "$d" -maxdepth 3 \( -name "build.gradle.kts" -o -name "build.gradle" \) \
+                -not -path "*/build/*" -not -path "*/.gradle/*" \
+                -exec grep -l "versionCode" {} \; | head -1)
+
+              if [ -n "$GRADLE_FILE" ]; then
+                CURRENT_CODE=$(grep -oE 'versionCode = [0-9]+' "$GRADLE_FILE" | grep -oE '[0-9]+')
+                if [ -n "$CURRENT_CODE" ]; then
+                  NEW_CODE=$((CURRENT_CODE + 1))
+                  sed -i -E "s/versionCode = [0-9]+/versionCode = $NEW_CODE/" "$GRADLE_FILE"
+                fi
+                sed -i -E "s/versionName = \"[^\"]*\"/versionName = \"$VERSION\"/" "$GRADLE_FILE"
+                git add "$GRADLE_FILE"
+                echo "Updated $GRADLE_FILE (versionName=$VERSION)"
+              fi
+              break
+            fi
+          done
+
+          for d in . */; do
+            d="${d%/}"
+            PUBSPEC="$d/pubspec.yaml"
+            if [ -f "$PUBSPEC" ] && [ -d "$d/android" ] && grep -q "^flutter:" "$PUBSPEC"; then
+              CURRENT_BUILD=$(grep -oE '^version: [0-9]+\.[0-9]+\.[0-9]+\+[0-9]+' "$PUBSPEC" | grep -oE '[0-9]+$')
+              NEW_BUILD=$(( ${CURRENT_BUILD:-0} + 1 ))
+              sed -i -E "s/^version: .*/version: $VERSION+$NEW_BUILD/" "$PUBSPEC"
+              git add "$PUBSPEC"
+              echo "Updated $PUBSPEC (version=$VERSION+$NEW_BUILD)"
+              break
+            fi
+          done
+
+      # CHANGELOG LIMPO
+      - name: Update changelog
+        if: env.created_tags == '1'
+        run: |
+          DATE=$(date +'%Y-%m-%d')
+          VERSION=${{ env.new_version }}
+
+          if [ "${{ env.latest_tag }}" = "none" ]; then
+            RANGE="HEAD"
+          else
+            RANGE="${{ env.latest_tag }}..HEAD"
+          fi
+          
+          touch CHANGELOG.md RELEASE_NOTES.md
+
+          LOG=$(git log $RANGE \
+            --pretty=format:"%s" \
+            --no-merges | \
+            grep -Ei "^(feat|fix|docs|style|test|ci|chore|refactor|perf|build|revert)(\(.+\))?:|breaking change" | \
+            grep -Eiv "^chore\(release\):" || true)
+
+          if [ -z "$LOG" ]; then
+            echo "No valid commits."
+            exit 0
+          fi
+
+          LOG_FORMATTED=$(echo "$LOG" | sed 's/^/* /')
+
+          echo "## $VERSION - $DATE" > tmp1.md
+          echo "$LOG_FORMATTED" >> tmp1.md
+          cat CHANGELOG.md >> tmp1.md
+          mv tmp1.md CHANGELOG.md
+
+          # RELEASE_NOTES.md contém apenas as notas desta versão (usado na GitHub Release)
+          echo "## $VERSION - $DATE" > RELEASE_NOTES.md
+          echo "$LOG_FORMATTED" >> RELEASE_NOTES.md
+
+          git add CHANGELOG.md RELEASE_NOTES.md
+
+      # Commit automático do bot
+      - name: Commit and Push everything
+        if: env.created_tags == '1'
+        run: |
+          # 1. Faz commit das alterações nos ficheiros (package.json, changelog)
+          # [skip ci] evita que este commit volte a acionar o workflow
+          git diff --cached --quiet || git commit -m "chore(release): ${{ env.new_version }} [skip ci]"
+
+          # 2. Empurra o commit para a branch (main/dev)
+          git push origin HEAD
+
+          # 3. Tenta empurrar cada tag individualmente
+          # Isso evita que uma tag rejeitada bloqueie todas as outras
+          for tag in $(git tag --points-at HEAD); do
+            git push origin "$tag" || echo "Tag $tag rejeitada (provavelmente contém alteração de workflow). Ignorando..."
+          done
+
+          # Tenta empurrar as outras tags criadas no replay (opcional)
+          git push origin --tags || echo "Algumas tags foram rejeitadas, mas o processo continuou."
+
+      # Publica a Release no GitHub com as notas da versão atual
+      - name: Create GitHub Release
+        if: env.created_tags == '1'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # Step 6: Commit and push the updated CHANGELOG.md file
-      - name: Configure Git identity
+          GH_TOKEN: ${{ github.token }}
         run: |
-          git config --local user.email "actions@github.com"
-          git config --local user.name "GitHub Actions"
-          
-       # Step 7: Update RELEASE_NOTES.md
-      - name: Update RELEASE_NOTES.md and CHANGELOG.md
-        run: |
-         # Check if RELEASE_NOTES.md exists; create it if missing
-            if [ ! -f RELEASE_NOTES.md ]; then
-              echo "Creating missing RELEASE_NOTES.md"
-              touch RELEASE_NOTES.md
-            fi
-        
-            # Check if CHANGELOG.md exists; create it if missing
-            if [ ! -f CHANGELOG.md ]; then
-              echo "Creating missing CHANGELOG.md"
-              touch CHANGELOG.md
-            fi
-        
-          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "v0.0.0")
-          COMMITS=$(git log --pretty=format:"* %s" ${PREVIOUS_TAG}..HEAD)
-      
-          if [ -z "$COMMITS" ]; then
-            echo "No new commits found. Skipping release notes update."
-            echo "No new commits found. Skipping changelog update."
-            exit 0
-          fi
-      
-          # Prepend the new version and commits to the release notes
-          echo "## ${{ env.new_version }} - $(date +'%Y-%m-%d')" > temp_RELEASE_NOTES.md
-          echo "$COMMITS" >> temp_RELEASE_NOTES.md
-
-           # Prepend the new version and commits to the changelog
-          echo "## ${{ env.new_version }} - $(date +'%Y-%m-%d')" > temp_CHANGELOG.md
-          echo "$COMMITS" >> temp_CHANGELOG.md
-      
-          # Append the existing content of RELEASE_NOTES.md to the new file
-          cat RELEASE_NOTES.md >> temp_RELEASE_NOTES.md
-
-          # Append the existing content of CHANGELOG.md to the new file
-          cat CHANGELOG.md >> temp_CHANGELOG.md
-      
-          # Replace the old RELEASE_NOTES.md with the new one
-          mv temp_RELEASE_NOTES.md RELEASE_NOTES.md
-
-          # Replace the old CHANGELOG.md with the new one
-          mv temp_CHANGELOG.md CHANGELOG.md
-      
-          git add RELEASE_NOTES.md
-          git add CHANGELOG.md
-          
-          if git diff --cached --quiet; then
-            echo "No changes to commit in RELEASE_NOTES.md."
-            echo "No changes to commit in CHANGELOG.md."
-            exit 0
-          fi
-      
-          git commit -m "chore: update release notes and changelog for ${{ env.new_version }}"
-          git push origin main
+          gh release create "${{ env.new_version }}" \
+            --title "${{ env.new_version }}" \
+            --notes-file RELEASE_NOTES.md

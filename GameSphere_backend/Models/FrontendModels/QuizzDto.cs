@@ -5,7 +5,8 @@ namespace GameSphere_backend.Models.FrontendModels
     public class QuizzDto
     {
         public int Id { get; set; }
-        public string Title { get; set; }
+
+        public required string Title { get; set; }
 
         public Difficulty Difficulty { get; set; }
 

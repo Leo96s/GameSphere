@@ -62,6 +62,14 @@ namespace GameSphere_backend.Services
 
             var u = UserMapper.UserToDto(user);
 
+            if (u == null)
+                return new ServiceResponse<UserDto>
+                {
+                    Success = false,
+                    Message = "Error mapping user.",
+                    Type = "BadRequest"
+                };
+
             return new ServiceResponse<UserDto>
             {
                 Success = true,
@@ -114,6 +122,14 @@ namespace GameSphere_backend.Services
             {
                 response.Success = false;
                 response.Message = "Password is required";
+                response.Type = "BadRequest";
+                return response;
+            }
+
+            if (user.HashedPassword.Trim().Length < 8)
+            {
+                response.Success = false;
+                response.Message = "Password must have 8 characteres";
                 response.Type = "BadRequest";
                 return response;
             }
@@ -234,7 +250,7 @@ namespace GameSphere_backend.Services
             catch (Exception ex)
             {
                 response.Success = false;
-                response.Message = "An error occurred while checking email availability.";
+                response.Message = ex.Message;
                 response.Type = "BadRequest";
             }
 
@@ -282,7 +298,7 @@ namespace GameSphere_backend.Services
             catch (Exception ex)
             {
                 response.Success = false;
-                response.Message = "An error occurred while deleting the user.";
+                response.Message = ex.Message;
                 response.Type = "BadRequest";
             }
 
@@ -381,7 +397,7 @@ namespace GameSphere_backend.Services
             catch (Exception ex)
             {
                 response.Success = false;
-                response.Message = "An error occurred while updating the user.";
+                response.Message = ex.Message;
                 response.Type = "BadRequest";
             }
 
@@ -471,7 +487,7 @@ namespace GameSphere_backend.Services
             catch (Exception ex)
             {
                 response.Success = false;
-                response.Message = "An error occurred during login.";
+                response.Message = ex.Message;
                 response.Type = "BadRequest";
             }
 
@@ -520,7 +536,7 @@ namespace GameSphere_backend.Services
             catch (Exception ex)
             {
                 response.Success = false;
-                response.Message = "An error occurred while checking email availability.";
+                response.Message = ex.Message;
                 response.Type = "BadRequest";
             }
 
@@ -742,7 +758,7 @@ namespace GameSphere_backend.Services
                     return response;
                 }
 
-                var user = await _context.Users.SingleOrDefaultAsync(u => (u.Email == email && u.UID == uid));
+                var user = await _context.Users.FirstOrDefaultAsync(u => (u.Email == email && u.UID == uid));
 
                 if (user == null)
                 {
@@ -790,7 +806,7 @@ namespace GameSphere_backend.Services
             catch (Exception ex)
             {
                 response.Success = false;
-                response.Message = "An error occurred during login.";
+                response.Message = ex.Message;
                 response.Type = "BadRequest";
             }
 

@@ -21,7 +21,7 @@
         /// <value>
         /// The operation result data of type T when successful; otherwise may be null or default.
         /// </value>
-        public T Data { get; set; }
+        public T? Data { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the operation was successful.
@@ -37,7 +37,7 @@
         /// <value>
         /// Success or error message providing additional context about the operation outcome.
         /// </value>
-        public string Message { get; set; }
+        public string? Message { get; set; }
 
         /// <summary>
         /// Gets or sets the response type categorization.
@@ -46,6 +46,6 @@
         /// String identifier categorizing the response type (e.g., "NotFound", "BadRequest", "Ok").
         /// Typically maps to standard HTTP status code categories.
         /// </value>
-        public string Type { get; set; }
+        public string? Type { get; set; }
     }
 }

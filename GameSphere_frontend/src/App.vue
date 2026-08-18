@@ -1,19 +1,26 @@
 <template>
-  <div id="app">
-    <router-view name="header"></router-view>
-    <main>
-      <transition name="fade" mode="out-in">
+  <div id="app" class="min-h-screen flex flex-col">
+
+    <AppHeader />
+
+    <main class="flex-grow">
         <router-view/>
-      </transition>
+
     </main>
-    <router-view name="footer"></router-view>
+
+    <AppFooter />
+
   </div>
 </template>
 
 <script>
-export default {
-  name: "App"
-};
+import {defineComponent} from "vue";
+import AppHeader from "@/layout/AppHeader.vue";
+import AppFooter from "@/layout/AppFooter.vue";
+
+export default defineComponent({
+  components: {AppFooter, AppHeader}
+})
 </script>
 
 <style scoped>
