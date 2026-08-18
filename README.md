@@ -112,6 +112,31 @@ O site será uma plataforma interativa focada em **entretenimento e aprendizado 
    - Expandir para jogos e gamificação.  
 4. Testes e feedback de utilizadores.  
 
+### Configuração local segura
+
+O backend não versiona credenciais. Copia `GameSphere_backend/appsettings.example.json` para
+`GameSphere_backend/appsettings.json` apenas no teu ambiente local e substitui os valores de
+exemplo por valores próprios. Não faças commit desse ficheiro.
+
+Em ambientes de execução, usa variáveis de ambiente com a convenção do .NET:
+
+```
+ConnectionStrings__GameSphereDB
+JwtSettings__SecretKey
+JwtSettings__Issuer
+JwtSettings__Audience
+EmailSettings__SmtpServer
+EmailSettings__SmtpPort
+EmailSettings__SenderEmail
+EmailSettings__SenderName
+EmailSettings__Username
+EmailSettings__Password
+EmailSettings__EnableSSL
+```
+
+`JwtSettings__SecretKey` deve ter pelo menos 32 bytes e todos os valores reais devem ser
+mantidos apenas no gestor de segredos ou no ambiente de execução.
+
 ---
 
 ### **Funcionalidades de Quizzes Temáticos**  
