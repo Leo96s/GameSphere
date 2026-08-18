@@ -1,3 +1,7 @@
+## v0.2.9 - 2026-08-18
+* chore(config): validate required runtime configuration
+* chore(ci): update semantic versioning workflow via automatic-version-control
+* ci: update do ficheiro de controlo de versões
 ## v0.2.6 - 2026-04-10
 * fix: corrigido erros de negócio
 ## v0.2.5 - 2026-04-09
