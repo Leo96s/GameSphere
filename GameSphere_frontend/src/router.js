@@ -10,6 +10,8 @@ import ResetPassword from '@/views/Login/ResetPassword.vue';
 import QuizCatalogPage from '@/views/Quizzes/QuizCatalogPage.vue';
 import QuizPlayPage from '@/views/Quizzes/QuizPlayPage.vue';
 import QuizResultPage from '@/views/Quizzes/QuizResultPage.vue';
+import AdminQuizListPage from '@/views/Admin/AdminQuizListPage.vue';
+import AdminQuizEditorPage from '@/views/Admin/AdminQuizEditorPage.vue';
 import { getCurrentRole } from '@/services/authService';
 
 const getToken = () => localStorage.getItem('token');
@@ -88,6 +90,18 @@ const routes = [
     name: 'quiz-result',
     component: QuizResultPage,
     meta: { requiresAuth: true },
+  },
+  {
+    path: '/admin/quizzes',
+    name: 'admin-quiz-list',
+    component: AdminQuizListPage,
+    meta: { requiresAuth: true, requiresAdmin: true },
+  },
+  {
+    path: '/admin/quizzes/:id',
+    name: 'admin-quiz-editor',
+    component: AdminQuizEditorPage,
+    meta: { requiresAuth: true, requiresAdmin: true },
   },
   {
     path: '/forgetPassword/sentCode',

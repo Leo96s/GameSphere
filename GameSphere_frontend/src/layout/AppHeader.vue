@@ -9,7 +9,7 @@
 
         <nav class="hidden lg:flex items-center space-x-6">
           <router-link v-if="user" to="/quizzes" class="hover:text-purple-200 font-medium transition-colors text-sm">Quizzes</router-link>
-          <router-link v-if="isCurrentUserAdmin" to="/admin/quizzes" class="hover:text-purple-200 font-medium transition-colors text-sm">Administration</router-link>
+          <router-link v-if="isCurrentUserAdmin" to="/admin/quizzes" class="hover:text-purple-200 font-medium transition-colors text-sm">Administração</router-link>
           <span class="opacity-50 cursor-not-allowed font-medium text-sm">Disabled</span>
 
           <template v-if="!user">
@@ -96,7 +96,7 @@
 
         <nav class="flex flex-col space-y-2">
           <router-link v-if="user" to="/quizzes" class="block py-2 hover:text-purple-300">Quizzes</router-link>
-          <router-link v-if="isCurrentUserAdmin" to="/admin/quizzes" class="block py-2 hover:text-purple-300">Administration</router-link>
+          <router-link v-if="isCurrentUserAdmin" to="/admin/quizzes" class="block py-2 hover:text-purple-300">Administração</router-link>
 
           <template v-if="!user">
              <router-link to="/login" class="block py-2 hover:text-purple-300">Sign-in</router-link>
