@@ -186,7 +186,7 @@ public sealed class InitialAdminBootstrapperTests : IClassFixture<PostgreSqlFixt
 
     private sealed class TestAuthService : IAuthService
     {
-        public string GenerateToken(string userId, string email) => string.Empty;
+        public string GenerateToken(string userId, string email, UserRole role) => string.Empty;
     }
 
     private sealed class TestEmailService : IEmailService

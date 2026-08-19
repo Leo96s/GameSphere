@@ -5,6 +5,8 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using GameSphere_backend.Interfaces;
 
+using GameSphere_backend.Enums;
+
 namespace GameSphere_backend.Services
 {
     /// <summary>
@@ -32,6 +34,7 @@ namespace GameSphere_backend.Services
         /// </summary>
         /// <param name="userId">The unique identifier of the user.</param>
         /// <param name="email">The email address of the user.</param>
+        /// <param name="role">The persistent authorization role of the user.</param>
         /// <returns>
         /// A signed JWT token string containing the user's claims.
         /// </returns>
@@ -47,7 +50,7 @@ namespace GameSphere_backend.Services
         /// - Audience: The intended token audience
         /// - ExpirationMinutes: Token validity period in minutes
         /// </remarks>
-        public string GenerateToken(string userId, string email)
+        public string GenerateToken(string userId, string email, UserRole role)
         {
             // Retrieve JWT configuration from app settings
             var secretKey = _config["JwtSettings:SecretKey"] ?? throw new Exception("JWT SecretKey is missing in config"); ;
@@ -67,6 +70,7 @@ namespace GameSphere_backend.Services
             {
             new Claim(JwtRegisteredClaimNames.Sub, userId),
             new Claim(JwtRegisteredClaimNames.Email, email),
+            new Claim(ClaimTypes.Role, role.ToString()),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()) // Identificador único
         };
 

@@ -467,7 +467,7 @@ namespace GameSphere_backend.Services
                     return response;
                 }
 
-                var token = _authService.GenerateToken(authenticatedUserDTO.Id.ToString(), authenticatedUserDTO.Email);
+                var token = _authService.GenerateToken(user.Id.ToString(), user.Email, user.Role);
 
                 response.Data = new LoginResponse
                 {
@@ -786,7 +786,7 @@ namespace GameSphere_backend.Services
                     return response;
                 }
 
-                var token = _authService.GenerateToken(authenticatedUserDTO.Id.ToString(), authenticatedUserDTO.Email);
+                var token = _authService.GenerateToken(user.Id.ToString(), user.Email, user.Role);
 
                 response.Data = new LoginResponse
                 {
