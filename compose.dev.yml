@@ -1,0 +1,46 @@
+services:
+  api-dev:
+    build:
+      context: ./GameSphere_backend
+      target: development
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__GameSphereDB: ${DATABASE_CONNECTION_STRING:?DATABASE_CONNECTION_STRING is required}
+      JwtSettings__SecretKey: ${JWT_SECRET:?JWT_SECRET is required}
+      JwtSettings__Issuer: ${JWT_ISSUER:?JWT_ISSUER is required}
+      JwtSettings__Audience: ${JWT_AUDIENCE:?JWT_AUDIENCE is required}
+      EmailSettings__SmtpServer: ${SMTP_SERVER:?SMTP_SERVER is required}
+      EmailSettings__SmtpPort: ${SMTP_PORT:?SMTP_PORT is required}
+      EmailSettings__SenderEmail: ${SMTP_SENDER_EMAIL:?SMTP_SENDER_EMAIL is required}
+      EmailSettings__SenderName: ${SMTP_SENDER_NAME:?SMTP_SENDER_NAME is required}
+      EmailSettings__Username: ${SMTP_USERNAME:?SMTP_USERNAME is required}
+      EmailSettings__Password: ${SMTP_PASSWORD:?SMTP_PASSWORD is required}
+      EmailSettings__EnableSSL: ${SMTP_ENABLE_SSL:?SMTP_ENABLE_SSL is required}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - "127.0.0.1:5095:8080"
+    volumes:
+      - ./GameSphere_backend:/src
+      - nuget-packages:/root/.nuget/packages
+
+  frontend-dev:
+    build:
+      context: ./GameSphere_frontend
+      target: development
+    environment:
+      VITE_API_BASE_URL: http://localhost:5095/api
+    depends_on:
+      api-dev:
+        condition: service_started
+    ports:
+      - "127.0.0.1:5173:5173"
+    volumes:
+      - ./GameSphere_frontend:/app
+      - frontend-node-modules:/app/node_modules
+
+volumes:
+  frontend-node-modules:
+  nuget-packages:

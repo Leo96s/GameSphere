@@ -1,0 +1,46 @@
+name: gamesphere
+
+x-api-environment: &api-environment
+  ASPNETCORE_ENVIRONMENT: Development
+  ASPNETCORE_URLS: http://+:8080
+  ConnectionStrings__GameSphereDB: ${DATABASE_CONNECTION_STRING:?DATABASE_CONNECTION_STRING is required}
+  JwtSettings__SecretKey: ${JWT_SECRET:?JWT_SECRET is required}
+  JwtSettings__Issuer: ${JWT_ISSUER:?JWT_ISSUER is required}
+  JwtSettings__Audience: ${JWT_AUDIENCE:?JWT_AUDIENCE is required}
+  EmailSettings__SmtpServer: ${SMTP_SERVER:?SMTP_SERVER is required}
+  EmailSettings__SmtpPort: ${SMTP_PORT:?SMTP_PORT is required}
+  EmailSettings__SenderEmail: ${SMTP_SENDER_EMAIL:?SMTP_SENDER_EMAIL is required}
+  EmailSettings__SenderName: ${SMTP_SENDER_NAME:?SMTP_SENDER_NAME is required}
+  EmailSettings__Username: ${SMTP_USERNAME:?SMTP_USERNAME is required}
+  EmailSettings__Password: ${SMTP_PASSWORD:?SMTP_PASSWORD is required}
+  EmailSettings__EnableSSL: ${SMTP_ENABLE_SSL:?SMTP_ENABLE_SSL is required}
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  migrate:
+    build:
+      context: ./GameSphere_backend
+      target: migration
+    environment: *api-environment
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+volumes:
+  postgres-data:

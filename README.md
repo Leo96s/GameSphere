@@ -426,4 +426,60 @@ Para recursos como rankings ao vivo ou quizzes com múltiplos jogadores:
 - **Firebase**: Para integrar um sistema de notificações em tempo real (desafios e conquistas).  
 - **Unity WebGL**: Se quiser incluir mini-jogos com gráficos mais avançados.  
 
----
+## Ambiente Docker
+
+### Pré-requisitos
+
+Instala o Docker Desktop, que inclui o Docker Compose, e confirma que o daemon do Docker está em execução.
+
+Na raiz do projeto, cria a configuração local a partir do exemplo e substitui todos os valores `CHANGE_ME`. `DATABASE_CONNECTION_STRING` deve ser uma connection string Npgsql completa para o serviço `db`; em produção, fornece-a já formatada pelo gestor de segredos ou CI.
+
+```powershell
+Copy-Item .env.example .env
+```
+
+O ficheiro `.env` é exclusivamente local: não o faças commit nem o copies para um servidor. Em produção, fornece as variáveis através de um gestor de segredos, CI ou de `--env-file` apontado para um ficheiro fora do repositório.
+
+### Desenvolvimento
+
+Inicia o PostgreSQL, aplica as migrações e arranca a API e o frontend com hot reload:
+
+```powershell
+docker compose -f compose.yml -f compose.dev.yml up --build
+```
+
+URLs locais:
+
+- Frontend: <http://localhost:5173>
+- API: <http://localhost:5095>
+- Swagger: <http://localhost:5095/swagger>
+
+Para parar os serviços, preservando o volume do PostgreSQL:
+
+```powershell
+docker compose -f compose.yml -f compose.dev.yml down
+```
+
+Se precisares de executar as migrações EF Core novamente depois de uma alteração:
+
+```powershell
+docker compose -f compose.yml -f compose.dev.yml run --rm migrate
+```
+
+### Validação local das imagens de produção
+
+Constrói e arranca localmente as imagens de produção com o Nginx como ponto de entrada. Este fluxo usa HTTP apenas em `localhost` e não substitui um deployment público com terminação TLS:
+
+```powershell
+docker compose -f compose.yml -f compose.prod.yml up --build
+```
+
+A aplicação fica disponível em <http://localhost:8080>. A API não é publicada diretamente; é acessível internamente através do caminho `/api`.
+
+Para parar os serviços, preservando o volume do PostgreSQL:
+
+```powershell
+docker compose -f compose.yml -f compose.prod.yml down
+```
+
+Os comandos `down` não usam `--volumes`, para que os dados locais do PostgreSQL não sejam removidos.

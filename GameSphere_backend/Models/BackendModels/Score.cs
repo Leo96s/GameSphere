@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace GameSphere_backend.Models.BackendModels
 {
-    public class Score
+    public class Score : IValidatableObject
     {
         [Key]
         public int Id { get; set; }
@@ -14,12 +14,12 @@ namespace GameSphere_backend.Models.BackendModels
         public virtual User? User { get; set; }
 
         [ForeignKey("Quizz")]
-        public required int QuizzId { get; set; }
+        public int? QuizzId { get; set; }
 
         public virtual Quizz? Quizz { get; set; }
 
         [ForeignKey("Game")]
-        public required int GameId { get; set; }
+        public int? GameId { get; set; }
 
         public virtual Game? Game { get; set; }
 
@@ -28,6 +28,16 @@ namespace GameSphere_backend.Models.BackendModels
 
         [Required(ErrorMessage = "The field 'date' is required.")]
         public DateTime Date { get; set; }
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (GameId.HasValue == QuizzId.HasValue)
+            {
+                yield return new ValidationResult(
+                    "A score must be associated with exactly one game or quiz.",
+                    [nameof(GameId), nameof(QuizzId)]);
+            }
+        }
 
     }
 }

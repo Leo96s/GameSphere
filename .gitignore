@@ -10,3 +10,13 @@ GameSphere_backend/.env.*
 !GameSphere_backend/.env.example
 /GameSphere_backend/.vs
 /.history
+
+# Docker Compose local environment
+/.env
+/.env.*
+!/.env.example
+
+# Frontend local environment files
+/GameSphere_frontend/.env
+/GameSphere_frontend/.env.*
+!/GameSphere_frontend/.env.example

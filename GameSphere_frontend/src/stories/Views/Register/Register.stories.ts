@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
 import Register from '../../../views/Register/RegisterPage.vue';
 import { vueRouter } from 'storybook-vue3-router';
-import { userEvent, within, expect } from '@storybook/test';
+import { userEvent, within, expect } from 'storybook/test';
 
 const meta: Meta<typeof Register> = {
   title: 'Views/Auth/Register',

@@ -1,0 +1,38 @@
+services:
+  migrate:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+
+  api-prod:
+    build:
+      context: ./GameSphere_backend
+      target: production
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__GameSphereDB: ${DATABASE_CONNECTION_STRING:?DATABASE_CONNECTION_STRING is required}
+      JwtSettings__SecretKey: ${JWT_SECRET:?JWT_SECRET is required}
+      JwtSettings__Issuer: ${JWT_ISSUER:?JWT_ISSUER is required}
+      JwtSettings__Audience: ${JWT_AUDIENCE:?JWT_AUDIENCE is required}
+      EmailSettings__SmtpServer: ${SMTP_SERVER:?SMTP_SERVER is required}
+      EmailSettings__SmtpPort: ${SMTP_PORT:?SMTP_PORT is required}
+      EmailSettings__SenderEmail: ${SMTP_SENDER_EMAIL:?SMTP_SENDER_EMAIL is required}
+      EmailSettings__SenderName: ${SMTP_SENDER_NAME:?SMTP_SENDER_NAME is required}
+      EmailSettings__Username: ${SMTP_USERNAME:?SMTP_USERNAME is required}
+      EmailSettings__Password: ${SMTP_PASSWORD:?SMTP_PASSWORD is required}
+      EmailSettings__EnableSSL: ${SMTP_ENABLE_SSL:?SMTP_ENABLE_SSL is required}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  frontend-prod:
+    build:
+      context: ./GameSphere_frontend
+      target: production
+      args:
+        VITE_API_BASE_URL: /api
+    depends_on:
+      api-prod:
+        condition: service_started
+    ports:
+      - "127.0.0.1:8080:80"
