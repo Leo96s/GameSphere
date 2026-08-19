@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
 import Login from '../../../views/Login/Login.vue';
-import { userEvent, within, expect } from 'storybook/test';
+import { userEvent, within, expect, waitFor } from 'storybook/test';
 
 // Este decorator simula o ambiente do Router para que o <RouterLink> funcione
 import { vueRouter } from 'storybook-vue3-router';
@@ -31,9 +31,11 @@ export const ValidationErrors: Story = {
     // Clica no botão sem preencher nada para disparar o Zod
     await userEvent.click(submitBtn);
 
-    // Verifica se as mensagens do Zod aparecem
-    await expect(canvas.getByText(/Email is required/i)).toBeInTheDocument();
-    await expect(canvas.getByText(/Password is required/i)).toBeInTheDocument();
+    // Verifica as mensagens do Zod depois da validação assíncrona do formulário.
+    await waitFor(() => {
+      expect(canvas.getByText(/Email is required/i)).toBeInTheDocument();
+      expect(canvas.getByText(/Password is required/i)).toBeInTheDocument();
+    });
   },
 };
 

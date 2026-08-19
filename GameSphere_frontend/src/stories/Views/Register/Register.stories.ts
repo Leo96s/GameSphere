@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
 import Register from '../../../views/Register/RegisterPage.vue';
 import { vueRouter } from 'storybook-vue3-router';
-import { userEvent, within, expect } from 'storybook/test';
+import { userEvent, within, expect, waitFor } from 'storybook/test';
 
 const meta: Meta<typeof Register> = {
   title: 'Views/Auth/Register',
@@ -25,9 +25,11 @@ export const ValidationTrigger: Story = {
 
     await userEvent.click(createBtn);
 
-    // Check for specific Zod error messages
-    await expect(canvas.getByText(/First name is required/i)).toBeInTheDocument();
-    await expect(canvas.getByText(/You must accept the terms/i)).toBeInTheDocument();
+    // Check for specific Zod error messages after asynchronous form validation.
+    await waitFor(() => {
+      expect(canvas.getByText(/First name is required/i)).toBeInTheDocument();
+      expect(canvas.getByText(/You must accept the terms/i)).toBeInTheDocument();
+    });
   },
 };
 

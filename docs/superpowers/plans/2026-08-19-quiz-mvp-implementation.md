@@ -432,6 +432,11 @@ Expected: DB saudável, `migrate` exit 0, API e frontend em execução; smoke te
 
 Commit: `docs(quiz): document local admin bootstrap`
 
+### Nota de implementação da Task 7
+
+- O frontend mantém duas configurações Vite. O projeto Vitest `unit` foi declarado em ambas para manter a descoberta consistente dos specs JavaScript e preservar o projeto Storybook existente; a resolução por omissão usa `vite.config.ts`.
+- Os stories de validação de Login e Register usam `waitFor` para observar as mensagens Zod depois da validação assíncrona do Vee Validate, sem alterar as páginas nem enfraquecer as asserções.
+
 ## Revisão do plano
 
 - Cobertura da especificação: Tasks 2–3 cobrem roles e bootstrap; Tasks 4–5 catálogo, proteção de respostas e tentativas; Task 6 CRUD administrativo; Tasks 7–9 frontend; Tasks 1 e 7–10 testes e validação.

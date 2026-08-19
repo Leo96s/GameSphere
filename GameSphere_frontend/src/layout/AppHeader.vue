@@ -8,7 +8,8 @@
         </router-link>
 
         <nav class="hidden lg:flex items-center space-x-6">
-          <router-link to="#" class="hover:text-purple-200 font-medium transition-colors text-sm">Quizzes</router-link>
+          <router-link v-if="user" to="/quizzes" class="hover:text-purple-200 font-medium transition-colors text-sm">Quizzes</router-link>
+          <router-link v-if="isCurrentUserAdmin" to="/admin/quizzes" class="hover:text-purple-200 font-medium transition-colors text-sm">Administration</router-link>
           <span class="opacity-50 cursor-not-allowed font-medium text-sm">Disabled</span>
 
           <template v-if="!user">
@@ -94,7 +95,8 @@
         </form>
 
         <nav class="flex flex-col space-y-2">
-          <router-link to="#" class="block py-2 hover:text-purple-300">Quizzes</router-link>
+          <router-link v-if="user" to="/quizzes" class="block py-2 hover:text-purple-300">Quizzes</router-link>
+          <router-link v-if="isCurrentUserAdmin" to="/admin/quizzes" class="block py-2 hover:text-purple-300">Administration</router-link>
 
           <template v-if="!user">
              <router-link to="/login" class="block py-2 hover:text-purple-300">Sign-in</router-link>
@@ -122,9 +124,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
+import { computed, ref, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
-import { logout } from "@/services/authService";
+import { getCurrentUser, isAdmin, logout } from "@/services/authService";
 
 // ChadCN UI Components
 import {
@@ -144,7 +146,9 @@ const router = useRouter();
  * Reactive user object synchronized with localStorage.
  * @type {import('vue').Ref<Object|null>}
  */
-const user = ref(null);
+const user = ref(getCurrentUser());
+
+const isCurrentUserAdmin = computed(() => user.value && isAdmin());
 
 /**
  * Controls the visibility of the mobile navigation menu.
@@ -157,17 +161,7 @@ const isOpen = ref(false);
  * Handles edge cases like "undefined" or "null" strings.
  */
 const checkUser = () => {
-  try {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser && storedUser !== "undefined" && storedUser !== "null") {
-      user.value = JSON.parse(storedUser);
-    } else {
-      user.value = null;
-    }
-  } catch (e) {
-    console.error("Error processing user data:", e);
-    user.value = null;
-  }
+  user.value = getCurrentUser();
 };
 
 /**

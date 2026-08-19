@@ -25,6 +25,14 @@ export default defineConfig({
     projects: [
       {
         extends: true,
+        test: {
+          name: 'unit',
+          environment: 'node',
+          include: ['src/**/*.spec.js'],
+        },
+      },
+      {
+        extends: true,
         plugins: [
           // Integração oficial do Storybook com Vitest
           storybookTest({
