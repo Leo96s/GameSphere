@@ -8,13 +8,13 @@ COPY . ./
 
 FROM base AS development
 EXPOSE 8080
-ENTRYPOINT ["dotnet", "watch", "run", "--urls", "http://0.0.0.0:8080"]
+ENTRYPOINT ["dotnet", "watch", "--project", "GameSphere_backend.csproj", "run", "--urls", "http://0.0.0.0:8080"]
 
 FROM base AS build
-RUN dotnet publish -c Release --no-restore -o /app/publish
+RUN dotnet publish GameSphere_backend.csproj -c Release --no-restore -o /app/publish
 
 FROM base AS migration
-RUN dotnet build -c Release --no-restore
+RUN dotnet build GameSphere_backend.csproj -c Release --no-restore
 RUN dotnet tool install --tool-path /tools dotnet-ef --version 10.0.2
 ENV PATH="/tools:${PATH}"
 ENTRYPOINT ["dotnet-ef", "database", "update", "--no-build", "--configuration", "Release", "--project", "GameSphere_backend.csproj"]
