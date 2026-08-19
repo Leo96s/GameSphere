@@ -7,6 +7,9 @@ import RegisterPage from '@/views/Register/RegisterPage.vue';
 import Profile from '@/views/Profile/ProfilePage.vue';
 import SentCodePage from '@/views/Login/SentCodePage.vue';
 import ResetPassword from '@/views/Login/ResetPassword.vue';
+import QuizCatalogPage from '@/views/Quizzes/QuizCatalogPage.vue';
+import QuizPlayPage from '@/views/Quizzes/QuizPlayPage.vue';
+import QuizResultPage from '@/views/Quizzes/QuizResultPage.vue';
 import { getCurrentRole } from '@/services/authService';
 
 const getToken = () => localStorage.getItem('token');
@@ -66,6 +69,24 @@ const routes = [
       default: Profile,
       footer: AppFooter,
     },
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/quizzes',
+    name: 'quiz-catalog',
+    component: QuizCatalogPage,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/quizzes/:id',
+    name: 'quiz-play',
+    component: QuizPlayPage,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/quizzes/result',
+    name: 'quiz-result',
+    component: QuizResultPage,
     meta: { requiresAuth: true },
   },
   {

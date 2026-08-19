@@ -352,7 +352,7 @@ attempt.selectAnswer(4, 'Lisbon')
 expect(attempt.toRequest()).toEqual({ answers: [{ questionId: 4, selectedAnswer: 'Lisbon' }] })
 ```
 
-- [ ] **Step 2: Implementar o serviço Axios e composable sem respostas corretas ou cálculo de pontuação. A página de quiz só ativa submissão quando `isComplete` é verdadeiro.**
+- [ ] **Step 2: Implementar o serviço Axios e composable sem respostas corretas ou cálculo de pontuação. A página de quiz só ativa submissão quando `isComplete` é verdadeiro; um quiz sem perguntas mostra estado vazio e não pode ser submetido.**
 
 - [ ] **Step 3: Implementar catálogo autenticado, vista de jogo com loading/erro e resultado a partir da resposta do servidor; guardar o resultado na navegação por state e redirecionar ao catálogo se não existir resultado.**
 
