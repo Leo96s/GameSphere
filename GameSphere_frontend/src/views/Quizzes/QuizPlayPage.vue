@@ -101,7 +101,11 @@ const handleSubmit = async () => {
   try {
     const result = await submitAttempt(quiz.value.id, attempt.value.toRequest());
     attempt.value.clear();
-    await router.push({ name: 'quiz-result', state: { quizResult: result } });
+    await router.push({
+      name: 'quiz-result',
+      params: { id: quiz.value.id },
+      state: { quizResult: result },
+    });
   } catch (error) {
     submitError.value = error?.response?.data?.message ?? 'Não foi possível submeter a tentativa. Tenta novamente.';
   } finally {

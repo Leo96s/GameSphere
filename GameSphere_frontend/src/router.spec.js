@@ -5,7 +5,7 @@ vi.mock('vue-router', () => ({
   createWebHistory: vi.fn(),
 }));
 
-import { createNavigationGuard } from './router';
+import { createNavigationGuard, routes } from './router';
 
 describe('createNavigationGuard', () => {
   it('redireciona para a landing sem token numa rota autenticada', () => {
@@ -33,5 +33,16 @@ describe('createNavigationGuard', () => {
     });
 
     expect(guard({ meta: { requiresAdmin: true } })).toBe(true);
+  });
+});
+
+describe('quiz result route', () => {
+  it('identifica o quiz no caminho do resultado', () => {
+    const resultRoute = routes.find((route) => route.name === 'quiz-result');
+
+    expect(resultRoute).toMatchObject({
+      path: '/quizzes/:id/result',
+      meta: { requiresAuth: true },
+    });
   });
 });

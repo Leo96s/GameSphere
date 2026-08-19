@@ -35,7 +35,7 @@ export const createNavigationGuard = ({
   return true;
 };
 
-const routes = [
+export const routes = [
   {
     path: '/',
     name: 'landing',
@@ -86,7 +86,7 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
-    path: '/quizzes/result',
+    path: '/quizzes/:id/result',
     name: 'quiz-result',
     component: QuizResultPage,
     meta: { requiresAuth: true },
