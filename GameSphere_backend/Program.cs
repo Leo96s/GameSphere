@@ -55,6 +55,7 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserServices>();
+builder.Services.AddScoped<InitialAdminBootstrapper>();
 
 builder.Services.AddOptions<EmailSettings>()
     .Bind(config.GetSection("EmailSettings"))
@@ -121,6 +122,13 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var app = builder.Build();
+
+if (!app.Environment.IsEnvironment("DesignTime"))
+{
+    await using var scope = app.Services.CreateAsyncScope();
+    var bootstrapper = scope.ServiceProvider.GetRequiredService<InitialAdminBootstrapper>();
+    await bootstrapper.EnsureAdminAsync();
+}
 
 app.UseCors("AllowAll");
 

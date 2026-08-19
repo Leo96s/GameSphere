@@ -125,6 +125,8 @@ ConnectionStrings__GameSphereDB
 JwtSettings__SecretKey
 JwtSettings__Issuer
 JwtSettings__Audience
+InitialAdmin__Email
+InitialAdmin__Password
 EmailSettings__SmtpServer
 EmailSettings__SmtpPort
 EmailSettings__SenderEmail
@@ -136,6 +138,15 @@ EmailSettings__EnableSSL
 
 `JwtSettings__SecretKey` deve ter pelo menos 32 bytes e todos os valores reais devem ser
 mantidos apenas no gestor de segredos ou no ambiente de execução.
+
+`InitialAdmin__Email` e `InitialAdmin__Password` são obrigatórias para criar ou promover o
+administrador inicial. Em Docker Compose, define `INITIAL_ADMIN_EMAIL` e
+`INITIAL_ADMIN_PASSWORD` no ficheiro `.env` local ou no ambiente de execução. A password não
+é registada e deve ter pelo menos 8 caracteres.
+
+O e-mail de cada utilizador é único. A migração cria o índice único sem alterar nem eliminar
+dados: se uma base de dados legada já tiver e-mails duplicados, a migração falha e esses dados
+devem ser resolvidos manualmente antes de voltar a aplicá-la.
 
 ---
 

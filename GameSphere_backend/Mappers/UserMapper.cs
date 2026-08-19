@@ -1,5 +1,6 @@
 ﻿using GameSphere_backend.Models.BackendModels;
 using GameSphere_backend.Models.FrontendModels;
+using GameSphere_backend.Enums;
 using GameSphere_backend.Utils;
 
 namespace GameSphere_backend.Mappers
@@ -37,7 +38,7 @@ namespace GameSphere_backend.Mappers
                 ? DateTime.Now
                 : user.RegistrationDate;
 
-            return new UserDto
+            return new UserDto(user.Role)
             {
                 Id = user.Id,
                 UID = user.UID,
@@ -87,6 +88,7 @@ namespace GameSphere_backend.Mappers
                 HashedPassword = user.HashedPassword ?? "",
                 RegistrationDate = user.RegistrationDate,
                 isActive = user.isActive,
+                Role = UserRole.User,
                 Image = user.Image,
                 TotalPoints = user.TotalPoints,
                 Gender = user.Gender,

@@ -13,6 +13,22 @@ namespace GameSphere_backend.Models.FrontendModels
     public class UserDto
     {
         /// <summary>
+        /// Initializes a new instance of the <see cref="UserDto"/> class for request deserialization.
+        /// </summary>
+        public UserDto()
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="UserDto"/> class for a server response.
+        /// </summary>
+        /// <param name="role">The role persisted for the user.</param>
+        public UserDto(UserRole role)
+        {
+            Role = role;
+        }
+
+        /// <summary>
         /// Gets or sets the unique identifier for the user.
         /// </summary>
         public int Id { get; set; }
@@ -81,6 +97,12 @@ namespace GameSphere_backend.Models.FrontendModels
         /// Gets or sets a value indicating whether the user account is active.
         /// </summary>
         public bool isActive { get; set; }
+
+        /// <summary>
+        /// Gets the persistent authorization role for the user.
+        /// This value is serialized in server responses but cannot be set by a client request.
+        /// </summary>
+        public UserRole Role { get; }
 
         /// <summary>
         /// Gets or sets the authentication token for the user.

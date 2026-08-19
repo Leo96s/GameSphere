@@ -1,5 +1,6 @@
 ﻿using GameSphere_backend.Enums;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
 
 namespace GameSphere_backend.Models.BackendModels
 {
@@ -11,6 +12,7 @@ namespace GameSphere_backend.Models.BackendModels
     /// including personal information, authentication details, and game-related statistics.
     /// It also includes navigation properties for related entities.
     /// </remarks>
+    [Index(nameof(Email), IsUnique = true)]
     public class User
     {
         /// <summary>
@@ -94,6 +96,12 @@ namespace GameSphere_backend.Models.BackendModels
         /// </summary>
         /// <value>True if the account is active, false if deactivated.</value>
         public bool isActive { get; set; }
+
+        /// <summary>
+        /// Gets or sets the persistent authorization role for the user.
+        /// </summary>
+        /// <value>The user role, which defaults to <see cref="UserRole.User"/>.</value>
+        public UserRole Role { get; set; } = UserRole.User;
 
         /// <summary>
         /// Gets or sets the authentication token for the user.

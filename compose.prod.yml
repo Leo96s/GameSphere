@@ -14,6 +14,8 @@ services:
       JwtSettings__SecretKey: ${JWT_SECRET:?JWT_SECRET is required}
       JwtSettings__Issuer: ${JWT_ISSUER:?JWT_ISSUER is required}
       JwtSettings__Audience: ${JWT_AUDIENCE:?JWT_AUDIENCE is required}
+      InitialAdmin__Email: ${INITIAL_ADMIN_EMAIL:?INITIAL_ADMIN_EMAIL is required}
+      InitialAdmin__Password: ${INITIAL_ADMIN_PASSWORD:?INITIAL_ADMIN_PASSWORD is required}
       EmailSettings__SmtpServer: ${SMTP_SERVER:?SMTP_SERVER is required}
       EmailSettings__SmtpPort: ${SMTP_PORT:?SMTP_PORT is required}
       EmailSettings__SenderEmail: ${SMTP_SENDER_EMAIL:?SMTP_SENDER_EMAIL is required}

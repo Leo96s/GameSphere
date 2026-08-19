@@ -112,8 +112,9 @@ Commit: `test(api): add PostgreSQL integration harness`
 **Interfaces:**
 - Produces `UserRole { User, Admin }` e `User.Role` com valor por defeito `User`.
 - Produces `Task EnsureAdminAsync(CancellationToken cancellationToken = default)`.
+- Produces um índice único para `User.Email`; em caso de arranque concorrente, o bootstrap relê o utilizador após a violação desse índice.
 
-- [ ] **Step 1: Escrever testes que falham para criação, promoção e idempotência.**
+- [ ] **Step 1: Escrever testes que falham para criação, promoção, idempotência, arranque concorrente e regressão de escalada de privilégios.**
 
 ```csharp
 [Fact]
@@ -125,9 +126,9 @@ public async Task EnsureAdminAsync_promotes_existing_configured_user()
 }
 ```
 
-- [ ] **Step 2: Adicionar `UserRole` e a propriedade `public UserRole Role { get; set; } = UserRole.User;`; propagar `Role` para `UserDto` e `UserMapper`.**
+- [ ] **Step 2: Adicionar `UserRole` e a propriedade `public UserRole Role { get; set; } = UserRole.User;`; expor `Role` apenas para leitura no `UserDto`, predefinir `User` na criação pública e preservar a role persistida nas atualizações públicas.**
 
-- [ ] **Step 3: Implementar o bootstrap num serviço scoped. Validar email e password configurados; procurar por email; promover o existente ou criar um utilizador ativo com password BCrypt e campos mínimos válidos; nunca registar a password.**
+- [ ] **Step 3: Implementar o bootstrap num serviço scoped. Validar email e password configurados (mínimo de 8 caracteres); procurar por email; promover o existente ou criar um utilizador ativo com password BCrypt e campos mínimos válidos; nunca registar a password. Após uma violação da unicidade de e-mail, reler e promover o utilizador concorrente, repondo os restantes erros.**
 
 ```csharp
 await using var scope = app.Services.CreateAsyncScope();
@@ -135,11 +136,11 @@ await scope.ServiceProvider.GetRequiredService<InitialAdminBootstrapper>()
     .EnsureAdminAsync();
 ```
 
-- [ ] **Step 4: Criar e rever a migração EF. Passar `InitialAdmin__Email` e `InitialAdmin__Password` a partir das variáveis obrigatórias `INITIAL_ADMIN_EMAIL` e `INITIAL_ADMIN_PASSWORD` nos Compose; adicionar apenas placeholders fictícios ao `.env.example`.**
+- [ ] **Step 4: Criar e rever a migração EF. Passar `InitialAdmin__Email` e `InitialAdmin__Password` a partir das variáveis obrigatórias `INITIAL_ADMIN_EMAIL` e `INITIAL_ADMIN_PASSWORD` nos Compose; adicionar apenas placeholders fictícios ao `.env.example`. Criar o índice único de `Users.Email` sem limpeza automática: a migração falha se houver e-mails legados duplicados.**
 
 - [ ] **Step 5: Executar os testes do bootstrap e compilar.**
 
-Run: `dotnet test GameSphere_backend.Tests/GameSphere_backend.Tests.csproj --filter InitialAdminBootstrapperTests`
+Run: `dotnet test GameSphere_backend.Tests/GameSphere_backend.Tests.csproj -- --filter-class GameSphere_backend.Tests.Authentication.InitialAdminBootstrapperTests`
 Run: `dotnet build GameSphere_backend/GameSphere_backend.csproj`
 Expected: PASS sem segredos no output.
 
