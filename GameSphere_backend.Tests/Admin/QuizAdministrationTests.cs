@@ -26,6 +26,8 @@ public sealed class QuizAdministrationTests : IClassFixture<PostgreSqlFixture>, 
     private readonly GameSphereApiFactory _factory;
     private HttpClient _client = null!;
     private int _adminId;
+    private int _inactiveAdminId;
+    private int _userId;
 
     public QuizAdministrationTests(PostgreSqlFixture database)
     {
@@ -59,11 +61,29 @@ public sealed class QuizAdministrationTests : IClassFixture<PostgreSqlFixture>, 
     [Fact]
     public async Task Administration_with_a_user_role_returns_forbidden()
     {
-        using var request = CreateRequest(HttpMethod.Get, "/api/admin/quizzes", UserRole.User);
+        using var request = CreateRequest(HttpMethod.Get, "/api/admin/quizzes", UserRole.User, _userId);
 
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Administration_with_an_inactive_admin_session_returns_forbidden_for_reads_and_writes()
+    {
+        using var readRequest = CreateRequest(HttpMethod.Get, "/api/admin/quizzes", UserRole.Admin, _inactiveAdminId);
+        using var writeRequest = CreateRequest(HttpMethod.Post, "/api/admin/quizzes", UserRole.Admin, _inactiveAdminId, new
+        {
+            title = "Inactive admin quiz",
+            difficulty = (int)Difficulty.EASY,
+            isPublished = false
+        });
+
+        var readResponse = await _client.SendAsync(readRequest, TestContext.Current.CancellationToken);
+        var writeResponse = await _client.SendAsync(writeRequest, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Forbidden, readResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, writeResponse.StatusCode);
     }
 
     [Fact]
@@ -288,14 +308,19 @@ public sealed class QuizAdministrationTests : IClassFixture<PostgreSqlFixture>, 
 
     private async Task<HttpResponseMessage> SendAdminRequestAsync(HttpMethod method, string uri, object? payload = null)
     {
-        using var request = CreateRequest(method, uri, UserRole.Admin, payload);
+        using var request = CreateRequest(method, uri, UserRole.Admin, payload: payload);
         return await _client.SendAsync(request, TestContext.Current.CancellationToken);
     }
 
-    private HttpRequestMessage CreateRequest(HttpMethod method, string uri, UserRole role, object? payload = null)
+    private HttpRequestMessage CreateRequest(
+        HttpMethod method,
+        string uri,
+        UserRole role,
+        int? userId = null,
+        object? payload = null)
     {
         var request = new HttpRequestMessage(method, uri);
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", GenerateToken(_adminId, role));
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", GenerateToken(userId ?? _adminId, role));
         if (payload is not null)
         {
             request.Content = JsonContent.Create(payload);
@@ -319,9 +344,33 @@ public sealed class QuizAdministrationTests : IClassFixture<PostgreSqlFixture>, 
             isActive = true,
             Role = UserRole.Admin
         };
-        context.Users.Add(admin);
+        var inactiveAdmin = new User
+        {
+            Email = $"inactive-admin-{suffix}@example.test",
+            FirstName = "Inactive",
+            LastName = "Admin",
+            HashedPassword = "Test-password-123",
+            RegistrationDate = DateTime.UtcNow,
+            Gender = Gender.OUTRO,
+            isActive = false,
+            Role = UserRole.Admin
+        };
+        var user = new User
+        {
+            Email = $"user-{suffix}@example.test",
+            FirstName = "User",
+            LastName = "Test",
+            HashedPassword = "Test-password-123",
+            RegistrationDate = DateTime.UtcNow,
+            Gender = Gender.OUTRO,
+            isActive = true,
+            Role = UserRole.User
+        };
+        context.Users.AddRange(admin, inactiveAdmin, user);
         await context.SaveChangesAsync(TestContext.Current.CancellationToken);
         _adminId = admin.Id;
+        _inactiveAdminId = inactiveAdmin.Id;
+        _userId = user.Id;
     }
 
     private async Task AssertQuizOwnerAsync(int quizId, int adminId)

@@ -1,4 +1,4 @@
-using GameSphere_backend.Enums;
+using GameSphere_backend.Authorization;
 using GameSphere_backend.Interfaces;
 using GameSphere_backend.Models.FrontendModels;
 using GameSphere_backend.ServicesResponses;
@@ -11,7 +11,7 @@ namespace GameSphere_backend.Controllers;
 
 [ApiController]
 [Route("api/admin/quizzes")]
-[Authorize(Roles = nameof(UserRole.Admin))]
+[Authorize(Policy = ActiveAdminRequirement.PolicyName)]
 public sealed class AdminQuizzesController : ControllerBase
 {
     private readonly IQuizAdministrationService _quizAdministrationService;

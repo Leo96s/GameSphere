@@ -1,8 +1,10 @@
 using GameSphere_backend.Data;
+using GameSphere_backend.Authorization;
 using GameSphere_backend.Interfaces;
 using GameSphere_backend.Models.FrontendModels;
 using GameSphere_backend.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -59,6 +61,7 @@ builder.Services.AddScoped<IUserService, UserServices>();
 builder.Services.AddScoped<IQuizCatalogService, QuizCatalogService>();
 builder.Services.AddScoped<IQuizAdministrationService, QuizAdministrationService>();
 builder.Services.AddScoped<InitialAdminBootstrapper>();
+builder.Services.AddScoped<IAuthorizationHandler, ActiveAdminAuthorizationHandler>();
 
 builder.Services.AddOptions<EmailSettings>()
     .Bind(config.GetSection("EmailSettings"))
@@ -83,7 +86,14 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(ActiveAdminRequirement.PolicyName, policy =>
+    {
+        policy.RequireAuthenticatedUser();
+        policy.AddRequirements(new ActiveAdminRequirement());
+    });
+});
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
