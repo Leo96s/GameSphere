@@ -282,7 +282,7 @@ Assert.Equal(2, updatedQuiz.NumberOfQuests);
 
 - [ ] **Step 2: Implementar validação de título, perguntas, opções e resposta correta. Rejeitar `CorrectAnswer` que não exista em `Answers`; definir `UserId` a partir do admin autenticado na criação; recalcular `NumberOfQuests` depois de cada alteração.**
 
-- [ ] **Step 3: Implementar alterações de quiz e respetivas perguntas em transação EF Core quando o pedido as inclui; apagar perguntas antes do quiz para respeitar a FK.**
+- [ ] **Step 3: Implementar alterações de quiz e respetivas perguntas em transação EF Core quando o pedido as inclui; serializar mutações de perguntas por quiz com bloqueio da linha-pai PostgreSQL para manter `NumberOfQuests` consistente; apagar perguntas antes do quiz para respeitar a FK.**
 
 - [ ] **Step 4: Registar o serviço e executar os testes administrativos.**
 

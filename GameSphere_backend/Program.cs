@@ -57,6 +57,7 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserServices>();
 builder.Services.AddScoped<IQuizCatalogService, QuizCatalogService>();
+builder.Services.AddScoped<IQuizAdministrationService, QuizAdministrationService>();
 builder.Services.AddScoped<InitialAdminBootstrapper>();
 
 builder.Services.AddOptions<EmailSettings>()
