@@ -1,5 +1,7 @@
 /GameSphere_backend/.idea
 /GameSphere_backend/obj
+/GameSphere_backend.Tests/bin
+/GameSphere_backend.Tests/obj
 /GameSphere_frontend/.fleet
 GameSphere_backend/appsettings.json
 GameSphere_backend/appsettings.*.json

@@ -172,3 +172,5 @@ static string GetRequiredConfiguration(IConfiguration configuration, string key)
 
     return value;
 }
+
+public partial class Program { }
