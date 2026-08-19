@@ -17,6 +17,8 @@ namespace GameSphere_backend.Models.BackendModels
 
         public int NumberOfQuests { get; set; }
 
+        public bool IsPublished { get; set; }
+
         [Required(ErrorMessage = "The field 'RegistrationDate' is required.")]
         public DateTime RegistrationDate { get; set; }
 
