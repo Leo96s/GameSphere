@@ -53,6 +53,12 @@ public sealed class QuizCatalogService : IQuizCatalogService
         }
 
         var questions = quiz.Questions?.ToArray() ?? [];
+
+        if (questions.Length == 0)
+        {
+            return Failure("BadRequest", "Quiz has no questions.");
+        }
+
         var submittedAnswers = request.Answers;
 
         if (submittedAnswers.Count != questions.Length)

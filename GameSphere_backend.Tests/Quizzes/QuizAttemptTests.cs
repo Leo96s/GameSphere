@@ -31,6 +31,7 @@ public sealed class QuizAttemptTests : IClassFixture<PostgreSqlFixture>, IAsyncL
     private int _firstQuestionId;
     private int _secondQuestionId;
     private int _draftQuizId;
+    private int _emptyPublishedQuizId;
 
     public QuizAttemptTests(PostgreSqlFixture database)
     {
@@ -162,6 +163,35 @@ public sealed class QuizAttemptTests : IClassFixture<PostgreSqlFixture>, IAsyncL
         Assert.Equal(0, await ScoreCountAsync());
     }
 
+    [Fact]
+    public async Task Attempt_for_published_quiz_without_questions_returns_bad_request_without_persisting_score()
+    {
+        var response = await SendAttemptAsync(_emptyPublishedQuizId, []);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Empty(await ScoresForQuizAsync(_emptyPublishedQuizId));
+    }
+
+    [Fact]
+    public async Task Two_valid_attempts_persist_distinct_utc_quiz_scores()
+    {
+        var firstResponse = await SendAttemptAsync(_publishedQuizId, ValidAnswers());
+        var secondResponse = await SendAttemptAsync(_publishedQuizId, ValidAnswers());
+        var scores = await ScoresForQuizAsync(_publishedQuizId);
+
+        Assert.Equal(HttpStatusCode.OK, firstResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, secondResponse.StatusCode);
+        Assert.Equal(2, scores.Count);
+        Assert.All(scores, score =>
+        {
+            Assert.Equal(_playerId, score.UserId);
+            Assert.Equal(_publishedQuizId, score.QuizzId);
+            Assert.Null(score.GameId);
+            Assert.Equal(DateTimeKind.Utc, score.Date.Kind);
+            Assert.Equal(2f, score.Points);
+        });
+    }
+
     private object[] ValidAnswers() =>
     [
         new { questionId = _firstQuestionId, selectedAnswer = "Alpha" },
@@ -234,11 +264,22 @@ public sealed class QuizAttemptTests : IClassFixture<PostgreSqlFixture>, IAsyncL
                 }
             }
         };
+        var emptyPublishedQuiz = new Quizz
+        {
+            Title = $"Empty attempt quiz {suffix}",
+            Difficulty = Difficulty.EASY,
+            NumberOfQuests = 0,
+            RegistrationDate = DateTime.UtcNow,
+            UserId = owner.Id,
+            IsPublished = true,
+            Questions = []
+        };
 
-        context.Quizzs.AddRange(publishedQuiz, draftQuiz);
+        context.Quizzs.AddRange(publishedQuiz, draftQuiz, emptyPublishedQuiz);
         await context.SaveChangesAsync(TestContext.Current.CancellationToken);
         _publishedQuizId = publishedQuiz.Id;
         _draftQuizId = draftQuiz.Id;
+        _emptyPublishedQuizId = emptyPublishedQuiz.Id;
         _firstQuestionId = publishedQuiz.Questions!.ElementAt(0).Id;
         _secondQuestionId = publishedQuiz.Questions.ElementAt(1).Id;
     }
@@ -258,6 +299,15 @@ public sealed class QuizAttemptTests : IClassFixture<PostgreSqlFixture>, IAsyncL
             .Where(score => score.UserId == _playerId && score.QuizzId == _publishedQuizId)
             .Select(score => score.Points)
             .SingleAsync(TestContext.Current.CancellationToken);
+    }
+
+    private async Task<List<Score>> ScoresForQuizAsync(int quizId)
+    {
+        await using var context = CreateContext();
+        return await context.Scores
+            .Where(score => score.UserId == _playerId && score.QuizzId == quizId)
+            .OrderBy(score => score.Id)
+            .ToListAsync(TestContext.Current.CancellationToken);
     }
 
     private AppDbContext CreateContext()
