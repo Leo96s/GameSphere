@@ -20,3 +20,6 @@ GameSphere_backend/.env.*
 /GameSphere_frontend/.env
 /GameSphere_frontend/.env.*
 !/GameSphere_frontend/.env.example
+
+# Local orchestration artifacts
+.superpowers/
