@@ -1,3 +1,6 @@
+## v0.3.0 - 2026-08-19
+* feat(docker): add Compose environments
+* ci: update do ficheiro de controlo de versões
 ## v0.2.9 - 2026-08-18
 * chore(config): validate required runtime configuration
 * chore(ci): update semantic versioning workflow via automatic-version-control
