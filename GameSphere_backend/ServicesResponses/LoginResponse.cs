@@ -21,7 +21,8 @@ namespace GameSphere_backend.ServicesResponses
         /// <remarks>
         /// O token JWT gerado para autenticação.
         /// </remarks>
-        public required string token { get; set; }
+        [System.Text.Json.Serialization.JsonIgnore]
+        public string token { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the details of the authenticated user.

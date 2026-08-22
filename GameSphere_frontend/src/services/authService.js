@@ -1,14 +1,12 @@
 import api from './api';
 
-const tokenKey = 'token';
 const userKey = 'user';
 
 const persistSession = (session) => {
-  if (!session?.token || !session?.user) {
+  if (!session?.user) {
     throw new Error('Erro no login: sessão inválida.');
   }
 
-  localStorage.setItem(tokenKey, session.token);
   localStorage.setItem(userKey, JSON.stringify(session.user));
   window.dispatchEvent(new Event('user-logged-in'));
 
@@ -48,28 +46,25 @@ export const isAdmin = () => getCurrentRole() === 'Admin';
 export const login = async (email, password) => {
   const response = await api.post('/User/login', { email, password });
 
-  if (!response.data?.token) {
-    throw new Error('Erro no login: nenhum token recebido.');
+  if (!response.data?.user) {
+    throw new Error('Erro no login: sessão inválida.');
   }
 
   return persistSession(response.data);
 };
 
-export const social_login = async (uid, email) => {
-  const response = await api.post(`/User/social-login/${uid}/${email}`, {
-    uid,
-    email,
-  });
+export const social_login = async (idToken) => {
+  const response = await api.post('/User/social-login', { idToken });
 
-  if (!response.data?.token) {
-    throw new Error('Erro no login: nenhum token recebido.');
+  if (!response.data?.user) {
+    throw new Error('Erro no login: sessão inválida.');
   }
 
   return persistSession(response.data);
 };
 
 export const logout = () => {
-  localStorage.removeItem(tokenKey);
+  void api.post('/User/logout').catch(() => undefined);
   localStorage.removeItem(userKey);
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new Event('user-logged-out'));

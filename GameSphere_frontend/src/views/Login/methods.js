@@ -15,8 +15,8 @@ export default {
   
           const response = await login(this.email, this.password);
   
-          if (response.data) {
-            localStorage.setItem("user", JSON.stringify(response.data));
+          if (response.user) {
+            localStorage.setItem("user", JSON.stringify(response.user));
           } else {
             console.error("Erro: Nenhum dado recebido do login.");
           }
@@ -39,7 +39,7 @@ export default {
           const result = await signInWithPopup(auth, googleProvider);
           const googleUser = result.user;
   
-          const response = await social_login(googleUser.uid, googleUser.email);
+          const response = await social_login(await googleUser.getIdToken());
   
           if (response) {
             localStorage.setItem("user", JSON.stringify(response.user));
@@ -66,7 +66,7 @@ export default {
           const result = await signInWithPopup(auth, githubProvider);
           const githubUser = result.user;
   
-          const response = await social_login(githubUser.uid, githubUser.email);
+          const response = await social_login(await githubUser.getIdToken());
   
           if (response) {
             localStorage.setItem("user", JSON.stringify(response.user));

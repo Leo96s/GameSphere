@@ -178,7 +178,7 @@ public sealed class UserAccountTests : IClassFixture<PostgreSqlFixture>, IAsyncL
             firstName = "New",
             lastName = "Player",
             email,
-            hashedPassword = password,
+            password,
             gender = (int)Gender.OUTRO,
             isActive = true,
         }, TestContext.Current.CancellationToken);
@@ -195,8 +195,147 @@ public sealed class UserAccountTests : IClassFixture<PostgreSqlFixture>, IAsyncL
 
         Assert.Equal(HttpStatusCode.OK, loginResponse.StatusCode);
         using var loginDocument = JsonDocument.Parse(loginBody);
-        Assert.False(string.IsNullOrWhiteSpace(loginDocument.RootElement.GetProperty("token").GetString()));
+        Assert.DoesNotContain("\"token\"", loginBody, StringComparison.OrdinalIgnoreCase);
+        Assert.True(loginResponse.Headers.TryGetValues("Set-Cookie", out var cookies));
+        Assert.Contains(cookies, cookie => cookie.Contains("gamesphere_access_token=", StringComparison.Ordinal));
         Assert.DoesNotContain("hashedPassword", loginBody, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Registration_does_not_accept_server_managed_fields()
+    {
+        var email = $"managed-fields-{Guid.NewGuid():N}@example.test";
+
+        var response = await _client.PostAsJsonAsync("/api/User", new
+        {
+            id = 999999,
+            firstName = "Managed",
+            lastName = "Fields",
+            email,
+            password = "Registration-password-123",
+            gender = (int)Gender.OUTRO,
+            uid = "attacker-controlled-uid",
+            image = "https://attacker.example/avatar.png",
+            level = 99,
+            totalPoints = 999999,
+            isActive = false,
+            registrationDate = "2099-01-01T00:00:00Z",
+        }, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+        await using var context = CreateContext();
+        var user = await context.Users.SingleAsync(candidate => candidate.Email == email, TestContext.Current.CancellationToken);
+
+        Assert.NotEqual(999999, user.Id);
+        Assert.Equal(0, user.Level);
+        Assert.Equal(0, user.TotalPoints);
+        Assert.True(user.isActive);
+        Assert.Null(user.UID);
+        Assert.Null(user.Image);
+        Assert.InRange(user.RegistrationDate, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow.AddMinutes(1));
+    }
+
+    [Fact]
+    public async Task Profile_update_rejects_a_password_shorter_than_eight_characters()
+    {
+        var (owner, _) = await SeedUsersAsync();
+
+        using var request = CreateAuthorizedRequest(HttpMethod.Put, $"/api/User/{owner.Id}", owner);
+        request.Content = JsonContent.Create(new
+        {
+            firstName = owner.FirstName,
+            lastName = owner.LastName,
+            email = owner.Email,
+            gender = (int)owner.Gender,
+            password = "short",
+        });
+
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        await using var context = CreateContext();
+        var persistedUser = await context.Users.SingleAsync(user => user.Id == owner.Id, TestContext.Current.CancellationToken);
+        Assert.True(BCrypt.Net.BCrypt.EnhancedVerify("Test-password-123", persistedUser.HashedPassword));
+    }
+
+    [Fact]
+    public async Task Social_login_requires_a_verified_firebase_token()
+    {
+        var user = CreateUser($"social-{Guid.NewGuid():N}@example.test", "Social");
+        user.UID = "firebase-user-id";
+        await using (var context = CreateContext())
+        {
+            context.Users.Add(user);
+            await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        var response = await _client.PostAsJsonAsync(
+            "/api/User/social-login",
+            new { idToken = string.Empty },
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task A_deactivated_user_cannot_use_an_existing_token()
+    {
+        var (owner, _) = await SeedUsersAsync();
+        await using (var context = CreateContext())
+        {
+            var persistedOwner = await context.Users.SingleAsync(user => user.Id == owner.Id, TestContext.Current.CancellationToken);
+            persistedOwner.isActive = false;
+            await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        using var request = CreateAuthorizedRequest(HttpMethod.Get, "/api/quizzes", owner);
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Unsafe_requests_from_an_untrusted_origin_are_rejected()
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/User/login");
+        request.Headers.TryAddWithoutValidation("Origin", "https://attacker.example");
+        request.Content = JsonContent.Create(new
+        {
+            email = "unknown@example.test",
+            password = "irrelevant-password",
+        });
+
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Email_lookup_is_case_insensitive_after_registration()
+    {
+        var email = $"Case-{Guid.NewGuid():N}@example.test";
+        const string password = "Registration-password-123";
+
+        var registrationResponse = await _client.PostAsJsonAsync("/api/User", new
+        {
+            firstName = "Case",
+            lastName = "Insensitive",
+            email,
+            password,
+            gender = (int)Gender.OUTRO,
+            isActive = true,
+        }, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Created, registrationResponse.StatusCode);
+
+        var loginResponse = await _client.PostAsJsonAsync("/api/User/login", new
+        {
+            email = email.ToLowerInvariant(),
+            password,
+        }, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, loginResponse.StatusCode);
     }
 
     [Fact]

@@ -13,15 +13,16 @@ namespace GameSphere_backend.Controllers
     /// </remarks>
     public class ResponseController : ControllerBase
     {
-        private readonly IConfiguration _configuration;
+        private readonly IWebHostEnvironment _environment;
 
         /// <summary>
         /// Initializes a new instance of the ResponseController class.
         /// </summary>
         /// <param name="configuration">Application configuration settings.</param>
-        public ResponseController(IConfiguration configuration)
+        /// <param name="environment">The current hosting environment.</param>
+        public ResponseController(IConfiguration configuration, IWebHostEnvironment environment)
         {
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _environment = environment ?? throw new ArgumentNullException(nameof(environment));
         }
 
         /// <summary>
@@ -46,8 +47,7 @@ namespace GameSphere_backend.Controllers
         /// </remarks>
         protected IActionResult HandleResponse<T>(ServiceResponse<T> serviceResponse)
         {
-            var mode = _configuration["MessageMode"];
-            var message = mode == "Development" ? serviceResponse.Message : "Something went wrong";
+            var message = _environment.IsDevelopment() ? serviceResponse.Message : "Something went wrong";
 
             if (!serviceResponse.Success)
             {

@@ -12,9 +12,9 @@ import QuizPlayPage from '@/views/Quizzes/QuizPlayPage.vue';
 import QuizResultPage from '@/views/Quizzes/QuizResultPage.vue';
 import AdminQuizListPage from '@/views/Admin/AdminQuizListPage.vue';
 import AdminQuizEditorPage from '@/views/Admin/AdminQuizEditorPage.vue';
-import { getCurrentRole } from '@/services/authService';
+import { getCurrentRole, getCurrentUser } from '@/services/authService';
 
-const getToken = () => localStorage.getItem('token');
+const getToken = () => getCurrentUser();
 
 export const createNavigationGuard = ({
   getToken: readToken = getToken,

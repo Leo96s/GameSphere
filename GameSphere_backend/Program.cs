@@ -2,6 +2,7 @@ using GameSphere_backend.Data;
 using GameSphere_backend.Authorization;
 using GameSphere_backend.Interfaces;
 using GameSphere_backend.Models.FrontendModels;
+using GameSphere_backend.Security;
 using GameSphere_backend.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -10,6 +11,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Security.Claims;
 using System.Text;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
@@ -46,7 +49,8 @@ builder.Services.AddCors(options =>
     {
         builder.WithOrigins(corsOrigins)
                .AllowAnyMethod()
-               .AllowAnyHeader();
+               .AllowAnyHeader()
+               .AllowCredentials();
     });
 });
 // Add services to the container.
@@ -65,6 +69,21 @@ builder.Services.AddScoped<IQuizCatalogService, QuizCatalogService>();
 builder.Services.AddScoped<IQuizAdministrationService, QuizAdministrationService>();
 builder.Services.AddScoped<InitialAdminBootstrapper>();
 builder.Services.AddScoped<IAuthorizationHandler, ActiveAdminAuthorizationHandler>();
+builder.Services.AddScoped<IAuthorizationHandler, ActiveUserAuthorizationHandler>();
+builder.Services.AddSingleton<IFirebaseTokenVerifier, FirebaseTokenVerifier>();
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("auth", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 20,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        }));
+});
 
 builder.Services.AddOptions<EmailSettings>()
     .Bind(config.GetSection("EmailSettings"))
@@ -87,6 +106,19 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             RoleClaimType = ClaimTypes.Role,
             ClockSkew = TimeSpan.Zero // Expira no tempo exato
         };
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                if (string.IsNullOrWhiteSpace(context.Token) &&
+                    context.Request.Cookies.TryGetValue("gamesphere_access_token", out var cookieToken))
+                {
+                    context.Token = cookieToken;
+                }
+
+                return Task.CompletedTask;
+            }
+        };
     });
 
 builder.Services.AddAuthorization(options =>
@@ -95,6 +127,11 @@ builder.Services.AddAuthorization(options =>
     {
         policy.RequireAuthenticatedUser();
         policy.AddRequirements(new ActiveAdminRequirement());
+    });
+    options.AddPolicy(ActiveUserRequirement.PolicyName, policy =>
+    {
+        policy.RequireAuthenticatedUser();
+        policy.AddRequirements(new ActiveUserRequirement());
     });
 });
 
@@ -156,12 +193,6 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-var messageMode = "Development"; // Define manualmente para teste.
-builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
-{
-    { "MessageMode", messageMode }
-});
-
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
@@ -174,7 +205,9 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+app.UseMiddleware<OriginProtectionMiddleware>();
 app.UseCors("App");
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();

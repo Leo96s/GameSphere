@@ -117,11 +117,13 @@ namespace GameSphere_backend.Models.FrontendModels
         /// <remarks>
         /// Used for maintaining authenticated sessions. Can be null when not logged in.
         /// </remarks>
+        [System.Text.Json.Serialization.JsonIgnore]
         public string? Token { get; set; }
 
         /// <summary>
         /// Gets or sets the expiration date/time for the authentication token.
         /// </summary>
+        [System.Text.Json.Serialization.JsonIgnore]
         public DateTime? TokenExpDate { get; set; }
 
         /// <summary>

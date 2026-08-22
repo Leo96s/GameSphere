@@ -17,7 +17,8 @@ Como o `localStorage` por si só não é reativo no Vue 3, utilizamos um sistema
 // Local: src/services/authService.ts
 export const login = async (credentials) => {
   const response = await api.post('/login', credentials);
-  localStorage.setItem('user_token', response.data.token);
+  // The backend sets the HttpOnly session cookie; only the profile is persisted locally.
+  localStorage.setItem('user', JSON.stringify(response.data.user));
 
   // Dispara um evento para o resto da app acordar
   window.dispatchEvent(new Event("user-logged-in"));

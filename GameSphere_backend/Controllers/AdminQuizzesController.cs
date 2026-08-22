@@ -22,9 +22,11 @@ public sealed class AdminQuizzesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<AdminQuizUpsertDto>>> GetQuizzes()
+    public async Task<ActionResult<IReadOnlyList<AdminQuizUpsertDto>>> GetQuizzes(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 50)
     {
-        return Ok(await _quizAdministrationService.GetQuizzesAsync());
+        return Ok(await _quizAdministrationService.GetQuizzesAsync(page, pageSize));
     }
 
     [HttpGet("{id:int}")]

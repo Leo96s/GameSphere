@@ -39,7 +39,7 @@ namespace GameSphere_backend.Interfaces
         /// - Message: Error message if validation or creation failed
         /// - Type: Response type indicator
         /// </returns>
-        Task<ServiceResponse<UserDto>> CreateNewUserAsync(UserDto user);
+        Task<ServiceResponse<UserDto>> CreateNewUserAsync(RegisterUserRequest user);
 
         /// <summary>
         /// Deletes a user account from the system.
@@ -66,7 +66,7 @@ namespace GameSphere_backend.Interfaces
         /// - Message: Error message if validation or update failed
         /// - Type: Response type indicator
         /// </returns>
-        Task<ServiceResponse<UserDto>> EditUserAsync(int id, UserDto updatedUser);
+        Task<ServiceResponse<UserDto>> EditUserAsync(int id, UpdateUserRequest updatedUser);
 
         /// <summary>
         /// Authenticates a user with email and password credentials.
@@ -80,33 +80,6 @@ namespace GameSphere_backend.Interfaces
         /// - Type: Response type indicator
         /// </returns>
         Task<ServiceResponse<LoginResponse>> LoginAsync(LoginRequest request);
-
-        /// <summary>
-        /// Checks if an email address is available for registration.
-        /// </summary>
-        /// <param name="email">Email address to check for availability.</param>
-        /// <returns>
-        /// A ServiceResponse containing:
-        /// - Success: true if operation succeeded
-        /// - Data: true if email is available, false if already registered
-        /// - Message: Status message about email availability
-        /// - Type: Response type indicator
-        /// </returns>
-        Task<ServiceResponse<bool>> CheckEmailAvailabilityAsync(string email);
-
-        /// <summary>
-        /// Verifies if a user exists with the specified external provider credentials.
-        /// </summary>
-        /// <param name="uid">Unique identifier from external authentication provider.</param>
-        /// <param name="email">Email address associated with the external account.</param>
-        /// <returns>
-        /// A ServiceResponse containing:
-        /// - Success: true if verification succeeded
-        /// - Data: true if user exists, false otherwise
-        /// - Message: Status message about user existence
-        /// - Type: Response type indicator
-        /// </returns>
-        Task<ServiceResponse<bool>> CheckExistsUserExtern(string uid, string email);
 
         /// <summary>
         /// Retrieves a user's information by their email address.
@@ -164,10 +137,9 @@ namespace GameSphere_backend.Interfaces
         Task<ServiceResponse<bool>> ResetPassword(string email, string resetCode, string newPassword);
 
         /// <summary>
-        /// Authenticates a user using external provider credentials.
+        /// Authenticates a user using a verified Firebase ID token.
         /// </summary>
-        /// <param name="uid">Unique identifier from external authentication provider.</param>
-        /// <param name="email">Email address associated with the external account.</param>
+        /// <param name="firebaseUser">The identity extracted from the verified Firebase token.</param>
         /// <returns>
         /// A ServiceResponse containing:
         /// - Success: true if authentication succeeded
@@ -175,6 +147,6 @@ namespace GameSphere_backend.Interfaces
         /// - Message: Error message if authentication failed
         /// - Type: Response type indicator
         /// </returns>
-        Task<ServiceResponse<LoginResponse>> SocialLoginAsync(string uid, string email);
+        Task<ServiceResponse<LoginResponse>> SocialLoginAsync(FirebaseUserInfo firebaseUser);
     }
 }

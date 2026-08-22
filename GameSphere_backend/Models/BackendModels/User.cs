@@ -103,6 +103,8 @@ namespace GameSphere_backend.Models.BackendModels
         /// <value>The user role, which defaults to <see cref="UserRole.User"/>.</value>
         public UserRole Role { get; set; } = UserRole.User;
 
+        public int AuthVersion { get; set; }
+
         /// <summary>
         /// Gets or sets the authentication token for the user.
         /// </summary>
@@ -116,10 +118,12 @@ namespace GameSphere_backend.Models.BackendModels
         public DateTime? TokenExpDate { get; set; }
 
         /// <summary>
-        /// Gets or sets the password reset code for the user.
+        /// Gets or sets the hashed password reset code for the user.
         /// </summary>
         /// <value>Nullable string containing the temporary reset code.</value>
-        public string? ResetCode { get; set; }
+        public string? ResetCodeHash { get; set; }
+
+        public int ResetCodeAttempts { get; set; }
 
         /// <summary>
         /// Gets or sets the expiration date for the password reset code.

@@ -12,18 +12,12 @@ Object.defineProperty(globalThis, 'localStorage', {
   },
 });
 
-describe('API request interceptor', () => {
+describe('API client', () => {
   beforeEach(() => storage.clear());
   afterEach(() => storage.clear());
 
-  it('adiciona o cabe\u00e7alho Bearer quando existe um token local', async () => {
-    storage.set('token', 'test-token');
-    const interceptor = api.interceptors.request.handlers.at(-1);
-
-    expect(interceptor).toBeDefined();
-
-    const request = await interceptor.fulfilled({ headers: {} });
-
-    expect(request.headers.Authorization).toBe('Bearer test-token');
+  it('sends credentials for the HttpOnly cookie session', () => {
+    expect(api.defaults.withCredentials).toBe(true);
+    expect(api.interceptors.request.handlers).toHaveLength(0);
   });
 });

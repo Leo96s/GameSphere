@@ -144,7 +144,7 @@ const onSubmit = form.handleSubmit(async (values) => {
 async function handleGoogleLogin() {
   try {
     const { user } = await signInWithPopup(auth, googleProvider)
-    const response = await social_login(user.uid, user.email!)
+    const response = await social_login(await user.getIdToken())
     localStorage.setItem("user", JSON.stringify(response.user))
     success("Google Login", "Logged in successfully")
     await router.push("/profile")
@@ -156,7 +156,7 @@ async function handleGoogleLogin() {
 async function handleGithubLogin() {
   try {
     const { user } = await signInWithPopup(auth, githubProvider)
-    const response = await social_login(user.uid, user.email!)
+    const response = await social_login(await user.getIdToken())
     localStorage.setItem("user", JSON.stringify(response.user))
     success("GitHub Login", "Logged in successfully")
     await router.push("/profile")

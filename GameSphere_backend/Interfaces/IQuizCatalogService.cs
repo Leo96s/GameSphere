@@ -5,7 +5,7 @@ namespace GameSphere_backend.Interfaces;
 
 public interface IQuizCatalogService
 {
-    Task<IReadOnlyList<QuizCatalogItemDto>> GetPublishedAsync();
+    Task<IReadOnlyList<QuizCatalogItemDto>> GetPublishedAsync(int page = 1, int pageSize = 50);
 
     Task<QuizPlayDto?> GetPublishedByIdAsync(int id);
 

@@ -26,6 +26,7 @@ public sealed class QuizCatalogTests : IClassFixture<PostgreSqlFixture>, IAsyncL
     private readonly GameSphereApiFactory _factory;
     private HttpClient _client = null!;
     private int _publishedQuizId;
+    private int _ownerId;
     private string _draftTitle = null!;
 
     public QuizCatalogTests(PostgreSqlFixture database)
@@ -113,6 +114,7 @@ public sealed class QuizCatalogTests : IClassFixture<PostgreSqlFixture>, IAsyncL
         };
         context.Users.Add(owner);
         await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        _ownerId = owner.Id;
 
         var published = new Quizz
         {
@@ -168,14 +170,14 @@ public sealed class QuizCatalogTests : IClassFixture<PostgreSqlFixture>, IAsyncL
         return new AppDbContext(options);
     }
 
-    private static HttpRequestMessage CreateAuthorizedRequest(HttpMethod method, string uri)
+    private HttpRequestMessage CreateAuthorizedRequest(HttpMethod method, string uri)
     {
         var request = new HttpRequestMessage(method, uri);
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", GenerateToken());
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", GenerateToken(_ownerId));
         return request;
     }
 
-    private static string GenerateToken()
+    private static string GenerateToken(int userId)
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -187,6 +189,6 @@ public sealed class QuizCatalogTests : IClassFixture<PostgreSqlFixture>, IAsyncL
             })
             .Build();
 
-        return new AuthService(configuration).GenerateToken("42", "player@example.test", UserRole.User);
+        return new AuthService(configuration).GenerateToken(userId.ToString(), "player@example.test", UserRole.User);
     }
 }

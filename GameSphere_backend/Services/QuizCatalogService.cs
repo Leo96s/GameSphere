@@ -17,12 +17,16 @@ public sealed class QuizCatalogService : IQuizCatalogService
         _context = context;
     }
 
-    public async Task<IReadOnlyList<QuizCatalogItemDto>> GetPublishedAsync()
+    public async Task<IReadOnlyList<QuizCatalogItemDto>> GetPublishedAsync(int page = 1, int pageSize = 50)
     {
+        page = Math.Clamp(page, 1, 10_000);
+        pageSize = Math.Clamp(pageSize, 1, 100);
         var quizzes = await _context.Quizzs
             .AsNoTracking()
             .Where(quiz => quiz.IsPublished)
             .OrderBy(quiz => quiz.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
 
         return quizzes.Select(QuizPlayerMapper.ToCatalogItem).ToArray();

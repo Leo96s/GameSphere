@@ -95,7 +95,30 @@ namespace GameSphere_backend.Mappers
                 Level = user.Level,
             };
 
-            ConversionValidate.ValidateModel(userModel);
+            return userModel;
+        }
+
+        public static User? UserToModel(RegisterUserRequest? request)
+        {
+            if (request == null) return null;
+
+            var userModel = new User
+            {
+                UID = null,
+                FirstName = request.FirstName.Trim(),
+                LastName = request.LastName?.Trim() ?? string.Empty,
+                Email = request.Email.Trim().ToLowerInvariant(),
+                HashedPassword = string.Empty,
+                RegistrationDate = DateTime.UtcNow,
+                isActive = true,
+                Role = UserRole.User,
+                Image = null,
+                TotalPoints = 0,
+                Gender = request.Gender,
+                Level = 0,
+                AuthVersion = 0,
+            };
+
             return userModel;
         }
     }

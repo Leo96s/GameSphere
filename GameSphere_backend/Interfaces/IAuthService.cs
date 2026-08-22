@@ -19,6 +19,7 @@ namespace GameSphere_backend.Interfaces
         /// <param name="userId">The unique identifier of the user.</param>
         /// <param name="email">The email address of the user.</param>
         /// <param name="role">The persistent authorization role of the user.</param>
+        /// <param name="authVersion">The account credential version included in the token.</param>
         /// <returns>
         /// A signed JWT string containing the user's claims.
         /// </returns>
@@ -38,6 +39,6 @@ namespace GameSphere_backend.Interfaces
         /// 3. Set appropriate expiration time
         /// 4. Include necessary claims for authorization
         /// </remarks>
-        string GenerateToken(string userId, string email, UserRole role);
+        string GenerateToken(string userId, string email, UserRole role, int authVersion = 0);
     }
 }

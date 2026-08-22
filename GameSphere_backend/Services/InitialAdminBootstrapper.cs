@@ -4,6 +4,7 @@ using GameSphere_backend.Enums;
 using GameSphere_backend.Models.BackendModels;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using GameSphere_backend.Security;
 
 namespace GameSphere_backend.Services
 {
@@ -30,7 +31,7 @@ namespace GameSphere_backend.Services
         /// </summary>
         public async Task EnsureAdminAsync(CancellationToken cancellationToken = default)
         {
-            var email = GetConfiguredEmail();
+            var email = EmailNormalizer.Normalize(GetConfiguredEmail());
             var password = GetConfiguredPassword();
             var existingUser = await _context.Users.SingleOrDefaultAsync(user => user.Email == email, cancellationToken);
 

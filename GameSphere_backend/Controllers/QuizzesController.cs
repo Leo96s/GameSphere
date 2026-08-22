@@ -1,4 +1,5 @@
 using GameSphere_backend.Interfaces;
+using GameSphere_backend.Authorization;
 using GameSphere_backend.Models.FrontendModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -9,7 +10,7 @@ namespace GameSphere_backend.Controllers;
 
 [ApiController]
 [Route("api/quizzes")]
-[Authorize]
+[Authorize(Policy = ActiveUserRequirement.PolicyName)]
 public sealed class QuizzesController : ControllerBase
 {
     private readonly IQuizCatalogService _quizCatalogService;
@@ -20,9 +21,11 @@ public sealed class QuizzesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<QuizCatalogItemDto>>> GetPublished()
+    public async Task<ActionResult<IReadOnlyList<QuizCatalogItemDto>>> GetPublished(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 50)
     {
-        return Ok(await _quizCatalogService.GetPublishedAsync());
+        return Ok(await _quizCatalogService.GetPublishedAsync(page, pageSize));
     }
 
     [HttpGet("{id:int}")]

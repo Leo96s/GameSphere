@@ -159,6 +159,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/comp
 import User from '@/models/User'
 import { Gender } from '@/enums/Gender'
 import { createUser } from '@/services/userServices'
+import { social_login } from '@/services/authService'
 import { auth, googleProvider, githubProvider, signInWithPopup } from '@/services/firebase'
 import { useToast } from '@/composables/useToast';
 import { getPasswordStrength } from '@/utils/passwordStrength'
@@ -207,14 +208,7 @@ const onSubmit = form.handleSubmit(async (values) => {
 async function registerWithGoogle() {
   try {
     const { user } = await signInWithPopup(auth, googleProvider)
-    await createUser(new User({
-      firstName: user.displayName?.split(' ')[0],
-      lastName: user.displayName?.split(' ')[1] ?? '',
-      email: user.email,
-      gender: Gender.Other,
-      password: Math.random().toString(36).slice(-8),
-      uid: user.uid,
-    }))
+    await social_login(await user.getIdToken())
     success('Account created via Google!')
     await router.push('/login')
   } catch {
@@ -229,14 +223,7 @@ async function registerWithGoogle() {
 async function registerWithGithub() {
   try {
     const { user } = await signInWithPopup(auth, githubProvider)
-    await createUser(new User({
-      firstName: 'GitHub',
-      lastName: 'User',
-      email: user.email,
-      gender: Gender.Other,
-      password: Math.random().toString(36).slice(-8),
-      uid: user.uid,
-    }))
+    await social_login(await user.getIdToken())
     success('Account created via GitHub!')
     await router.push('/login')
   } catch {

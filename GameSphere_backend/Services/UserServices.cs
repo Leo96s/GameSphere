@@ -2,6 +2,7 @@
 using GameSphere_backend.Enums;
 using GameSphere_backend.Interfaces;
 using GameSphere_backend.Mappers;
+using GameSphere_backend.Models.BackendModels;
 using GameSphere_backend.Models.FrontendModels;
 using GameSphere_backend.ServicesResponses;
 using Microsoft.AspNetCore.Identity.Data;
@@ -9,6 +10,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Cryptography;
+using GameSphere_backend.Security;
+using GameSphere_backend.Utils;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace GameSphere_backend.Services
 {
@@ -21,6 +25,7 @@ namespace GameSphere_backend.Services
         private readonly AppDbContext _context;
         private readonly IAuthService _authService;
         private readonly IEmailService _emailService;
+        private readonly ILogger<UserServices> _logger;
 
         /// <summary>
         /// Initializes a new instance of the UserServices class.
@@ -28,12 +33,18 @@ namespace GameSphere_backend.Services
         /// <param name="context">The database context for user data access</param>
         /// <param name="authService">The authentication service for token generation</param>
         /// <param name="emailService">The email service for sending notifications</param>
+        /// <param name="logger">The logger for internal failures.</param>
         /// <exception cref="ArgumentNullException">Thrown when authService or emailService is null</exception>
-        public UserServices(AppDbContext context, IAuthService authService, IEmailService emailService)
+        public UserServices(
+            AppDbContext context,
+            IAuthService authService,
+            IEmailService emailService,
+            ILogger<UserServices>? logger = null)
         {
             this._context = context;
             this._authService = authService ?? throw new ArgumentNullException(nameof(_authService));
             this._emailService = emailService ?? throw new ArgumentNullException(nameof(_emailService));
+            _logger = logger ?? NullLogger<UserServices>.Instance;
         }
 
         /// <summary>
@@ -84,7 +95,7 @@ namespace GameSphere_backend.Services
         /// </summary>
         /// <param name="user">The UserDto containing user information to create.</param>
         /// <returns>A ServiceResponse indicating success or failure of the operation, including the created user if successful.</returns>
-        public async Task<ServiceResponse<UserDto>> CreateNewUserAsync(UserDto user)
+        public async Task<ServiceResponse<UserDto>> CreateNewUserAsync(RegisterUserRequest user)
         {
             var response = new ServiceResponse<UserDto>();
 
@@ -119,7 +130,7 @@ namespace GameSphere_backend.Services
                 return response;
             }
 
-            if (string.IsNullOrWhiteSpace(user.HashedPassword))
+            if (string.IsNullOrWhiteSpace(user.Password))
             {
                 response.Success = false;
                 response.Message = "Password is required";
@@ -127,7 +138,7 @@ namespace GameSphere_backend.Services
                 return response;
             }
 
-            if (user.HashedPassword.Trim().Length is < 8 or > 128)
+            if (user.Password.Trim().Length is < 8 or > 128)
             {
                 response.Success = false;
                 response.Message = "Password must contain between 8 and 128 characters";
@@ -137,7 +148,7 @@ namespace GameSphere_backend.Services
 
             try { 
 
-                string passwordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(user.HashedPassword, 13);
+                string passwordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(user.Password, 13);
             
 
                 var u = UserMapper.UserToModel(user);
@@ -152,6 +163,7 @@ namespace GameSphere_backend.Services
                 }
 
                 u.HashedPassword = passwordHash;
+                ConversionValidate.ValidateModel(u);
                 
                 
                 await _context.Users.AddAsync(u);
@@ -173,8 +185,9 @@ namespace GameSphere_backend.Services
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Failed to create a user account.");
                 response.Success = false;
-                response.Message = ex.Message;
+                response.Message = "The user account could not be created.";
                 response.Type = "BadRequest";
             }
 
@@ -192,70 +205,8 @@ namespace GameSphere_backend.Services
             if (string.IsNullOrWhiteSpace(email))
                 return false;
 
-            return !await _context.Users.AnyAsync(user => user.Email == email);
-        }
-
-        /// <summary>
-        /// Checks if a user exists with the specified UID and email.
-        /// </summary>
-        /// <param name="uid">The unique identifier from the external authentication provider.</param>
-        /// <param name="email">The email address to check.</param>
-        /// <returns>True if a matching user exists, false otherwise.</returns>
-        private async Task<Boolean> UserExist(string uid, string email)
-        {
-            if (string.IsNullOrWhiteSpace(uid)) return false;
-
-            if (string.IsNullOrWhiteSpace(email)) return false;
-
-            return await _context.Users.AnyAsync(user => (user.Email == email && user.UID == uid));
-        }
-
-        /// <summary>
-        /// Verifies the availability of an email address for registration.
-        /// </summary>
-        /// <param name="email">The email address to check.</param>
-        /// <returns>A ServiceResponse indicating whether the email is available, with appropriate messages.</returns>
-        public async Task<ServiceResponse<bool>> CheckEmailAvailabilityAsync(string email)
-
-        {
-            var response = new ServiceResponse<bool>();
-
-            try
-            {
-                if (_context == null)
-                {
-                    response.Success = false;
-                    response.Message = "DB context is missing.";
-                    response.Type = "NotFound";
-                    return response;
-                }
-
-                if (string.IsNullOrWhiteSpace(email))
-                {
-                    response.Success = false;
-                    response.Message = "Email cannot be null or empty.";
-                    response.Type = "BadRequest";
-                    return response;
-                }
-
-                // Verifica a disponibilidade do email
-                var emailAvailable = await IsEmailAvailable(email);
-
-                response.Data = emailAvailable;
-                response.Success = true;
-                response.Message = emailAvailable
-                ? "Email is available."
-                : "Email is already in use.";
-                response.Type = "Ok";
-            }
-            catch (Exception ex)
-            {
-                response.Success = false;
-                response.Message = ex.Message;
-                response.Type = "BadRequest";
-            }
-
-            return response;
+            var normalizedEmail = EmailNormalizer.Normalize(email);
+            return !await _context.Users.AnyAsync(user => user.Email == normalizedEmail);
         }
 
         /// <summary>
@@ -298,8 +249,9 @@ namespace GameSphere_backend.Services
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Failed to delete user {UserId}.", id);
                 response.Success = false;
-                response.Message = ex.Message;
+                response.Message = "The user account could not be deleted.";
                 response.Type = "BadRequest";
             }
 
@@ -312,7 +264,7 @@ namespace GameSphere_backend.Services
         /// <param name="id">The ID of the user to update.</param>
         /// <param name="updatedUser">The UserDto containing updated user information.</param>
         /// <returns>A ServiceResponse containing the updated UserDto if successful, or error information if failed.</returns>
-        public async Task<ServiceResponse<UserDto>> EditUserAsync(int id, UserDto updatedUser)
+        public async Task<ServiceResponse<UserDto>> EditUserAsync(int id, UpdateUserRequest updatedUser)
         {
             var response = new ServiceResponse<UserDto>();
 
@@ -356,6 +308,14 @@ namespace GameSphere_backend.Services
                     return response;
                 }
 
+                if (updatedUser.Password is not null && updatedUser.Password.Length is < 8 or > 128)
+                {
+                    response.Success = false;
+                    response.Message = "Password must contain between 8 and 128 characters.";
+                    response.Type = "BadRequest";
+                    return response;
+                }
+
                 if (!existingUser.Email.Equals(updatedUser.Email, StringComparison.OrdinalIgnoreCase))
                 {
                     if (!await IsEmailAvailable(updatedUser.Email))
@@ -380,14 +340,15 @@ namespace GameSphere_backend.Services
                 // Atualizar os dados do usuário
                 existingUser.FirstName = updatedUser.FirstName.Trim();
                 existingUser.LastName = updatedUser.LastName?.Trim();
-                existingUser.Email = updatedUser.Email.Trim();
+                existingUser.Email = EmailNormalizer.Normalize(updatedUser.Email);
                 existingUser.Gender = updatedUser.Gender;
                 existingUser.Image = updatedUser.Image;
 
-                if (!string.IsNullOrEmpty(updatedUser.HashedPassword))
+                if (!string.IsNullOrEmpty(updatedUser.Password))
                 {
-                    string passwordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(updatedUser.HashedPassword, 13);
+                    string passwordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(updatedUser.Password, 13);
                     existingUser.HashedPassword = passwordHash;
+                    existingUser.AuthVersion++;
                 }
 
                 _context.Users.Update(existingUser);
@@ -412,13 +373,15 @@ namespace GameSphere_backend.Services
             catch (ValidationException ve)
             {
                 response.Success = false;
-                response.Message = ve.Message;
+                _logger.LogWarning(ve, "Invalid user profile update for user {UserId}.", id);
+                response.Message = "Profile data is invalid.";
                 response.Type = "BadRequest";
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Failed to update user {UserId}.", id);
                 response.Success = false;
-                response.Message = ex.Message;
+                response.Message = "The user profile could not be updated.";
                 response.Type = "BadRequest";
             }
 
@@ -460,7 +423,8 @@ namespace GameSphere_backend.Services
                     return response;
                 }
 
-                var user = await _context.Users.SingleOrDefaultAsync(u => u.Email == request.Email);
+                var normalizedEmail = EmailNormalizer.Normalize(request.Email);
+                var user = await _context.Users.SingleOrDefaultAsync(u => u.Email == normalizedEmail);
 
                 if (user == null || !BCrypt.Net.BCrypt.EnhancedVerify(request.Password, user.HashedPassword))
                 {
@@ -488,7 +452,7 @@ namespace GameSphere_backend.Services
                     return response;
                 }
 
-                var token = _authService.GenerateToken(user.Id.ToString(), user.Email, user.Role);
+                var token = _authService.GenerateToken(user.Id.ToString(), user.Email, user.Role, user.AuthVersion);
 
                 response.Data = new LoginResponse
                 {
@@ -501,63 +465,16 @@ namespace GameSphere_backend.Services
             }
             catch (ValidationException ex)
             {
+                _logger.LogWarning(ex, "Invalid login request.");
                 response.Success = false;
-                response.Message = ex.Message;
+                response.Message = "Invalid login request.";
                 response.Type = "BadRequest";
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Unexpected error while logging in.");
                 response.Success = false;
-                response.Message = ex.Message;
-                response.Type = "BadRequest";
-            }
-
-            return response;
-        }
-
-        /// <summary>
-        /// Checks if a user exists with the specified external provider UID and email.
-        /// </summary>
-        /// <param name="uid">The unique identifier from the external authentication provider.</param>
-        /// <param name="email">The email address to check.</param>
-        /// <returns>A ServiceResponse indicating whether the user exists.</returns>
-        public async Task<ServiceResponse<bool>> CheckExistsUserExtern(string uid, string email)
-
-        {
-            var response = new ServiceResponse<bool>();
-
-            try
-            {
-                if (_context == null)
-                {
-                    response.Success = false;
-                    response.Message = "DB context is missing.";
-                    response.Type = "NotFound";
-                    return response;
-                }
-
-                if (string.IsNullOrWhiteSpace(email))
-                {
-                    response.Success = false;
-                    response.Message = "Email cannot be null or empty.";
-                    response.Type = "BadRequest";
-                    return response;
-                }
-
-                // Verifica a disponibilidade do email
-                var emailAvailable = await UserExist(uid, email);
-
-                response.Data = emailAvailable;
-                response.Success = true;
-                response.Message = emailAvailable
-                ? "User exist"
-                : "User not exist";
-                response.Type = "Ok";
-            }
-            catch (Exception ex)
-            {
-                response.Success = false;
-                response.Message = ex.Message;
+                response.Message = "Authentication is temporarily unavailable.";
                 response.Type = "BadRequest";
             }
 
@@ -572,29 +489,31 @@ namespace GameSphere_backend.Services
         public async Task<ServiceResponse<UserDto>> GetUserByEmailAsync(string email)
         {
             if (_context == null)
+            {
                 return new ServiceResponse<UserDto>
                 {
                     Success = false,
-                    Message = "DB context is Missing",
+                    Message = "DB context is missing.",
                     Type = "NotFound"
                 };
+            }
 
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-
+            var normalizedEmail = EmailNormalizer.Normalize(email);
+            var user = await _context.Users.FirstOrDefaultAsync(candidate => candidate.Email == normalizedEmail);
             if (user == null)
+            {
                 return new ServiceResponse<UserDto>
                 {
                     Success = false,
                     Message = "User was not found!",
                     Type = "NotFound"
                 };
-
-            var u = UserMapper.UserToDto(user);
+            }
 
             return new ServiceResponse<UserDto>
             {
                 Success = true,
-                Data = u,
+                Data = UserMapper.UserToDto(user),
                 Type = "Ok"
             };
         }
@@ -617,7 +536,7 @@ namespace GameSphere_backend.Services
                 return response;
             }
 
-            email = email.Trim();
+            email = EmailNormalizer.Normalize(email);
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
             if (user == null)
             {
@@ -630,7 +549,8 @@ namespace GameSphere_backend.Services
 
             var resetCode = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
 
-            user.ResetCode = resetCode;
+            user.ResetCodeHash = BCrypt.Net.BCrypt.EnhancedHashPassword(resetCode, 10);
+            user.ResetCodeAttempts = 0;
             user.ResetCodeExpiration = DateTime.UtcNow.AddMinutes(15);
 
             await _context.SaveChangesAsync();
@@ -644,11 +564,7 @@ namespace GameSphere_backend.Services
 
             if (!emailSent)
             {
-                response.Success = false;
-                response.Data = false;
-                response.Message = "Failed to send email.";
-                response.Type = "BadRequest";
-                return response;
+                _logger.LogError("Password reset email delivery failed for a registered account.");
             }
 
             response.Success = true;
@@ -680,7 +596,9 @@ namespace GameSphere_backend.Services
                 return response;
             }
 
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            email = EmailNormalizer.Normalize(email);
+            var normalizedEmail = EmailNormalizer.Normalize(email);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail);
             if (user == null)
             {
                 response.Success = false;
@@ -690,7 +608,7 @@ namespace GameSphere_backend.Services
                 return response;
             }
 
-            if (user.ResetCode != resetCode || user.ResetCodeExpiration < DateTime.UtcNow)
+            if (!await IsResetCodeValidAsync(user, resetCode))
             {
                 response.Success = false;
                 response.Data = false;
@@ -731,7 +649,9 @@ namespace GameSphere_backend.Services
                 return response;
             }
 
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            email = EmailNormalizer.Normalize(email);
+            var normalizedEmail = EmailNormalizer.Normalize(email);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail);
             if (user == null)
             {
                 response.Success = false;
@@ -741,7 +661,7 @@ namespace GameSphere_backend.Services
                 return response;
             }
 
-            if (user.ResetCode != resetCode || user.ResetCodeExpiration < DateTime.UtcNow)
+            if (!await IsResetCodeValidAsync(user, resetCode))
             {
                 response.Success = false;
                 response.Data = false;
@@ -752,8 +672,10 @@ namespace GameSphere_backend.Services
             
             user.HashedPassword = BCrypt.Net.BCrypt.EnhancedHashPassword(newPassword, 13);
 
-            user.ResetCode = null;
+            user.ResetCodeHash = null;
+            user.ResetCodeAttempts = 0;
             user.ResetCodeExpiration = null;
+            user.AuthVersion++;
 
             await _context.SaveChangesAsync();
 
@@ -769,49 +691,101 @@ namespace GameSphere_backend.Services
             return response;
         }
 
-        /// <summary>
-        /// Authenticates a user using external provider credentials (UID and email).
-        /// </summary>
-        /// <param name="uid">The unique identifier from the external authentication provider.</param>
-        /// <param name="email">The email address associated with the external account.</param>
-        /// <returns>A ServiceResponse containing a LoginResponse with JWT token and user data if authentication succeeds.</returns>
-        public async Task<ServiceResponse<LoginResponse>> SocialLoginAsync(string uid, string email)
+        public Task<ServiceResponse<UserDto>> EditUserAsync(int id, UserDto updatedUser) =>
+            EditUserAsync(id, new UpdateUserRequest
+            {
+                FirstName = updatedUser.FirstName,
+                LastName = updatedUser.LastName,
+                Email = updatedUser.Email,
+                Gender = updatedUser.Gender,
+                Image = updatedUser.Image,
+                Password = updatedUser.HashedPassword
+            });
+
+        private async Task<bool> IsResetCodeValidAsync(User user, string resetCode)
+        {
+            if (user.ResetCodeAttempts >= 5 ||
+                string.IsNullOrWhiteSpace(user.ResetCodeHash) ||
+                user.ResetCodeExpiration < DateTime.UtcNow)
+            {
+                return false;
+            }
+
+            bool valid;
+            try
+            {
+                valid = BCrypt.Net.BCrypt.EnhancedVerify(resetCode, user.ResetCodeHash);
+            }
+            catch (Exception exception)
+            {
+                _logger.LogWarning(exception, "Invalid password reset hash encountered for user {UserId}.", user.Id);
+                valid = false;
+            }
+
+            if (valid)
+            {
+                return true;
+            }
+
+            user.ResetCodeAttempts++;
+            if (user.ResetCodeAttempts >= 5)
+            {
+                user.ResetCodeHash = null;
+                user.ResetCodeExpiration = null;
+            }
+
+            await _context.SaveChangesAsync();
+            return false;
+        }
+
+        public async Task<ServiceResponse<LoginResponse>> SocialLoginAsync(FirebaseUserInfo firebaseUser)
         {
             var response = new ServiceResponse<LoginResponse>();
 
             try
             {
-                if (_context == null)
+                if (string.IsNullOrWhiteSpace(firebaseUser.Uid) || string.IsNullOrWhiteSpace(firebaseUser.Email))
                 {
                     response.Success = false;
-                    response.Message = "DB context is missing.";
-                    response.Type = "NotFound";
+                    response.Message = "The social login token is invalid.";
+                    response.Type = "Unauthorized";
                     return response;
                 }
 
-                if (string.IsNullOrWhiteSpace(email))
+                var email = EmailNormalizer.Normalize(firebaseUser.Email);
+                var user = await _context.Users.FirstOrDefaultAsync(candidate => candidate.UID == firebaseUser.Uid);
+
+                if (user is null)
                 {
-                    response.Success = false;
-                    response.Message = "Email is required.";
-                    response.Type = "BadRequest";
-                    return response;
+                    var emailUser = await _context.Users.FirstOrDefaultAsync(candidate => candidate.Email == email);
+                    if (emailUser is not null && emailUser.UID is not null)
+                    {
+                        response.Success = false;
+                        response.Message = "The social login could not be completed.";
+                        response.Type = "Conflict";
+                        return response;
+                    }
+
+                    user = emailUser ?? CreateSocialUser(firebaseUser, email);
+                    user.UID = firebaseUser.Uid;
+                    user.Email = email;
+
+                    if (emailUser is null)
+                    {
+                        await _context.Users.AddAsync(user);
+                        await _context.SaveChangesAsync();
+                    }
+                    else
+                    {
+                        await _context.SaveChangesAsync();
+                    }
                 }
 
-                if (string.IsNullOrWhiteSpace(uid))
+                if (!string.Equals(user.Email, email, StringComparison.OrdinalIgnoreCase))
                 {
                     response.Success = false;
-                    response.Message = "Password is required.";
-                    response.Type = "BadRequest";
-                    return response;
-                }
-
-                var user = await _context.Users.FirstOrDefaultAsync(u => (u.Email == email && u.UID == uid));
-
-                if (user == null)
-                {
-                    response.Success = false;
-                    response.Message = "User dont exist!";
-                    response.Type = "NotFound";
+                    response.Message = "The social login could not be completed.";
+                    response.Type = "Conflict";
                     return response;
                 }
 
@@ -833,7 +807,7 @@ namespace GameSphere_backend.Services
                     return response;
                 }
 
-                var token = _authService.GenerateToken(user.Id.ToString(), user.Email, user.Role);
+                var token = _authService.GenerateToken(user.Id.ToString(), user.Email, user.Role, user.AuthVersion);
 
                 response.Data = new LoginResponse
                 {
@@ -844,20 +818,38 @@ namespace GameSphere_backend.Services
                 response.Message = "Login successful.";
                 response.Type = "Ok";
             }
-            catch (ValidationException ex)
-            {
-                response.Success = false;
-                response.Message = ex.Message;
-                response.Type = "BadRequest";
-            }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Unexpected social login error.");
                 response.Success = false;
-                response.Message = ex.Message;
+                response.Message = "The social login could not be completed.";
                 response.Type = "BadRequest";
             }
 
             return response;
+        }
+
+        private static User CreateSocialUser(FirebaseUserInfo firebaseUser, string email)
+        {
+            var names = (firebaseUser.DisplayName ?? "GameSphere User")
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+            return new User
+            {
+                UID = firebaseUser.Uid,
+                FirstName = names.FirstOrDefault() ?? "GameSphere",
+                LastName = names.Length > 1 ? string.Join(' ', names.Skip(1)) : string.Empty,
+                Email = email,
+                HashedPassword = BCrypt.Net.BCrypt.EnhancedHashPassword(
+                    Convert.ToHexString(RandomNumberGenerator.GetBytes(32)),
+                    13),
+                RegistrationDate = DateTime.UtcNow,
+                Gender = Gender.OUTRO,
+                isActive = true,
+                Role = UserRole.User,
+                Level = 0,
+                TotalPoints = 0,
+            };
         }
     }
 }

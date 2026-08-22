@@ -2,21 +2,14 @@
 import {Gender} from "@/enums/Gender";
 
 export default class User {
-  constructor({firstName, lastName, email, gender, password }) {
+  constructor({ firstName, lastName, email, gender, password, uid = "" }) {
     this.id = 0; // O backend irá gerar um novo ID
-    this.uid = "";
-    this.hashedPassword = password;
+    this.uid = uid;
+    this.password = password;
     this.firstName = firstName;
     this.lastName = lastName;
     this.email = email;
     this.gender = Number(Gender[gender] ?? Gender.Other); // Converte para o formato esperado
-    this.image = ""; // Pode ser preenchido com um avatar padrão
-    this.level = 0; // Nível inicial do usuário
-    this.totalPoints = 0; // Pontos iniciais
-    this.isActive = true; // Define o utilizador como ativo
-    this.token = ""; // O backend pode preencher este campo após o login
-    this.tokenExpDate = new Date().toISOString(); // Define um valor padrão
-    this.registrationDate = new Date().toISOString(); // Data atual do registro
   }
 
   /**
@@ -29,7 +22,7 @@ export default class User {
     if (!this.lastName) errors.lastName = "Last name is required.";
     if (!this.email) errors.email = "Email is required.";
     if (!this.gender) errors.gender = "Gender is required.";
-    if (!this.hashedPassword) errors.hashedPassword = "Password is required.";
+    if (!this.password) errors.password = "Password is required.";
     return errors;
   }
 }

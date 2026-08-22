@@ -34,6 +34,9 @@ jobs:
       - name: Run backend tests
         run: dotnet test GameSphere_backend.Tests/GameSphere_backend.Tests.csproj --configuration Release
 
+      - name: Audit backend packages
+        run: dotnet list GameSphere_backend/GameSphere_backend.csproj package --vulnerable --include-transitive
+
   frontend:
     name: Frontend tests and build
     runs-on: ubuntu-latest

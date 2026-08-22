@@ -18,12 +18,16 @@ public sealed class QuizAdministrationService : IQuizAdministrationService
         _context = context;
     }
 
-    public async Task<IReadOnlyList<AdminQuizUpsertDto>> GetQuizzesAsync()
+    public async Task<IReadOnlyList<AdminQuizUpsertDto>> GetQuizzesAsync(int page = 1, int pageSize = 50)
     {
+        page = Math.Clamp(page, 1, 10_000);
+        pageSize = Math.Clamp(pageSize, 1, 100);
         var quizzes = await _context.Quizzs
             .AsNoTracking()
             .Include(quiz => quiz.Questions)
             .OrderBy(quiz => quiz.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
 
         return quizzes.Select(ToDto).ToArray();
@@ -355,6 +359,12 @@ public sealed class QuizAdministrationService : IQuizAdministrationService
             return false;
         }
 
+        if (request.Questions is not null && request.Questions.Count > 100)
+        {
+            message = "A quiz cannot contain more than 100 questions.";
+            return false;
+        }
+
         List<AdminQuestionUpsertDto>? questions = null;
         if (request.Questions is not null)
         {
@@ -398,8 +408,14 @@ public sealed class QuizAdministrationService : IQuizAdministrationService
             return false;
         }
 
+        if (request.Description.Trim().Length > 2_000 || request.Answers.Length > 6)
+        {
+            message = "A question or its options exceed the allowed size.";
+            return false;
+        }
+
         var answers = request.Answers.Select(answer => answer?.Trim() ?? string.Empty).ToArray();
-        if (answers.Any(string.IsNullOrWhiteSpace) ||
+        if (answers.Any(answer => string.IsNullOrWhiteSpace(answer) || answer.Length > 500) ||
             answers.Distinct(StringComparer.Ordinal).Count() != answers.Length)
         {
             message = "Each question option must be unique and non-empty.";

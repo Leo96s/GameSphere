@@ -3,6 +3,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       JwtSettings__ExpirationMinutes: ${JWT_EXPIRATION_MINUTES:-60}
+      Firebase__ProjectId: ${FIREBASE_PROJECT_ID:-gamesphere-9f7dc}
       Cors__AllowedOrigins__0: ${CORS_ALLOWED_ORIGIN:-http://localhost:8080}
 
   api-prod:
@@ -17,6 +18,7 @@ services:
       JwtSettings__Issuer: ${JWT_ISSUER:?JWT_ISSUER is required}
       JwtSettings__Audience: ${JWT_AUDIENCE:?JWT_AUDIENCE is required}
       JwtSettings__ExpirationMinutes: ${JWT_EXPIRATION_MINUTES:-60}
+      Firebase__ProjectId: ${FIREBASE_PROJECT_ID:-gamesphere-9f7dc}
       Cors__AllowedOrigins__0: ${CORS_ALLOWED_ORIGIN:-http://localhost:8080}
       InitialAdmin__Email: ${INITIAL_ADMIN_EMAIL:?INITIAL_ADMIN_EMAIL is required}
       InitialAdmin__Password: ${INITIAL_ADMIN_PASSWORD:?INITIAL_ADMIN_PASSWORD is required}

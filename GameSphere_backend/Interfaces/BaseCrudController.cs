@@ -1,5 +1,6 @@
 ﻿using GameSphere_backend.Controllers;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Hosting;
 
 namespace GameSphere_backend.Interfaces
 {
@@ -18,7 +19,8 @@ namespace GameSphere_backend.Interfaces
         /// Initializes a new instance of the BaseCrudController class.
         /// </summary>
         /// <param name="configuration">Application configuration settings.</param>
-        protected BaseCrudController(IConfiguration configuration) : base(configuration)
+        /// <param name="environment">The current hosting environment.</param>
+        protected BaseCrudController(IConfiguration configuration, IWebHostEnvironment environment) : base(configuration, environment)
         {
         }
 

@@ -5,7 +5,7 @@ namespace GameSphere_backend.Interfaces;
 
 public interface IQuizAdministrationService
 {
-    Task<IReadOnlyList<AdminQuizUpsertDto>> GetQuizzesAsync();
+    Task<IReadOnlyList<AdminQuizUpsertDto>> GetQuizzesAsync(int page = 1, int pageSize = 50);
 
     Task<AdminQuizUpsertDto?> GetQuizByIdAsync(int quizId);
 

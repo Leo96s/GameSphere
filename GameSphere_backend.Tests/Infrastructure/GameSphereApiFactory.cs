@@ -19,6 +19,8 @@ public sealed class GameSphereApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("JwtSettings:SecretKey", "test-secret-with-at-least-thirty-two-bytes");
         builder.UseSetting("JwtSettings:Issuer", "gamesphere-tests");
         builder.UseSetting("JwtSettings:Audience", "gamesphere-tests");
+        builder.UseSetting("JwtSettings:ExpirationMinutes", "60");
+        builder.UseSetting("Firebase:ProjectId", "gamesphere-9f7dc");
         builder.UseSetting("EmailSettings:SmtpServer", "smtp.example.test");
         builder.UseSetting("EmailSettings:SmtpPort", "2525");
         builder.UseSetting("EmailSettings:SenderEmail", "no-reply@example.test");

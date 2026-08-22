@@ -17,15 +17,18 @@ namespace GameSphere_backend.Services
     public class EmailService : IEmailService
     {
         private readonly EmailSettings _emailSettings;
+        private readonly ILogger<EmailService> _logger;
 
         /// <summary>
         /// Initializes a new instance of the EmailService class.
         /// </summary>
         /// <param name="emailSettings">The email configuration options.</param>
+        /// <param name="logger">The logger for delivery failures.</param>
         /// <exception cref="ArgumentNullException">Thrown when emailSettings is null.</exception>
-        public EmailService(IOptions<EmailSettings> emailSettings)
+        public EmailService(IOptions<EmailSettings> emailSettings, ILogger<EmailService> logger)
         {
             _emailSettings = emailSettings.Value;
+            _logger = logger;
         }
 
         /// <summary>
@@ -78,7 +81,7 @@ namespace GameSphere_backend.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error sending email: {ex.Message}");
+                _logger.LogError(ex, "Error sending an email.");
                 return false;
             }
         }

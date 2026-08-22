@@ -1,9 +1,13 @@
 ﻿using GameSphere_backend.Interfaces;
 using GameSphere_backend.Models.BackendModels;
 using GameSphere_backend.Models.FrontendModels;
+using GameSphere_backend.ServicesResponses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.RateLimiting;
+using GameSphere_backend.Authorization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
@@ -19,19 +23,32 @@ namespace GameSphere_backend.Controllers
     /// </remarks>
     [Route("api/[controller]")]
     [ApiController]
-    public class UserController : BaseCrudController<UserDto>
+    public class UserController : ResponseController
     {
         private readonly IUserService _userService;
+        private readonly IFirebaseTokenVerifier _firebaseTokenVerifier;
+        private readonly IWebHostEnvironment _environment;
+        private readonly IConfiguration _configuration;
+        private const string AccessCookieName = "gamesphere_access_token";
 
         /// <summary>
         /// Initializes a new instance of the UserController class.
         /// </summary>
         /// <param name="userService">The user service for handling business logic.</param>
+        /// <param name="firebaseTokenVerifier">The verifier for Firebase ID tokens.</param>
         /// <param name="configuration">The application configuration.</param>
+        /// <param name="environment">The current hosting environment.</param>
         /// <exception cref="ArgumentNullException">Thrown when userService is null.</exception>
-        public UserController(IUserService userService, IConfiguration configuration) : base(configuration)
+        public UserController(
+            IUserService userService,
+            IFirebaseTokenVerifier firebaseTokenVerifier,
+            IConfiguration configuration,
+            IWebHostEnvironment environment) : base(configuration, environment)
         {
             _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+            _firebaseTokenVerifier = firebaseTokenVerifier ?? throw new ArgumentNullException(nameof(firebaseTokenVerifier));
+            _environment = environment ?? throw new ArgumentNullException(nameof(environment));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         }
 
         /// <summary>
@@ -44,9 +61,9 @@ namespace GameSphere_backend.Controllers
         /// - 404 Not Found if the user doesn't exist
         /// - 401 Unauthorized if not authenticated
         /// </returns>
-        [Authorize]
+        [Authorize(Policy = ActiveUserRequirement.PolicyName)]
         [HttpGet("by-id/{id}")]
-        public override async Task<IActionResult> GetEntityById(int id)
+        public async Task<IActionResult> GetEntityById(int id)
         {
             if (!IsCurrentUser(id))
             {
@@ -69,7 +86,8 @@ namespace GameSphere_backend.Controllers
         /// - 404 Not Found if required resources are missing
         /// </returns>
         [HttpPost]
-        public override async Task<IActionResult> CreateEntity(UserDto user)
+        [EnableRateLimiting("auth")]
+        public async Task<IActionResult> CreateEntity([FromBody] RegisterUserRequest user)
         {
             var serviceResponse = await _userService.CreateNewUserAsync(user);
 
@@ -92,9 +110,9 @@ namespace GameSphere_backend.Controllers
         /// - 401 Unauthorized if not authenticated
         /// - 404 Not Found if the user doesn't exist
         /// </returns>
-        [Authorize]
+        [Authorize(Policy = ActiveUserRequirement.PolicyName)]
         [HttpDelete("{id}")]
-        public override async Task<IActionResult> DeleteEntity(int id)
+        public async Task<IActionResult> DeleteEntity(int id)
         {
             if (!IsCurrentUser(id))
             {
@@ -118,9 +136,9 @@ namespace GameSphere_backend.Controllers
         /// - 401 Unauthorized if not authenticated
         /// - 404 Not Found if the user doesn't exist
         /// </returns>
-        [Authorize]
+        [Authorize(Policy = ActiveUserRequirement.PolicyName)]
         [HttpPut("{id}")]
-        public override async Task<IActionResult> UpdateEntity(int id, UserDto updatedUser)
+        public async Task<IActionResult> UpdateEntity(int id, [FromBody] UpdateUserRequest updatedUser)
         {
             if (!IsCurrentUser(id))
             {
@@ -144,51 +162,12 @@ namespace GameSphere_backend.Controllers
         /// - 404 Not Found if required resources are missing
         /// </returns>
         [HttpPost("login")]
+        [EnableRateLimiting("auth")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             var serviceResponse = await _userService.LoginAsync(request);
 
-            return HandleResponse(serviceResponse);
-        }
-
-        /// <summary>
-        /// Checks if an email address is available for registration.
-        /// </summary>
-        /// <param name="email">The email address to check.</param>
-        /// <returns>
-        /// Returns an IActionResult representing the HTTP response:
-        /// - 200 OK with availability status if check was successful
-        /// - 400 Bad Request if input is invalid
-        /// - 401 Unauthorized if not authenticated
-        /// - 404 Not Found if required resources are missing
-        /// </returns>
-        [Authorize]
-        [HttpGet("get-email-availability/{email}")]
-        public async Task<IActionResult> GetEmailAvailability(string email)
-        {
-            var serviceResponse = await _userService.CheckEmailAvailabilityAsync(email);
-
-            return HandleResponse(serviceResponse);
-        }
-
-
-        /// <summary>
-        /// Checks if a user exists with the specified external provider UID and email.
-        /// </summary>
-        /// <param name="uid">The unique identifier from the external authentication provider.</param>
-        /// <param name="email">The email address associated with the external account.</param>
-        /// <returns>
-        /// Returns an IActionResult representing the HTTP response:
-        /// - 200 OK with existence status if check was successful
-        /// - 400 Bad Request if input is invalid
-        /// - 404 Not Found if required resources are missing
-        /// </returns>
-        [HttpGet("user-exist/{uid}/{email}")]
-        public async Task<IActionResult> GetUserExist(string uid, string email)
-        {
-            var serviceResponse = await _userService.CheckExistsUserExtern(uid,email);
-
-            return HandleResponse(serviceResponse);
+            return HandleAuthenticationResponse(serviceResponse);
         }
 
         /// <summary>
@@ -201,7 +180,7 @@ namespace GameSphere_backend.Controllers
         /// - 401 Unauthorized if not authenticated
         /// - 404 Not Found if the user doesn't exist
         /// </returns>
-        [Authorize]
+        [Authorize(Policy = ActiveUserRequirement.PolicyName)]
         [HttpGet("by-email/{email}")]
         public async Task<IActionResult> GetEntityByEmail(string email)
         {
@@ -231,6 +210,7 @@ namespace GameSphere_backend.Controllers
         /// - 404 Not Found if the user doesn't exist
         /// </returns>
         [HttpPost("send-reset-code")]
+        [EnableRateLimiting("auth")]
         public async Task<IActionResult> SendResetCode([FromBody] string email)
         {
             var response = await _userService.SendPasswordResetCode(email);
@@ -248,6 +228,7 @@ namespace GameSphere_backend.Controllers
         /// - 404 Not Found if the user doesn't exist
         /// </returns>
         [HttpPost("validate-reset-code")]
+        [EnableRateLimiting("auth")]
         public async Task<IActionResult> ValidateResetCode([FromBody] ValidateResetCodeRequest request)
         {
             var response = await _userService.ValidateResetCode(request.Email, request.ResetCode);
@@ -265,28 +246,67 @@ namespace GameSphere_backend.Controllers
         /// - 404 Not Found if the user doesn't exist
         /// </returns>
         [HttpPost("reset-password")]
+        [EnableRateLimiting("auth")]
         public async Task<IActionResult> ResetPassword([FromBody] Models.FrontendModels.ResetPasswordRequest request)
         {
             var response = await _userService.ResetPassword(request.Email, request.ResetCode, request.NewPassword);
             return HandleResponse(response);
         }
 
-        /// <summary>
-        /// Authenticates a user using external provider credentials (UID and email).
-        /// </summary>
-        /// <param name="uid">The unique identifier from the external authentication provider.</param>
-        /// <param name="email">The email address associated with the external account.</param>
-        /// <returns>
-        /// Returns an IActionResult representing the HTTP response:
-        /// - 200 OK with JWT token and user data if authentication succeeds
-        /// - 400 Bad Request if input is invalid
-        /// - 401 Unauthorized if credentials are invalid
-        /// - 404 Not Found if the user doesn't exist
-        /// </returns>
-        [HttpPost("social-login/{uid}/{email}")]
-        public async Task<IActionResult> SocialLogin(string uid, string email)
+        /// <summary>Authenticates a user with a verified Firebase ID token.</summary>
+        /// <param name="request">The Firebase ID token request.</param>
+        [HttpPost("social-login")]
+        [EnableRateLimiting("auth")]
+        public async Task<IActionResult> SocialLogin([FromBody] SocialLoginRequest request)
         {
-            var serviceResponse = await _userService.SocialLoginAsync(uid, email);
+            if (string.IsNullOrWhiteSpace(request.IdToken))
+            {
+                return Unauthorized("The social login token is invalid.");
+            }
+
+            var firebaseUser = await _firebaseTokenVerifier.VerifyAsync(
+                request.IdToken,
+                HttpContext.RequestAborted);
+
+            if (firebaseUser is null)
+            {
+                return Unauthorized("The social login token is invalid.");
+            }
+
+            var serviceResponse = await _userService.SocialLoginAsync(firebaseUser);
+
+            return HandleAuthenticationResponse(serviceResponse);
+        }
+
+        [HttpPost("logout")]
+        public IActionResult Logout()
+        {
+            Response.Cookies.Delete(AccessCookieName, new CookieOptions
+            {
+                Path = "/",
+                Secure = !_environment.IsDevelopment(),
+                SameSite = SameSiteMode.Lax,
+                HttpOnly = true
+            });
+
+            return NoContent();
+        }
+
+        private IActionResult HandleAuthenticationResponse(ServiceResponse<LoginResponse> serviceResponse)
+        {
+            if (serviceResponse.Success && serviceResponse.Data is not null)
+            {
+                var expirationMinutes = _configuration.GetValue("JwtSettings:ExpirationMinutes", 60);
+                Response.Cookies.Append(AccessCookieName, serviceResponse.Data.token, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = !_environment.IsDevelopment(),
+                    SameSite = SameSiteMode.Lax,
+                    IsEssential = true,
+                    Path = "/",
+                    Expires = DateTimeOffset.UtcNow.AddMinutes(expirationMinutes)
+                });
+            }
 
             return HandleResponse(serviceResponse);
         }
