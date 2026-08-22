@@ -125,6 +125,7 @@ ConnectionStrings__GameSphereDB
 JwtSettings__SecretKey
 JwtSettings__Issuer
 JwtSettings__Audience
+JwtSettings__ExpirationMinutes
 InitialAdmin__Email
 InitialAdmin__Password
 EmailSettings__SmtpServer
