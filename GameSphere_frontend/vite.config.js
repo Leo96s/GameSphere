@@ -55,5 +55,23 @@ export default defineConfig({
         },
       },
     ],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json-summary', 'html'],
+      include: [
+        'src/router.js',
+        'src/models/User.js',
+        'src/services/*.js',
+        'src/composables/useQuizAttempt.js',
+        'src/utils/passwordStrength.ts',
+      ],
+      exclude: ['src/**/*.spec.js'],
+      thresholds: {
+        statements: 75,
+        lines: 75,
+        functions: 70,
+        branches: 65,
+      },
+    },
   },
 });

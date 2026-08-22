@@ -21,7 +21,7 @@ export default class User {
     if (!this.firstName) errors.firstName = "First name is required.";
     if (!this.lastName) errors.lastName = "Last name is required.";
     if (!this.email) errors.email = "Email is required.";
-    if (!this.gender) errors.gender = "Gender is required.";
+    if (this.gender === undefined || this.gender === null) errors.gender = "Gender is required.";
     if (!this.password) errors.password = "Password is required.";
     return errors;
   }

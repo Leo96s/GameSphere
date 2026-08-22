@@ -14,4 +14,16 @@ describe('User model', () => {
 
     expect(user.uid).toBe('firebase-user-id');
   });
+
+  it('accepts the first gender enum value as valid', () => {
+    const user = new User({
+      firstName: 'First',
+      lastName: 'Gender',
+      email: 'first@example.test',
+      gender: 'Male',
+      password: 'Test-password-123',
+    });
+
+    expect(user.validate()).toEqual({});
+  });
 });

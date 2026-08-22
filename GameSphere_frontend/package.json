@@ -11,6 +11,8 @@
     "dev": "vite",
     "build": "vite build",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "node --test tests/e2e/*.test.mjs",
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",

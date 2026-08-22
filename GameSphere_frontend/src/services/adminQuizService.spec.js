@@ -61,4 +61,14 @@ describe('adminQuizService', () => {
     expect(getAdminErrorMessage({ response: { status: 403 } }))
       .toBe('Não tens permissão para gerir quizzes.');
   });
+
+  it('mapeia os restantes erros administrativos para mensagens acionáveis', () => {
+    expect(getAdminErrorMessage({ response: { status: 401 } }))
+      .toBe('A tua sessão terminou. Inicia sessão novamente.');
+    expect(getAdminErrorMessage({ response: { data: { message: 'Validation failed' } } }))
+      .toBe('Validation failed');
+    expect(getAdminErrorMessage({ response: { data: { detail: 'Details' } } }))
+      .toBe('Details');
+    expect(getAdminErrorMessage({})).toBe('Não foi possível concluir a alteração. Tenta novamente.');
+  });
 });
