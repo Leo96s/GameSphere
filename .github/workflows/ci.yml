@@ -56,10 +56,105 @@ jobs:
         working-directory: GameSphere_frontend
         run: npm ci
 
+      - name: Install Chromium for browser tests
+        working-directory: GameSphere_frontend
+        run: npx playwright install --with-deps chromium
+
       - name: Run frontend tests
         working-directory: GameSphere_frontend
         run: npm test
 
+      - name: Run frontend coverage gate
+        working-directory: GameSphere_frontend
+        run: npm run test:coverage
+
+      - name: Audit frontend packages
+        working-directory: GameSphere_frontend
+        run: npm audit --audit-level=high
+
       - name: Build frontend
         working-directory: GameSphere_frontend
         run: npm run build
+
+  docker-e2e:
+    name: Docker smoke and E2E
+    needs:
+      - backend
+      - frontend
+    runs-on: ubuntu-latest
+    env:
+      POSTGRES_DB: gamesphere_ci
+      POSTGRES_USER: gamesphere
+      POSTGRES_PASSWORD: gamesphere-ci-password
+      DATABASE_CONNECTION_STRING: Host=db;Port=5432;Database=gamesphere_ci;Username=gamesphere;Password=gamesphere-ci-password
+      JWT_SECRET: gamesphere-ci-jwt-secret-key-with-at-least-32-bytes
+      JWT_ISSUER: gamesphere-ci
+      JWT_AUDIENCE: gamesphere-ci
+      INITIAL_ADMIN_EMAIL: e2e-admin@example.test
+      INITIAL_ADMIN_PASSWORD: E2e-admin-password-123
+      SMTP_SERVER: smtp.example.test
+      SMTP_PORT: 2525
+      SMTP_SENDER_EMAIL: no-reply@example.test
+      SMTP_SENDER_NAME: GameSphere CI
+      SMTP_USERNAME: ci-user
+      SMTP_PASSWORD: ci-email-password
+      SMTP_ENABLE_SSL: false
+      FIREBASE_PROJECT_ID: gamesphere-9f7dc
+      E2E_BASE_URL: http://localhost:8080
+      E2E_ADMIN_EMAIL: e2e-admin@example.test
+      E2E_ADMIN_PASSWORD: E2e-admin-password-123
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: GameSphere_frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: GameSphere_frontend
+        run: npm ci
+
+      - name: Install Chromium for E2E
+        working-directory: GameSphere_frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Start production Compose stack
+        run: docker compose -f compose.yml -f compose.prod.yml up -d --build
+
+      - name: Wait for database migration
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 60); do
+            migrate_id="$(docker compose -f compose.yml -f compose.prod.yml ps -q migrate)"
+            if [ -n "$migrate_id" ]; then
+              state="$(docker inspect --format '{{.State.Status}}:{{.State.ExitCode}}' "$migrate_id")"
+              if [ "$state" = "exited:0" ]; then
+                exit 0
+              fi
+              if [[ "$state" == exited:* ]]; then
+                docker compose -f compose.yml -f compose.prod.yml logs migrate
+                exit 1
+              fi
+            fi
+            sleep 2
+          done
+          docker compose -f compose.yml -f compose.prod.yml ps -a
+          exit 1
+
+      - name: Run Docker smoke and E2E tests
+        working-directory: GameSphere_frontend
+        run: npm run test:e2e
+
+      - name: Show Compose diagnostics on failure
+        if: failure()
+        run: docker compose -f compose.yml -f compose.prod.yml ps -a && docker compose -f compose.yml -f compose.prod.yml logs --no-color --tail 200
+
+      - name: Stop Compose stack
+        if: always()
+        run: docker compose -f compose.yml -f compose.prod.yml down -v
