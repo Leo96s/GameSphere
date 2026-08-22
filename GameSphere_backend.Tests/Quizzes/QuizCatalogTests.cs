@@ -98,6 +98,24 @@ public sealed class QuizCatalogTests : IClassFixture<PostgreSqlFixture>, IAsyncL
         Assert.DoesNotContain("correctAnswer", body, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public async Task Catalog_clamps_invalid_pagination_values()
+    {
+        using var request = CreateAuthorizedRequest(HttpMethod.Get, "/api/quizzes?page=0&pageSize=0");
+        var clampedResponse = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        var clampedBody = await clampedResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, clampedResponse.StatusCode);
+        Assert.Contains("Published quiz", clampedBody, StringComparison.Ordinal);
+
+        using var largePageRequest = CreateAuthorizedRequest(HttpMethod.Get, "/api/quizzes?page=10001&pageSize=1000");
+        var largePageResponse = await _client.SendAsync(largePageRequest, TestContext.Current.CancellationToken);
+        var largePageBody = await largePageResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, largePageResponse.StatusCode);
+        Assert.Equal("[]", largePageBody);
+    }
+
     private async Task SeedQuizzesAsync()
     {
         await using var context = CreateContext();

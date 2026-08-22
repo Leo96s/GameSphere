@@ -8,12 +8,14 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using GameSphere_backend.Data;
 using GameSphere_backend.Enums;
 using GameSphere_backend.Interfaces;
 using GameSphere_backend.Models.BackendModels;
 using GameSphere_backend.Services;
+using GameSphere_backend.ServicesResponses;
 using GameSphere_backend.Tests.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -29,6 +31,7 @@ public sealed class UserAccountTests : IClassFixture<PostgreSqlFixture>, IAsyncL
     private readonly PostgreSqlFixture _database;
     private readonly GameSphereApiFactory _factory;
     private readonly CapturingEmailService _emailService = new();
+    private readonly StubFirebaseTokenVerifier _firebaseTokenVerifier = new();
     private HttpClient _client = null!;
     private Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactory<Program> _application = null!;
 
@@ -46,6 +49,8 @@ public sealed class UserAccountTests : IClassFixture<PostgreSqlFixture>, IAsyncL
             {
                 services.RemoveAll<IEmailService>();
                 services.AddSingleton<IEmailService>(_emailService);
+                services.RemoveAll<IFirebaseTokenVerifier>();
+                services.AddSingleton<IFirebaseTokenVerifier>(_firebaseTokenVerifier);
             });
         });
 
@@ -202,6 +207,37 @@ public sealed class UserAccountTests : IClassFixture<PostgreSqlFixture>, IAsyncL
     }
 
     [Fact]
+    public async Task Login_session_cookie_has_browser_security_attributes()
+    {
+        var (owner, _) = await SeedUsersAsync();
+
+        var response = await _client.PostAsJsonAsync("/api/User/login", new
+        {
+            email = owner.Email,
+            password = "Test-password-123",
+        }, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.True(response.Headers.TryGetValues("Set-Cookie", out var cookies));
+        var accessCookie = Assert.Single(cookies, cookie => cookie.StartsWith("gamesphere_access_token=", StringComparison.Ordinal));
+        Assert.Contains("HttpOnly", accessCookie, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("SameSite=Lax", accessCookie, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Path=/", accessCookie, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Logout_clears_the_session_cookie()
+    {
+        var response = await _client.PostAsync("/api/User/logout", content: null, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.True(response.Headers.TryGetValues("Set-Cookie", out var cookies));
+        var clearedCookie = Assert.Single(cookies, cookie => cookie.StartsWith("gamesphere_access_token=", StringComparison.Ordinal));
+        Assert.Contains("expires=Thu, 01 Jan 1970", clearedCookie, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("HttpOnly", clearedCookie, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task Registration_does_not_accept_server_managed_fields()
     {
         var email = $"managed-fields-{Guid.NewGuid():N}@example.test";
@@ -279,6 +315,25 @@ public sealed class UserAccountTests : IClassFixture<PostgreSqlFixture>, IAsyncL
     }
 
     [Fact]
+    public async Task Social_login_with_a_verified_token_creates_an_authenticated_session()
+    {
+        var email = $"social-{Guid.NewGuid():N}@example.test";
+        _firebaseTokenVerifier.ExpectedToken = "verified-firebase-token";
+        _firebaseTokenVerifier.User = new FirebaseUserInfo("firebase-new-user", email, "Social Player");
+
+        var response = await _client.PostAsJsonAsync(
+            "/api/User/social-login",
+            new { idToken = _firebaseTokenVerifier.ExpectedToken },
+            TestContext.Current.CancellationToken);
+        var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("firebase-new-user", body, StringComparison.Ordinal);
+        Assert.True(response.Headers.TryGetValues("Set-Cookie", out var cookies));
+        Assert.Contains(cookies, cookie => cookie.StartsWith("gamesphere_access_token=", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task A_deactivated_user_cannot_use_an_existing_token()
     {
         var (owner, _) = await SeedUsersAsync();
@@ -296,6 +351,29 @@ public sealed class UserAccountTests : IClassFixture<PostgreSqlFixture>, IAsyncL
     }
 
     [Fact]
+    public async Task Password_change_revokes_a_token_issued_before_the_change()
+    {
+        var (owner, _) = await SeedUsersAsync();
+        using var updateRequest = CreateAuthorizedRequest(HttpMethod.Put, $"/api/User/{owner.Id}", owner);
+        updateRequest.Content = JsonContent.Create(new
+        {
+            firstName = owner.FirstName,
+            lastName = owner.LastName,
+            email = owner.Email,
+            gender = (int)owner.Gender,
+            password = "Changed-password-123",
+        });
+
+        var updateResponse = await _client.SendAsync(updateRequest, TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.OK, updateResponse.StatusCode);
+
+        using var oldTokenRequest = CreateAuthorizedRequest(HttpMethod.Get, $"/api/User/by-id/{owner.Id}", owner);
+        var oldTokenResponse = await _client.SendAsync(oldTokenRequest, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Forbidden, oldTokenResponse.StatusCode);
+    }
+
+    [Fact]
     public async Task Unsafe_requests_from_an_untrusted_origin_are_rejected()
     {
         using var request = new HttpRequestMessage(HttpMethod.Post, "/api/User/login");
@@ -309,6 +387,34 @@ public sealed class UserAccountTests : IClassFixture<PostgreSqlFixture>, IAsyncL
         var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Auth_rate_limit_returns_too_many_requests_after_the_permit_window()
+    {
+        await using var rateLimitedApplication = _factory.WithWebHostBuilder(_ => { });
+        using var rateLimitedClient = rateLimitedApplication.CreateClient(new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions
+        {
+            BaseAddress = new Uri("https://localhost")
+        });
+
+        HttpStatusCode lastStatus = HttpStatusCode.OK;
+        for (var attempt = 0; attempt < 21; attempt++)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Post, "/api/User/login")
+            {
+                Content = JsonContent.Create(new
+                {
+                    email = $"rate-limit-{attempt}@example.test",
+                    password = "irrelevant-password",
+                })
+            };
+
+            using var response = await rateLimitedClient.SendAsync(request, TestContext.Current.CancellationToken);
+            lastStatus = response.StatusCode;
+        }
+
+        Assert.Equal(HttpStatusCode.TooManyRequests, lastStatus);
     }
 
     [Fact]
@@ -371,6 +477,32 @@ public sealed class UserAccountTests : IClassFixture<PostgreSqlFixture>, IAsyncL
             new { email = user.Email, password = newPassword },
             TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, loginResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task Password_recovery_clears_the_code_after_five_invalid_attempts()
+    {
+        var (_, user) = await SeedUsersAsync();
+        var sendResponse = await _client.PostAsJsonAsync(
+            "/api/User/send-reset-code",
+            user.Email,
+            TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.OK, sendResponse.StatusCode);
+
+        for (var attempt = 0; attempt < 5; attempt++)
+        {
+            var invalidResponse = await _client.PostAsJsonAsync(
+                "/api/User/validate-reset-code",
+                new { email = user.Email, resetCode = "000000" },
+                TestContext.Current.CancellationToken);
+            Assert.Equal(HttpStatusCode.BadRequest, invalidResponse.StatusCode);
+        }
+
+        await using var context = CreateContext();
+        var persistedUser = await context.Users.SingleAsync(candidate => candidate.Id == user.Id, TestContext.Current.CancellationToken);
+        Assert.Null(persistedUser.ResetCodeHash);
+        Assert.Null(persistedUser.ResetCodeExpiration);
+        Assert.Equal(5, persistedUser.ResetCodeAttempts);
     }
 
     private async Task<(User Owner, User Other)> SeedUsersAsync()
@@ -437,6 +569,20 @@ public sealed class UserAccountTests : IClassFixture<PostgreSqlFixture>, IAsyncL
         {
             LastBody = body;
             return Task.FromResult(true);
+        }
+    }
+
+    private sealed class StubFirebaseTokenVerifier : IFirebaseTokenVerifier
+    {
+        public string? ExpectedToken { get; set; }
+        public FirebaseUserInfo? User { get; set; }
+
+        public Task<FirebaseUserInfo?> VerifyAsync(string idToken, CancellationToken cancellationToken = default)
+        {
+            var result = string.Equals(idToken, ExpectedToken, StringComparison.Ordinal)
+                ? User
+                : null;
+            return Task.FromResult(result);
         }
     }
 }
