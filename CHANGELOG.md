@@ -1,3 +1,6 @@
+## v0.10.6 - 2026-08-22
+* fix(security): harden dependencies and Docker config
+* fix(account): secure user profile flows
 ## v0.10.4 - 2026-08-19
 * fix(admin): deny inactive admin sessions
 * fix(quiz): include quiz ID in result route
