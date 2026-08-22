@@ -16,6 +16,8 @@
         /// The email address associated with the user account.
         /// </value>
         /// <example>user@example.com</example>
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Email address is required")]
+        [System.ComponentModel.DataAnnotations.EmailAddress(ErrorMessage = "Invalid email address format")]
         public required string Email { get; set; }
 
         /// <summary>
@@ -25,6 +27,8 @@
         /// The 6-digit numeric code generated for password reset.
         /// </value>
         /// <example>123456</example>
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Reset code is required")]
+        [System.ComponentModel.DataAnnotations.RegularExpression("^[0-9]{6}$", ErrorMessage = "Reset code must be six digits")]
         public required string ResetCode { get; set; }
     }
 }

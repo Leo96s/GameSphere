@@ -1,0 +1,62 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Run backend tests
+        run: dotnet test GameSphere_backend.Tests/GameSphere_backend.Tests.csproj --configuration Release
+
+  frontend:
+    name: Frontend tests and build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: GameSphere_frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: GameSphere_frontend
+        run: npm ci
+
+      - name: Run frontend tests
+        working-directory: GameSphere_frontend
+        run: npm test
+
+      - name: Build frontend
+        working-directory: GameSphere_frontend
+        run: npm run build

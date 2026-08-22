@@ -71,6 +71,9 @@ export const social_login = async (uid, email) => {
 export const logout = () => {
   localStorage.removeItem(tokenKey);
   localStorage.removeItem(userKey);
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('user-logged-out'));
+  }
 };
 
 export const sentResetCode = async (email) => {

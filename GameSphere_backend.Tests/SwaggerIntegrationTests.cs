@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -35,5 +36,29 @@ public sealed class SwaggerIntegrationTests : IClassFixture<PostgreSqlFixture>, 
         var response = await _client.GetAsync("/swagger/v1/swagger.json", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Development_cors_allows_the_local_frontend_origin()
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/quizzes");
+        request.Headers.Add("Origin", "http://localhost:5173");
+
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.Equal("http://localhost:5173", response.Headers.GetValues("Access-Control-Allow-Origin").Single());
+    }
+
+    [Fact]
+    public async Task Development_cors_does_not_allow_an_unknown_origin()
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/quizzes");
+        request.Headers.Add("Origin", "https://attacker.example.test");
+
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.False(response.Headers.Contains("Access-Control-Allow-Origin"));
     }
 }

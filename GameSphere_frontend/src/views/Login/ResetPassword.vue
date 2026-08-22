@@ -126,7 +126,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     const email = emailData ? JSON.parse(emailData) : null
 
     if (!email) {
-      error("Session Error", "Email not found. Please try to recover again.")
+      showError("Session Error", "Email not found. Please try to recover again.")
       return
     }
 
@@ -136,7 +136,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     success("Success", "Password changed successfully!")
     setTimeout(() => router.push("/login"), 1500)
   } catch (err: any) {
-    error("Error", err?.response?.data?.message || "Invalid or expired code")
+    showError("Error", err?.response?.data?.message || "Invalid or expired code")
   } finally {
     isSubmitting.value = false
   }

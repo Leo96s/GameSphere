@@ -42,7 +42,7 @@ namespace GameSphere_backend.Models.FrontendModels
         /// </value>
         /// <example>NewSecurePassword123!</example>
         [Required(ErrorMessage = "New password is required")]
-        [MinLength(8, ErrorMessage = "Password must be at least 8 characters")]
+        [StringLength(128, MinimumLength = 8, ErrorMessage = "Password must contain between 8 and 128 characters")]
         [DataType(DataType.Password)]
         public required string NewPassword { get; set; }
     }

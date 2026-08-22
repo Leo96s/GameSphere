@@ -47,16 +47,20 @@ namespace GameSphere_backend.Models.FrontendModels
         /// <remarks>
         /// Should always be hashed using a secure algorithm like BCrypt.
         /// </remarks>
+        [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
         public string? HashedPassword { get; set; }
 
         /// <summary>
         /// Gets or sets the user's first name.
         /// </summary>
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "First name is required.")]
+        [System.ComponentModel.DataAnnotations.StringLength(100, ErrorMessage = "First name cannot exceed 100 characters.")]
         public required string FirstName { get; set; }
 
         /// <summary>
         /// Gets or sets the user's last name.
         /// </summary>
+        [System.ComponentModel.DataAnnotations.StringLength(100, ErrorMessage = "Last name cannot exceed 100 characters.")]
         public string? LastName { get; set; }
 
         /// <summary>
@@ -65,6 +69,9 @@ namespace GameSphere_backend.Models.FrontendModels
         /// <remarks>
         /// Used as the primary contact method and for authentication.
         /// </remarks>
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Email is required.")]
+        [System.ComponentModel.DataAnnotations.EmailAddress(ErrorMessage = "Email has an invalid format.")]
+        [System.ComponentModel.DataAnnotations.StringLength(320, ErrorMessage = "Email cannot exceed 320 characters.")]
         public required string Email { get; set; }
 
         /// <summary>

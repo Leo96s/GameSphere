@@ -35,7 +35,7 @@ namespace GameSphere_backend.Mappers
             if (user == null) return null;
 
             var registrationDate = user.RegistrationDate == default
-                ? DateTime.Now
+                ? DateTime.UtcNow
                 : user.RegistrationDate;
 
             return new UserDto(user.Role)
@@ -75,7 +75,7 @@ namespace GameSphere_backend.Mappers
 
             if (user.RegistrationDate == default)
             {
-                user.RegistrationDate = DateTime.Now;
+                user.RegistrationDate = DateTime.UtcNow;
             }
 
             var userModel = new User

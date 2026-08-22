@@ -173,6 +173,8 @@ onMounted(() => {
   checkUser();
   // Listen for the custom manual login event
   window.addEventListener('user-logged-in', handleStorageUpdate);
+  window.addEventListener('user-updated', handleStorageUpdate);
+  window.addEventListener('user-logged-out', handleStorageUpdate);
   // Listen for storage changes from other tabs
   window.addEventListener('storage', handleStorageUpdate);
 });
@@ -180,6 +182,8 @@ onMounted(() => {
 onUnmounted(() => {
   // Cleanup listeners to prevent memory leaks and HMR issues
   window.removeEventListener('user-logged-in', handleStorageUpdate);
+  window.removeEventListener('user-updated', handleStorageUpdate);
+  window.removeEventListener('user-logged-out', handleStorageUpdate);
   window.removeEventListener('storage', handleStorageUpdate);
 });
 

@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Cryptography;
 
 namespace GameSphere_backend.Services
 {
@@ -118,7 +119,7 @@ namespace GameSphere_backend.Services
                 return response;
             }
 
-            if (string.IsNullOrEmpty(user.HashedPassword))
+            if (string.IsNullOrWhiteSpace(user.HashedPassword))
             {
                 response.Success = false;
                 response.Message = "Password is required";
@@ -126,10 +127,10 @@ namespace GameSphere_backend.Services
                 return response;
             }
 
-            if (user.HashedPassword.Trim().Length < 8)
+            if (user.HashedPassword.Trim().Length is < 8 or > 128)
             {
                 response.Success = false;
-                response.Message = "Password must have 8 characteres";
+                response.Message = "Password must contain between 8 and 128 characters";
                 response.Type = "BadRequest";
                 return response;
             }
@@ -317,6 +318,14 @@ namespace GameSphere_backend.Services
 
             try
             {
+                if (updatedUser == null)
+                {
+                    response.Success = false;
+                    response.Message = "User data is required.";
+                    response.Type = "BadRequest";
+                    return response;
+                }
+
                 if (_context == null)
                 {
                     response.Success = false;
@@ -335,7 +344,19 @@ namespace GameSphere_backend.Services
                     return response;
                 }
 
-                if (!existingUser.Email.Equals(updatedUser.Email))
+                if (string.IsNullOrWhiteSpace(updatedUser.FirstName)
+                    || string.IsNullOrWhiteSpace(updatedUser.Email)
+                    || !new EmailAddressAttribute().IsValid(updatedUser.Email)
+                    || updatedUser.FirstName.Length > 100
+                    || updatedUser.LastName?.Length > 100)
+                {
+                    response.Success = false;
+                    response.Message = "Profile data is invalid.";
+                    response.Type = "BadRequest";
+                    return response;
+                }
+
+                if (!existingUser.Email.Equals(updatedUser.Email, StringComparison.OrdinalIgnoreCase))
                 {
                     if (!await IsEmailAvailable(updatedUser.Email))
                     {
@@ -357,9 +378,9 @@ namespace GameSphere_backend.Services
 
 
                 // Atualizar os dados do usuário
-                existingUser.FirstName = updatedUser.FirstName;
-                existingUser.LastName = updatedUser.LastName;
-                existingUser.Email = updatedUser.Email;
+                existingUser.FirstName = updatedUser.FirstName.Trim();
+                existingUser.LastName = updatedUser.LastName?.Trim();
+                existingUser.Email = updatedUser.Email.Trim();
                 existingUser.Gender = updatedUser.Gender;
                 existingUser.Image = updatedUser.Image;
 
@@ -587,17 +608,27 @@ namespace GameSphere_backend.Services
         {
             var response = new ServiceResponse<bool>();
 
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-            if(user == null)
+            if (string.IsNullOrWhiteSpace(email) || !new EmailAddressAttribute().IsValid(email))
             {
                 response.Success = false;
                 response.Data = false;
-                response.Message = "User not found!";
-                response.Type = "Not Found";
+                response.Message = "Email address is invalid.";
+                response.Type = "BadRequest";
                 return response;
             }
 
-            var resetCode = new Random().Next(100000, 999999).ToString();
+            email = email.Trim();
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null)
+            {
+                response.Success = true;
+                response.Data = true;
+                response.Message = "If an account exists for this email, recovery instructions will be sent.";
+                response.Type = "Ok";
+                return response;
+            }
+
+            var resetCode = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
 
             user.ResetCode = resetCode;
             user.ResetCodeExpiration = DateTime.UtcNow.AddMinutes(15);
@@ -622,7 +653,7 @@ namespace GameSphere_backend.Services
 
             response.Success = true;
             response.Data = true;
-            response.Message = "Reset code sent successfully!";
+            response.Message = "If an account exists for this email, recovery instructions will be sent.";
             response.Type = "Ok";
             return response;
         }
@@ -637,13 +668,25 @@ namespace GameSphere_backend.Services
         {
             var response = new ServiceResponse<bool>();
 
+            if (string.IsNullOrWhiteSpace(email)
+                || !new EmailAddressAttribute().IsValid(email)
+                || string.IsNullOrWhiteSpace(resetCode)
+                || !System.Text.RegularExpressions.Regex.IsMatch(resetCode, "^[0-9]{6}$"))
+            {
+                response.Success = false;
+                response.Data = false;
+                response.Message = "Invalid or expired reset code!";
+                response.Type = "BadRequest";
+                return response;
+            }
+
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
             if (user == null)
             {
                 response.Success = false;
                 response.Data = false;
-                response.Message = "User not found!";
-                response.Type = "NotFound";
+                response.Message = "Invalid or expired reset code!";
+                response.Type = "BadRequest";
                 return response;
             }
 
@@ -674,13 +717,27 @@ namespace GameSphere_backend.Services
         {
             var response = new ServiceResponse<bool>();
 
+            if (string.IsNullOrWhiteSpace(email)
+                || !new EmailAddressAttribute().IsValid(email)
+                || string.IsNullOrWhiteSpace(resetCode)
+                || !System.Text.RegularExpressions.Regex.IsMatch(resetCode, "^[0-9]{6}$")
+                || string.IsNullOrWhiteSpace(newPassword)
+                || newPassword.Length is < 8 or > 128)
+            {
+                response.Success = false;
+                response.Data = false;
+                response.Message = "Invalid password recovery data.";
+                response.Type = "BadRequest";
+                return response;
+            }
+
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
             if (user == null)
             {
                 response.Success = false;
                 response.Data = false;
-                response.Message = "User not found!";
-                response.Type = "NotFound";
+                response.Message = "Invalid or expired reset code!";
+                response.Type = "BadRequest";
                 return response;
             }
 
@@ -693,27 +750,17 @@ namespace GameSphere_backend.Services
                 return response;
             }
             
-            user.HashedPassword = BCrypt.Net.BCrypt.HashPassword(newPassword);
+            user.HashedPassword = BCrypt.Net.BCrypt.EnhancedHashPassword(newPassword, 13);
 
             user.ResetCode = null;
             user.ResetCodeExpiration = null;
 
             await _context.SaveChangesAsync();
 
-            string emailBody = $"<h3>Senha alterada</h3>" +
-                       $"<p>A sua senha foi altera se não foi você redefine a senha o mais depressa possível.</p>";
+            string emailBody = "<h3>Password changed</h3>" +
+                       "<p>Your GameSphere password was changed. If this was not you, contact support.</p>";
 
-            // Enviar o e-mail
-            bool emailSent = await _emailService.SendEmailAsync(email, "Aviso de Senha alterada", emailBody);
-
-            if (!emailSent)
-            {
-                response.Success = false;
-                response.Data = false;
-                response.Message = "Failed to send email.";
-                response.Type = "BadRequest";
-                return response;
-            }
+            await _emailService.SendEmailAsync(email, "Password changed", emailBody);
 
             response.Success = true;
             response.Data = true;

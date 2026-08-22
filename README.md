@@ -485,6 +485,8 @@ Constrói e arranca localmente as imagens de produção com o Nginx como ponto d
 docker compose -f compose.yml -f compose.prod.yml up --build
 ```
 
+O CORS da API de producao aceita a origem definida por `CORS_ALLOWED_ORIGIN`; o Compose usa `http://localhost:8080` por defeito. Num deployment publico, substitui-o pela origem HTTPS real do frontend.
+
 A aplicação fica disponível em <http://localhost:8080>. A API não é publicada diretamente; é acessível internamente através do caminho `/api`.
 
 Para parar os serviços, preservando o volume do PostgreSQL:

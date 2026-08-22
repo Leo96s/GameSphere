@@ -19,6 +19,19 @@ var connectionString = GetRequiredConfiguration(config, "ConnectionStrings:GameS
 var jwtSecret = GetRequiredConfiguration(config, "JwtSettings:SecretKey");
 var jwtIssuer = GetRequiredConfiguration(config, "JwtSettings:Issuer");
 var jwtAudience = GetRequiredConfiguration(config, "JwtSettings:Audience");
+var configuredCorsOrigins = config.GetSection("Cors:AllowedOrigins")
+    .GetChildren()
+    .Select(section => section.Value)
+    .Where(origin => !string.IsNullOrWhiteSpace(origin))
+    .Select(origin => origin!.TrimEnd('/'))
+    .Distinct(StringComparer.OrdinalIgnoreCase)
+    .ToArray();
+
+var corsOrigins = configuredCorsOrigins.Length > 0
+    ? configuredCorsOrigins
+    : builder.Environment.IsDevelopment()
+        ? ["http://localhost:5173", "http://127.0.0.1:5173"]
+        : throw new InvalidOperationException("Configuration section 'Cors:AllowedOrigins' is required outside Development.");
 
 if (Encoding.UTF8.GetByteCount(jwtSecret) < 32)
 {
@@ -29,22 +42,12 @@ if (Encoding.UTF8.GetByteCount(jwtSecret) < 32)
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", builder =>
+    options.AddPolicy("App", builder =>
     {
-        builder.AllowAnyOrigin()
+        builder.WithOrigins(corsOrigins)
                .AllowAnyMethod()
                .AllowAnyHeader();
     });
-
-    // options.AddPolicy(name: specificOrgins,
-    // policy =>
-    // {
-    //     policy.SetIsOriginAllowed(origin => new Uri(origin).Host == "")
-    //     .SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost")
-    //     .AllowAnyMethod()
-    //     .AllowAnyHeader()
-    //     .AllowCredentials();
-    // });
 });
 // Add services to the container.
 builder.Services.AddControllersWithViews();
@@ -144,8 +147,6 @@ if (!app.Environment.IsEnvironment("DesignTime"))
     await bootstrapper.EnsureAdminAsync();
 }
 
-app.UseCors("AllowAll");
-
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -173,6 +174,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+app.UseCors("App");
 
 app.UseAuthentication();
 app.UseAuthorization();

@@ -1,200 +1,200 @@
 <template>
-  <div class="profile-page">
-    <!-- Profile Cover Section -->
-    <section class="section-profile-cover section-shaped my-0">
-      <div class="shape shape-style-1 shape-primary shape-skew alpha-4"></div>
-    </section>
+  <section class="min-h-screen bg-gray-50 px-4 py-12">
+    <div class="mx-auto max-w-2xl">
+      <Card class="p-6 shadow-lg">
+        <div class="mb-8">
+          <p class="text-sm font-semibold uppercase tracking-wide text-purple-600">Account</p>
+          <h1 class="mt-1 text-3xl font-bold text-gray-900">My profile</h1>
+          <p class="mt-2 text-gray-500">Keep your personal information up to date.</p>
+        </div>
 
-    <!-- Profile Card Section -->
-    <section class="section section-skew">
-      <div class="container">
-        <div class="card shadow card-profile mt--300">
-          <div class="px-4">
-            <div class="row justify-content-center">
-              <!-- Profile Image -->
-              <div class="col-lg-3 order-lg-2">
-                <div v-if="user" class="card-profile-image">
-                  <a href="#">
-                    <!-- <img :src="user.profileImage || "
-                        alt="Profile Image"
-                        class="rounded-circle"
-                      />-->
-                  </a>
-                </div>
-              </div>
+        <div v-if="isLoading" class="py-8 text-center text-gray-500">Loading profile...</div>
 
-              <!-- Profile Actions -->
-              <div class="col-lg-4 order-lg-3 text-lg-right align-self-lg-center">
-                <div class="card-profile-actions py-4 mt-lg-0">
-                  <button class="btn btn-info btn-sm mr-4">Connect</button>
-                  <button class="btn btn-default btn-sm">Message</button>
-                </div>
-              </div>
-
-              <!-- Profile Stats -->
-              <div class="col-lg-4 order-lg-1">
-                <div class="card-profile-stats d-flex justify-content-center">
-                  <div>
-                    <span class="heading">22</span>
-                    <span class="description">Friends</span>
-                  </div>
-                  <div>
-                    <span class="heading">10</span>
-                    <span class="description">Photos</span>
-                  </div>
-                  <div>
-                    <span class="heading">89</span>
-                    <span class="description">Comments</span>
-                  </div>
-                </div>
-              </div>
+        <form v-else class="space-y-5" @submit.prevent="saveProfile">
+          <div class="grid gap-5 sm:grid-cols-2">
+            <div>
+              <label for="first-name" class="mb-2 block text-sm font-medium text-gray-700">First name</label>
+              <Input id="first-name" v-model="form.firstName" autocomplete="given-name" />
             </div>
 
-            <!-- Profile Info -->
-            <div v-if="user" class="text-center mt-5">
-              <h3>
-                {{ user.firstName }} {{ user.lastName }}
-                <span class="font-weight-light"> {{ timeSinceRegistration }}.</span>
-              </h3>
-              <div class="h6 font-weight-300">
-                <i class="ni location_pin mr-2"></i>{{ user.location || "Location not provided" }}
-              </div>
-              <div class="h6 mt-4">
-                <i class="ni business_briefcase-24 mr-2"></i>Solution Manager - Creative Tim Officer
-              </div>
-              <div>
-                <i class="ni education_hat mr-2"></i>University of Computer Science
-              </div>
-            </div>
-
-            <!-- Profile Bio -->
-            <div class="mt-5 py-5 border-top text-center">
-              <div class="row justify-content-center">
-                <div class="col-lg-9">
-                  <p>
-                    An artist of considerable range, Ryan — the name taken by
-                    Melbourne-raised, Brooklyn-based Nick Murphy — writes,
-                    performs and records all of his own music, giving it a warm,
-                    intimate feel with a solid groove structure. An artist of
-                    considerable range.
-                  </p>
-                  <a href="#">Show more</a>
-                </div>
-              </div>
+            <div>
+              <label for="last-name" class="mb-2 block text-sm font-medium text-gray-700">Last name</label>
+              <Input id="last-name" v-model="form.lastName" autocomplete="family-name" />
             </div>
           </div>
-        </div>
-      </div>
-    </section>
-  </div>
+
+          <div>
+            <label for="email" class="mb-2 block text-sm font-medium text-gray-700">Email</label>
+            <Input id="email" v-model="form.email" type="email" autocomplete="email" />
+          </div>
+
+          <div>
+            <label for="gender" class="mb-2 block text-sm font-medium text-gray-700">Gender</label>
+            <select
+              id="gender"
+              v-model.number="form.gender"
+              class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+            >
+              <option v-for="option in genderOptions" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
+
+          <p v-if="formError" class="text-sm text-red-600" role="alert">{{ formError }}</p>
+
+          <div class="flex flex-col gap-3 border-t pt-6 sm:flex-row sm:justify-between">
+            <Button type="submit" :disabled="isSaving" class="bg-purple-600 text-white hover:bg-purple-700">
+              {{ isSaving ? 'Saving...' : 'Save changes' }}
+            </Button>
+            <Button type="button" variant="destructive" :disabled="isDeleting" @click="deleteAccount">
+              {{ isDeleting ? 'Deleting...' : 'Delete account' }}
+            </Button>
+          </div>
+        </form>
+
+        <p v-if="user" class="mt-6 border-t pt-4 text-sm text-gray-500">
+          Member {{ timeSinceRegistration }}.
+        </p>
+      </Card>
+    </div>
+
+    <Toast ref="toastRef" />
+  </section>
 </template>
 
-<script>
-/**
- * ProfilePage Component
- * @description Displays the authenticated user's profile information,
- * including dynamic registration tenure, social stats, and personal biography.
- * Uses a negative margin layout to overlap the profile card onto the cover section.
- */
-export default {
-  name: "ProfilePage",
-  data() {
-    return {
-      user: null
-    };
-  },
-  mounted() {
-    /**
-     * Logic: On mount, sync component state with LocalStorage.
-     * Note: This allows for page persistence without hitting the API on every refresh.
-     */
-    const storedUser = localStorage.getItem("user");
-    console.log("Utilizador recuperado do localStorage:", storedUser);
-    if (storedUser) {
-      this.user = JSON.parse(storedUser);
-    }
-  },
-  computed: {
-    /**
-     * Calculates the duration since the user registered.
-     * Logic: Compares `registrationDate` with the current system time.
-     * @returns {string} A formatted string in Portuguese (e.g., "pertence ao site há 2 anos").
-     */
-    timeSinceRegistration() {
-      if (!this.user || !this.user.registrationDate) return "Data inválida";
+<script setup>
+import { computed, onMounted, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
-      const registrationDate = new Date(this.user.registrationDate);
-      const currentDate = new Date();
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import Toast from '@/components/ui/custom/Toast/Toast.vue'
+import { useToast } from '@/composables/useToast'
+import { deleteUser, editUser, getUser } from '@/services/userServices'
+import { getCurrentUser, logout } from '@/services/authService'
 
-      // Diferença em milissegundos
-      const diffTime = currentDate - registrationDate;
+const router = useRouter()
+const { success, showError, toastRef } = useToast()
 
-      // Conversões de tempo
-      const oneDay = 1000 * 60 * 60 * 24;
-      const oneMonth = oneDay * 30; // Aproximação de um mês
-      const oneYear = oneDay * 365; // Aproximação de um ano
+const user = ref(null)
+const isLoading = ref(true)
+const isSaving = ref(false)
+const isDeleting = ref(false)
+const formError = ref('')
+const form = reactive({
+  firstName: '',
+  lastName: '',
+  email: '',
+  gender: 2,
+})
 
-      // Calcula a diferença
-      const years = Math.floor(diffTime / oneYear);
-      const months = Math.floor(diffTime / oneMonth);
-      const days = Math.floor(diffTime / oneDay);
+const genderOptions = [
+  { value: 0, label: 'Male' },
+  { value: 1, label: 'Female' },
+  { value: 2, label: 'Other' },
+]
 
-      // Retorna o tempo no formato correto
-      if (years > 0) {
-        return `pertence ao site há ${years} ${years === 1 ? "ano" : "anos"}`;
-      } else if (months > 0) {
-        return `pertence ao site há ${months} ${months === 1 ? "mês" : "meses"}`;
-      } else {
-        return `pertence ao site há ${days} ${days === 1 ? "dia" : "dias"}`;
-      }
-    }
+const timeSinceRegistration = computed(() => {
+  if (!user.value?.registrationDate) return 'recently joined'
+
+  const elapsedDays = Math.max(
+    0,
+    Math.floor((Date.now() - new Date(user.value.registrationDate).getTime()) / 86400000),
+  )
+
+  if (elapsedDays >= 365) {
+    const years = Math.floor(elapsedDays / 365)
+    return `${years} ${years === 1 ? 'year' : 'years'} ago`
   }
-};
+
+  if (elapsedDays >= 30) {
+    const months = Math.floor(elapsedDays / 30)
+    return `${months} ${months === 1 ? 'month' : 'months'} ago`
+  }
+
+  return `${elapsedDays} ${elapsedDays === 1 ? 'day' : 'days'} ago`
+})
+
+const loadProfile = async () => {
+  const storedUser = getCurrentUser()
+
+  if (!storedUser?.id) {
+    formError.value = 'Your session does not contain a valid user.'
+    isLoading.value = false
+    return
+  }
+
+  try {
+    const currentUser = await getUser(storedUser.id)
+    user.value = currentUser
+    form.firstName = currentUser.firstName ?? ''
+    form.lastName = currentUser.lastName ?? ''
+    form.email = currentUser.email ?? ''
+    form.gender = Number(currentUser.gender ?? 2)
+  } catch (error) {
+    showError('Profile error', error?.response?.data?.message || 'Unable to load your profile.')
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const validateForm = () => {
+  if (!form.firstName.trim() || !form.lastName.trim()) {
+    return 'First name and last name are required.'
+  }
+
+  if (!form.email.trim() || !/^\S+@\S+\.\S+$/.test(form.email.trim())) {
+    return 'Enter a valid email address.'
+  }
+
+  if (![0, 1, 2].includes(Number(form.gender))) {
+    return 'Select a valid gender.'
+  }
+
+  return ''
+}
+
+const saveProfile = async () => {
+  formError.value = validateForm()
+  if (formError.value || !user.value) return
+
+  isSaving.value = true
+  try {
+    const updatedUser = await editUser(user.value.id, {
+      firstName: form.firstName.trim(),
+      lastName: form.lastName.trim(),
+      email: form.email.trim(),
+      gender: Number(form.gender),
+      image: user.value.image ?? null,
+    })
+
+    user.value = updatedUser
+    localStorage.setItem('user', JSON.stringify(updatedUser))
+    window.dispatchEvent(new Event('user-updated'))
+    success('Profile updated', 'Your personal information was saved.')
+  } catch (error) {
+    showError('Update failed', error?.response?.data?.message || 'Unable to update your profile.')
+  } finally {
+    isSaving.value = false
+  }
+}
+
+const deleteAccount = async () => {
+  if (!user.value || !window.confirm('Are you sure you want to permanently delete your account?')) return
+
+  isDeleting.value = true
+  try {
+    await deleteUser(user.value.id)
+    logout()
+    await router.push({ name: 'landing' })
+  } catch (error) {
+    showError('Deletion failed', error?.response?.data?.message || 'Unable to delete your account.')
+  } finally {
+    isDeleting.value = false
+  }
+}
+
+onMounted(loadProfile)
 </script>
-
-<style>
-/* Estilo básico */
-.profile-page .section-profile-cover {
-  position: relative;
-}
-
-.shape {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  z-index: 1;
-}
-
-.shape span {
-  display: block;
-  position: absolute;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.card-profile {
-  z-index: 2;
-  position: relative;
-}
-
-.card-profile-image img {
-  max-width: 140px;
-  border: 3px solid #fff;
-}
-
-.card-profile-stats div {
-  margin: 0 10px;
-  text-align: center;
-}
-
-.card-profile-stats .heading {
-  font-size: 1.2rem;
-  font-weight: bold;
-}
-
-.card-profile-stats .description {
-  font-size: 0.9rem;
-  color: #6c757d;
-}
-</style>

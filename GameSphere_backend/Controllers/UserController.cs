@@ -4,6 +4,8 @@ using GameSphere_backend.Models.FrontendModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace GameSphere_backend.Controllers
 {
@@ -46,6 +48,11 @@ namespace GameSphere_backend.Controllers
         [HttpGet("by-id/{id}")]
         public override async Task<IActionResult> GetEntityById(int id)
         {
+            if (!IsCurrentUser(id))
+            {
+                return Forbid();
+            }
+
             var serviceResponse = await _userService.GetUserByIdAsync(id);
 
             return HandleResponse(serviceResponse);
@@ -87,14 +94,16 @@ namespace GameSphere_backend.Controllers
         /// </returns>
         [Authorize]
         [HttpDelete("{id}")]
-        [Authorize]
         public override async Task<IActionResult> DeleteEntity(int id)
         {
+            if (!IsCurrentUser(id))
             {
-                var serviceResponse = await _userService.DeleteUserAsync(id);
-
-                return HandleResponse(serviceResponse);
+                return Forbid();
             }
+
+            var serviceResponse = await _userService.DeleteUserAsync(id);
+
+            return HandleResponse(serviceResponse);
         }
 
         /// <summary>
@@ -111,9 +120,13 @@ namespace GameSphere_backend.Controllers
         /// </returns>
         [Authorize]
         [HttpPut("{id}")]
-        [Authorize]
         public override async Task<IActionResult> UpdateEntity(int id, UserDto updatedUser)
         {
+            if (!IsCurrentUser(id))
+            {
+                return Forbid();
+            }
+
             var serviceResponse = await _userService.EditUserAsync(id, updatedUser);
 
             return HandleResponse(serviceResponse);
@@ -194,6 +207,16 @@ namespace GameSphere_backend.Controllers
         {
             var serviceResponse = await _userService.GetUserByEmailAsync(email);
 
+            if (!serviceResponse.Success || serviceResponse.Data == null)
+            {
+                return HandleResponse(serviceResponse);
+            }
+
+            if (!IsCurrentUser(serviceResponse.Data.Id))
+            {
+                return Forbid();
+            }
+
             return HandleResponse(serviceResponse);
         }
 
@@ -266,6 +289,15 @@ namespace GameSphere_backend.Controllers
             var serviceResponse = await _userService.SocialLoginAsync(uid, email);
 
             return HandleResponse(serviceResponse);
+        }
+
+        private bool IsCurrentUser(int userId)
+        {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+
+            return int.TryParse(userIdClaim, out var authenticatedUserId)
+                && authenticatedUserId == userId;
         }
 
     }
