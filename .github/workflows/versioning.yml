@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - dev
   workflow_dispatch:
 
 concurrency:
@@ -13,6 +12,8 @@ concurrency:
 
 jobs:
   versioning:
+    # A publicação é exclusiva da main, inclusive quando iniciada manualmente.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -177,6 +178,12 @@ jobs:
             fi
           done
 
+      - name: Synchronize optional plugin versions
+        if: env.created_tags == '1' && hashFiles('.github/actions/plugin-version-sync/action.yml') != ''
+        uses: ./.github/actions/plugin-version-sync
+        with:
+          version: ${{ env.new_version }}
+
       # CHANGELOG LIMPO
       - name: Update changelog
         if: env.created_tags == '1'
@@ -224,16 +231,16 @@ jobs:
           # [skip ci] evita que este commit volte a acionar o workflow
           git diff --cached --quiet || git commit -m "chore(release): ${{ env.new_version }} [skip ci]"
 
-          # 2. Empurra o commit para a branch (main/dev)
+          # 2. Empurra o commit da release para a branch.
           git push origin HEAD
 
-          # 3. Tenta empurrar cada tag individualmente
-          # Isso evita que uma tag rejeitada bloqueie todas as outras
+          # 3. Tenta empurrar cada tag individualmente.
+          # Isso evita que uma tag rejeitada bloqueie todas as outras.
           for tag in $(git tag --points-at HEAD); do
-            git push origin "$tag" || echo "Tag $tag rejeitada (provavelmente contém alteração de workflow). Ignorando..."
+            git push origin "$tag" || echo "Tag $tag rejeitada. Ignorando..."
           done
 
-          # Tenta empurrar as outras tags criadas no replay (opcional)
+          # Tenta empurrar as outras tags criadas no replay.
           git push origin --tags || echo "Algumas tags foram rejeitadas, mas o processo continuou."
 
       # Publica a Release no GitHub com as notas da versão atual
