@@ -2,12 +2,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Security.Claims;
 using System.Threading.Tasks;
 using GameSphere_backend.Data;
 using GameSphere_backend.Enums;
@@ -20,7 +18,7 @@ using Xunit;
 
 namespace GameSphere_backend.Tests.Quizzes;
 
-public sealed class QuizCatalogTests : IClassFixture<PostgreSqlFixture>, IAsyncLifetime
+public sealed class QuizCatalogAccessTests : IClassFixture<PostgreSqlFixture>, IAsyncLifetime
 {
     private readonly PostgreSqlFixture _database;
     private readonly GameSphereApiFactory _factory;
@@ -29,7 +27,7 @@ public sealed class QuizCatalogTests : IClassFixture<PostgreSqlFixture>, IAsyncL
     private int _ownerId;
     private string _draftTitle = null!;
 
-    public QuizCatalogTests(PostgreSqlFixture database)
+    public QuizCatalogAccessTests(PostgreSqlFixture database)
     {
         _database = database;
         _factory = new GameSphereApiFactory(database);

@@ -11,10 +11,20 @@ namespace GameSphere_backend.Services;
 public sealed class QuizCatalogService : IQuizCatalogService
 {
     private readonly AppDbContext _context;
+    private readonly QuizAttemptValidator _attemptValidator;
+    private readonly QuizAttemptScorer _attemptScorer;
+    private readonly QuizAttemptPersistenceService _attemptPersistenceService;
 
-    public QuizCatalogService(AppDbContext context)
+    public QuizCatalogService(
+        AppDbContext context,
+        QuizAttemptValidator attemptValidator,
+        QuizAttemptScorer attemptScorer,
+        QuizAttemptPersistenceService attemptPersistenceService)
     {
         _context = context;
+        _attemptValidator = attemptValidator;
+        _attemptScorer = attemptScorer;
+        _attemptPersistenceService = attemptPersistenceService;
     }
 
     public async Task<IReadOnlyList<QuizCatalogItemDto>> GetPublishedAsync(int page = 1, int pageSize = 50)
@@ -51,65 +61,16 @@ public sealed class QuizCatalogService : IQuizCatalogService
             .Include(candidate => candidate.Questions)
             .SingleOrDefaultAsync(candidate => candidate.Id == quizId && candidate.IsPublished);
 
-        if (quiz is null)
+        var validation = _attemptValidator.Validate(quiz, request);
+        if (!validation.Success)
         {
-            return Failure("NotFound", "Quiz not found.");
+            return Failure(validation.Type!, validation.Message!);
         }
 
-        var questions = quiz.Questions?.ToArray() ?? [];
+        var attempt = validation.Data!;
+        var correctAnswers = _attemptScorer.CountCorrectAnswers(attempt);
 
-        if (questions.Length == 0)
-        {
-            return Failure("BadRequest", "Quiz has no questions.");
-        }
-
-        var submittedAnswers = request.Answers;
-
-        if (submittedAnswers.Count != questions.Length)
-        {
-            return Failure("BadRequest", "An answer is required for every quiz question.");
-        }
-
-        var answersByQuestion = new Dictionary<int, QuizAnswerRequest>();
-        foreach (var answer in submittedAnswers)
-        {
-            if (string.IsNullOrWhiteSpace(answer.SelectedAnswer) ||
-                !answersByQuestion.TryAdd(answer.QuestionId, answer))
-            {
-                return Failure("BadRequest", "Each quiz question must have one valid answer.");
-            }
-        }
-
-        var questionsById = questions.ToDictionary(question => question.Id);
-        if (!answersByQuestion.Keys.ToHashSet().SetEquals(questionsById.Keys))
-        {
-            return Failure("BadRequest", "The submitted answers do not match this quiz.");
-        }
-
-        foreach (var question in questions)
-        {
-            var selectedAnswer = answersByQuestion[question.Id].SelectedAnswer;
-            if (!question.Answers.Contains(selectedAnswer, StringComparer.Ordinal))
-            {
-                return Failure("BadRequest", "Each selected answer must be one of the question options.");
-            }
-        }
-
-        var correctAnswers = questions.Count(question =>
-            string.Equals(
-                question.CorrectAnswer,
-                answersByQuestion[question.Id].SelectedAnswer,
-                StringComparison.Ordinal));
-
-        _context.Scores.Add(new Score
-        {
-            UserId = userId,
-            QuizzId = quiz.Id,
-            GameId = null,
-            Date = DateTime.UtcNow,
-            Points = correctAnswers
-        });
-        await _context.SaveChangesAsync();
+        await _attemptPersistenceService.SaveScoreAsync(userId, quiz!.Id, correctAnswers);
 
         return new ServiceResponse<QuizAttemptResultDto>
         {
@@ -118,10 +79,10 @@ public sealed class QuizCatalogService : IQuizCatalogService
             Data = new QuizAttemptResultDto
             {
                 CorrectAnswers = correctAnswers,
-                TotalQuestions = questions.Length,
-                Percentage = questions.Length == 0
+                TotalQuestions = attempt.Questions.Count,
+                Percentage = attempt.Questions.Count == 0
                     ? 0m
-                    : correctAnswers * 100m / questions.Length
+                    : correctAnswers * 100m / attempt.Questions.Count
             }
         };
     }

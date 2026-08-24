@@ -1,18 +1,15 @@
 using GameSphere_backend.Authorization;
 using GameSphere_backend.Interfaces;
 using GameSphere_backend.Models.FrontendModels;
-using GameSphere_backend.ServicesResponses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 
 namespace GameSphere_backend.Controllers;
 
 [ApiController]
 [Route("api/admin/quizzes")]
 [Authorize(Policy = ActiveAdminRequirement.PolicyName)]
-public sealed class AdminQuizzesController : ControllerBase
+public sealed class AdminQuizzesController : AdminControllerBase
 {
     private readonly IQuizAdministrationService _quizAdministrationService;
 
@@ -37,57 +34,19 @@ public sealed class AdminQuizzesController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<AdminQuizUpsertDto>> CreateQuiz([FromBody] AdminQuizUpsertDto request)
-    {
-        if (!TryGetAdminId(out var adminId))
-        {
-            return Unauthorized();
-        }
-
-        var result = await _quizAdministrationService.CreateQuizAsync(adminId, request);
-        if (!result.Success || result.Data is null)
-        {
-            return ToErrorResult(result);
-        }
-
-        return CreatedAtAction(nameof(GetQuizById), new { id = result.Data.Id }, result.Data);
-    }
+    public async Task<ActionResult<AdminQuizUpsertDto>> CreateQuiz([FromBody] AdminQuizUpsertDto request) =>
+        await RunAdminCommandAsync(
+            adminId => _quizAdministrationService.CreateQuizAsync(adminId, request),
+            quiz => CreatedAtAction(nameof(GetQuizById), new { id = quiz.Id }, quiz));
 
     [HttpPut("{id:int}")]
-    public async Task<ActionResult<AdminQuizUpsertDto>> UpdateQuiz(int id, [FromBody] AdminQuizUpsertDto request)
-    {
-        if (!TryGetAdminId(out var adminId))
-        {
-            return Unauthorized();
-        }
-
-        var result = await _quizAdministrationService.UpdateQuizAsync(adminId, id, request);
-        return result.Success && result.Data is not null ? Ok(result.Data) : ToErrorResult(result);
-    }
+    public async Task<ActionResult<AdminQuizUpsertDto>> UpdateQuiz(int id, [FromBody] AdminQuizUpsertDto request) =>
+        await RunAdminCommandAsync(
+            adminId => _quizAdministrationService.UpdateQuizAsync(adminId, id, request),
+            quiz => Ok(quiz));
 
     [HttpDelete("{id:int}")]
-    public async Task<IActionResult> DeleteQuiz(int id)
-    {
-        if (!TryGetAdminId(out var adminId))
-        {
-            return Unauthorized();
-        }
+    public async Task<IActionResult> DeleteQuiz(int id) =>
+        await RunAdminDeleteAsync(adminId => _quizAdministrationService.DeleteQuizAsync(adminId, id));
 
-        var result = await _quizAdministrationService.DeleteQuizAsync(adminId, id);
-        return result.Success ? NoContent() : ToErrorResult(result);
-    }
-
-    private bool TryGetAdminId(out int adminId)
-    {
-        var claim = User.FindFirstValue(ClaimTypes.NameIdentifier) ??
-            User.FindFirstValue(JwtRegisteredClaimNames.Sub);
-        return int.TryParse(claim, out adminId);
-    }
-
-    private ActionResult ToErrorResult<T>(ServiceResponse<T> response) => response.Type switch
-    {
-        "NotFound" => NotFound(),
-        "Conflict" => Conflict(),
-        _ => BadRequest()
-    };
 }
