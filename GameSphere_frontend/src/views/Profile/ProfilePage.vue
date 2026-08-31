@@ -24,11 +24,6 @@
           </div>
 
           <div>
-            <label for="email" class="mb-2 block text-sm font-medium text-gray-700">Email</label>
-            <Input id="email" v-model="form.email" type="email" autocomplete="email" />
-          </div>
-
-          <div>
             <label for="gender" class="mb-2 block text-sm font-medium text-gray-700">Gender</label>
             <select
               id="gender"
@@ -57,6 +52,67 @@
           Member {{ timeSinceRegistration }}.
         </p>
       </Card>
+
+      <Card v-if="user" class="mt-6 p-6 shadow-lg">
+        <h2 class="text-lg font-semibold text-gray-900">Change password</h2>
+        <p class="mt-1 text-sm text-gray-500">Confirm your current password to set a new one.</p>
+
+        <form class="mt-5 space-y-4" @submit.prevent="submitPasswordChange">
+          <div>
+            <label for="current-password" class="mb-2 block text-sm font-medium text-gray-700">Current password</label>
+            <Input id="current-password" v-model="passwordForm.currentPassword" type="password" autocomplete="current-password" />
+          </div>
+
+          <div>
+            <label for="new-password" class="mb-2 block text-sm font-medium text-gray-700">New password</label>
+            <Input id="new-password" v-model="passwordForm.newPassword" type="password" autocomplete="new-password" />
+          </div>
+
+          <p v-if="passwordError" class="text-sm text-red-600" role="alert">{{ passwordError }}</p>
+
+          <Button type="submit" :disabled="isChangingPassword" class="bg-purple-600 text-white hover:bg-purple-700">
+            {{ isChangingPassword ? 'Updating...' : 'Update password' }}
+          </Button>
+        </form>
+      </Card>
+
+      <Card v-if="user" class="mt-6 p-6 shadow-lg">
+        <h2 class="text-lg font-semibold text-gray-900">Change email</h2>
+        <p class="mt-1 text-sm text-gray-500">
+          We will send a confirmation code to the new address before applying the change.
+        </p>
+
+        <form v-if="!emailChangePending" class="mt-5 space-y-4" @submit.prevent="submitEmailChangeRequest">
+          <div>
+            <label for="new-email" class="mb-2 block text-sm font-medium text-gray-700">New email</label>
+            <Input id="new-email" v-model="emailForm.newEmail" type="email" autocomplete="email" />
+          </div>
+
+          <div>
+            <label for="email-current-password" class="mb-2 block text-sm font-medium text-gray-700">Current password</label>
+            <Input id="email-current-password" v-model="emailForm.currentPassword" type="password" autocomplete="current-password" />
+          </div>
+
+          <p v-if="emailError" class="text-sm text-red-600" role="alert">{{ emailError }}</p>
+
+          <Button type="submit" :disabled="isRequestingEmailChange" class="bg-purple-600 text-white hover:bg-purple-700">
+            {{ isRequestingEmailChange ? 'Sending code...' : 'Send confirmation code' }}
+          </Button>
+        </form>
+
+        <form v-else class="mt-5 space-y-4" @submit.prevent="submitEmailChangeConfirmation">
+          <div>
+            <label for="email-code" class="mb-2 block text-sm font-medium text-gray-700">Confirmation code</label>
+            <Input id="email-code" v-model="emailForm.code" autocomplete="one-time-code" />
+          </div>
+
+          <p v-if="emailError" class="text-sm text-red-600" role="alert">{{ emailError }}</p>
+
+          <Button type="submit" :disabled="isConfirmingEmailChange" class="bg-purple-600 text-white hover:bg-purple-700">
+            {{ isConfirmingEmailChange ? 'Confirming...' : 'Confirm new email' }}
+          </Button>
+        </form>
+      </Card>
     </div>
 
     <Toast ref="toastRef" />
@@ -72,7 +128,14 @@ import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import Toast from '@/components/ui/custom/Toast/Toast.vue'
 import { useToast } from '@/composables/useToast'
-import { deleteUser, editUser, getUser } from '@/services/userServices'
+import {
+  changePassword,
+  confirmEmailChange,
+  deleteUser,
+  editUser,
+  getUser,
+  requestEmailChange,
+} from '@/services/userServices'
 import { getCurrentUser, logout } from '@/services/authService'
 
 const router = useRouter()
@@ -86,9 +149,18 @@ const formError = ref('')
 const form = reactive({
   firstName: '',
   lastName: '',
-  email: '',
   gender: 2,
 })
+
+const passwordForm = reactive({ currentPassword: '', newPassword: '' })
+const passwordError = ref('')
+const isChangingPassword = ref(false)
+
+const emailForm = reactive({ newEmail: '', currentPassword: '', code: '' })
+const emailError = ref('')
+const emailChangePending = ref(false)
+const isRequestingEmailChange = ref(false)
+const isConfirmingEmailChange = ref(false)
 
 const genderOptions = [
   { value: 0, label: 'Male' },
@@ -131,7 +203,6 @@ const loadProfile = async () => {
     user.value = currentUser
     form.firstName = currentUser.firstName ?? ''
     form.lastName = currentUser.lastName ?? ''
-    form.email = currentUser.email ?? ''
     form.gender = Number(currentUser.gender ?? 2)
   } catch (error) {
     showError('Profile error', error?.response?.data?.message || 'Unable to load your profile.')
@@ -143,10 +214,6 @@ const loadProfile = async () => {
 const validateForm = () => {
   if (!form.firstName.trim() || !form.lastName.trim()) {
     return 'First name and last name are required.'
-  }
-
-  if (!form.email.trim() || !/^\S+@\S+\.\S+$/.test(form.email.trim())) {
-    return 'Enter a valid email address.'
   }
 
   if (![0, 1, 2].includes(Number(form.gender))) {
@@ -165,7 +232,6 @@ const saveProfile = async () => {
     const updatedUser = await editUser(user.value.id, {
       firstName: form.firstName.trim(),
       lastName: form.lastName.trim(),
-      email: form.email.trim(),
       gender: Number(form.gender),
       image: user.value.image ?? null,
     })
@@ -193,6 +259,75 @@ const deleteAccount = async () => {
     showError('Deletion failed', error?.response?.data?.message || 'Unable to delete your account.')
   } finally {
     isDeleting.value = false
+  }
+}
+
+const submitPasswordChange = async () => {
+  passwordError.value = ''
+  if (!passwordForm.currentPassword || passwordForm.newPassword.length < 8) {
+    passwordError.value = 'Enter your current password and a new password with at least 8 characters.'
+    return
+  }
+
+  isChangingPassword.value = true
+  try {
+    await changePassword(user.value.id, {
+      currentPassword: passwordForm.currentPassword,
+      newPassword: passwordForm.newPassword,
+    })
+    passwordForm.currentPassword = ''
+    passwordForm.newPassword = ''
+    success('Password updated', 'Your password was changed successfully.')
+  } catch (error) {
+    passwordError.value = error?.response?.data?.message || 'Unable to change your password.'
+  } finally {
+    isChangingPassword.value = false
+  }
+}
+
+const submitEmailChangeRequest = async () => {
+  emailError.value = ''
+  if (!emailForm.newEmail.trim() || !emailForm.currentPassword) {
+    emailError.value = 'Enter the new email and your current password.'
+    return
+  }
+
+  isRequestingEmailChange.value = true
+  try {
+    await requestEmailChange(user.value.id, {
+      newEmail: emailForm.newEmail.trim(),
+      currentPassword: emailForm.currentPassword,
+    })
+    emailChangePending.value = true
+    success('Confirmation code sent', 'Check the new email address for a confirmation code.')
+  } catch (error) {
+    emailError.value = error?.response?.data?.message || 'Unable to request the email change.'
+  } finally {
+    isRequestingEmailChange.value = false
+  }
+}
+
+const submitEmailChangeConfirmation = async () => {
+  emailError.value = ''
+  if (!emailForm.code.trim()) {
+    emailError.value = 'Enter the confirmation code.'
+    return
+  }
+
+  isConfirmingEmailChange.value = true
+  try {
+    await confirmEmailChange(user.value.id, emailForm.code.trim())
+    emailChangePending.value = false
+    emailForm.newEmail = ''
+    emailForm.currentPassword = ''
+    emailForm.code = ''
+    success('Email changed', 'Sign in again with your new email address.')
+    logout()
+    await router.push({ name: 'login' })
+  } catch (error) {
+    emailError.value = error?.response?.data?.message || 'Unable to confirm the email change.'
+  } finally {
+    isConfirmingEmailChange.value = false
   }
 }
 

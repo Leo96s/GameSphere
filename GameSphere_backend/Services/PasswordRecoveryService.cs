@@ -105,6 +105,7 @@ public sealed class PasswordRecoveryService : IPasswordRecoveryService
     private async Task ApplyPasswordResetAsync(User user, string email, string newPassword)
     {
         user.HashedPassword = BCrypt.Net.BCrypt.EnhancedHashPassword(newPassword, 13);
+        user.HasLocalPassword = true;
         _resetCodeService.ClearCode(user);
         user.AuthVersion++;
 

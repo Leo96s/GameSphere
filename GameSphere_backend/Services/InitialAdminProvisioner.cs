@@ -76,6 +76,7 @@ public sealed class InitialAdminProvisioner
         FirstName = "Administrator",
         LastName = "Account",
         HashedPassword = BCrypt.Net.BCrypt.EnhancedHashPassword(configuration.Password, 13),
+        HasLocalPassword = true,
         RegistrationDate = DateTime.UtcNow,
         Gender = Gender.OUTRO,
         isActive = true,

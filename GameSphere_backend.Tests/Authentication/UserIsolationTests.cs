@@ -183,29 +183,6 @@ public sealed class UserIsolationTests : UserAccountTestBase, IClassFixture<Post
     }
 
     [Fact]
-    public async Task Profile_update_rejects_a_password_shorter_than_eight_characters()
-    {
-        var (owner, _) = await SeedUsersAsync();
-
-        using var request = CreateAuthorizedRequest(HttpMethod.Put, $"/api/User/{owner.Id}", owner);
-        request.Content = JsonContent.Create(new
-        {
-            firstName = owner.FirstName,
-            lastName = owner.LastName,
-            email = owner.Email,
-            gender = (int)owner.Gender,
-            password = "short",
-        });
-
-        var response = await Client.SendAsync(request, TestContext.Current.CancellationToken);
-
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        await using var context = CreateContext();
-        var persistedUser = await context.Users.SingleAsync(user => user.Id == owner.Id, TestContext.Current.CancellationToken);
-        Assert.True(BCrypt.Net.BCrypt.EnhancedVerify("Test-password-123", persistedUser.HashedPassword));
-    }
-
-    [Fact]
     public async Task Profile_update_rejects_invalid_profile_without_persisting_changes()
     {
         var (owner, _) = await SeedUsersAsync();

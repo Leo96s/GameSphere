@@ -89,6 +89,7 @@ public abstract class UserAccountTestBase : IAsyncLifetime
         FirstName = firstName,
         LastName = "User",
         HashedPassword = BCrypt.Net.BCrypt.EnhancedHashPassword("Test-password-123", 4),
+        HasLocalPassword = true,
         RegistrationDate = DateTime.UtcNow,
         Gender = Gender.OUTRO,
         isActive = true,

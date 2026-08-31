@@ -55,6 +55,7 @@ public sealed class UserRegistrationService : IUserRegistrationService
             }
 
             createdUser.HashedPassword = passwordHash;
+            createdUser.HasLocalPassword = true;
             ConversionValidate.ValidateModel(createdUser);
 
             await _context.Users.AddAsync(createdUser);

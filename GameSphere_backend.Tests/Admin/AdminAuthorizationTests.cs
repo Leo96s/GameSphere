@@ -255,10 +255,8 @@ public sealed class AdminAuthorizationTests : AdminQuizAdministrationTestBase, I
     {
         FirstName = "Client",
         LastName = "Request",
-        Email = "client@example.test",
         Gender = Gender.OUTRO,
         Image = null,
-        Password = "Client-password-123",
     };
 
     private static UserDto DeserializeUserRequest(UserRole role)

@@ -177,14 +177,11 @@ public sealed class UserSessionTests : UserAccountTestBase, IClassFixture<Postgr
     public async Task Password_change_revokes_a_token_issued_before_the_change()
     {
         var (owner, _) = await SeedUsersAsync();
-        using var updateRequest = CreateAuthorizedRequest(HttpMethod.Put, $"/api/User/{owner.Id}", owner);
+        using var updateRequest = CreateAuthorizedRequest(HttpMethod.Post, $"/api/User/{owner.Id}/password", owner);
         updateRequest.Content = JsonContent.Create(new
         {
-            firstName = owner.FirstName,
-            lastName = owner.LastName,
-            email = owner.Email,
-            gender = (int)owner.Gender,
-            password = "Changed-password-123",
+            currentPassword = "Test-password-123",
+            newPassword = "Changed-password-123",
         });
 
         var updateResponse = await Client.SendAsync(updateRequest, TestContext.Current.CancellationToken);

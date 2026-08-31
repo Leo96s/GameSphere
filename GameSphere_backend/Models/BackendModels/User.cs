@@ -132,6 +132,33 @@ namespace GameSphere_backend.Models.BackendModels
         public DateTime? ResetCodeExpiration { get; set; }
 
         /// <summary>
+        /// Gets or sets whether the user knows their own local password.
+        /// </summary>
+        /// <value>
+        /// False for a social-only account, whose <see cref="HashedPassword"/> is an
+        /// unknown, randomly generated placeholder. Becomes true once the user sets a
+        /// local password explicitly.
+        /// </value>
+        public bool HasLocalPassword { get; set; }
+
+        /// <summary>
+        /// Gets or sets the new email address awaiting confirmation.
+        /// </summary>
+        public string? PendingEmail { get; set; }
+
+        /// <summary>
+        /// Gets or sets the hashed confirmation code for the pending email change.
+        /// </summary>
+        public string? PendingEmailCodeHash { get; set; }
+
+        public int PendingEmailCodeAttempts { get; set; }
+
+        /// <summary>
+        /// Gets or sets the expiration date for the pending email change code.
+        /// </summary>
+        public DateTime? PendingEmailCodeExpiration { get; set; }
+
+        /// <summary>
         /// Gets or sets the collection of quizzes created by the user.
         /// </summary>
         /// <value>Collection of Quizz entities.</value>

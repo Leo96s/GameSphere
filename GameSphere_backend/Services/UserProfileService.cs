@@ -4,9 +4,7 @@ using GameSphere_backend.Enums;
 using GameSphere_backend.Interfaces;
 using GameSphere_backend.Mappers;
 using GameSphere_backend.Models.FrontendModels;
-using GameSphere_backend.Security;
 using GameSphere_backend.ServicesResponses;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace GameSphere_backend.Services;
@@ -49,11 +47,6 @@ public sealed class UserProfileService : IUserProfileService
                 response.Success = false;
                 response.Message = "User not found.";
                 response.Type = "NotFound";
-                return response;
-            }
-
-            if (!await ValidateUniqueEmailAsync(existingUser.Email, updatedUser.Email, response))
-            {
                 return response;
             }
 
@@ -100,14 +93,6 @@ public sealed class UserProfileService : IUserProfileService
             return false;
         }
 
-        if (updatedUser.Password is not null && updatedUser.Password.Length is < 8 or > 128)
-        {
-            response.Success = false;
-            response.Message = "Password must contain between 8 and 128 characters.";
-            response.Type = "BadRequest";
-            return false;
-        }
-
         if (!Enum.IsDefined(typeof(Gender), updatedUser.Gender))
         {
             response.Success = false;
@@ -121,42 +106,8 @@ public sealed class UserProfileService : IUserProfileService
 
     private static bool HasValidProfileData(UpdateUserRequest updatedUser) =>
         !string.IsNullOrWhiteSpace(updatedUser.FirstName)
-        && !string.IsNullOrWhiteSpace(updatedUser.Email)
-        && new EmailAddressAttribute().IsValid(updatedUser.Email)
         && updatedUser.FirstName.Length <= 100
         && (updatedUser.LastName is null || updatedUser.LastName.Length <= 100);
-
-    private async Task<bool> ValidateUniqueEmailAsync(
-        string existingEmail,
-        string updatedEmail,
-        ServiceResponse<UserDto> response)
-    {
-        if (existingEmail.Equals(updatedEmail, StringComparison.OrdinalIgnoreCase))
-        {
-            return true;
-        }
-
-        if (await IsEmailAvailable(updatedEmail))
-        {
-            return true;
-        }
-
-        response.Success = false;
-        response.Message = "The email is already in use.";
-        response.Type = "BadRequest";
-        return false;
-    }
-
-    private async Task<bool> IsEmailAvailable(string email)
-    {
-        if (string.IsNullOrWhiteSpace(email))
-        {
-            return false;
-        }
-
-        var normalizedEmail = EmailNormalizer.Normalize(email);
-        return !await _context.Users.AnyAsync(user => user.Email == normalizedEmail);
-    }
 
     private static void ApplyProfileUpdate(Models.BackendModels.User existingUser, UpdateUserRequest updatedUser)
     {
@@ -166,15 +117,8 @@ public sealed class UserProfileService : IUserProfileService
             existingUser.LastName = updatedUser.LastName.Trim();
         }
 
-        existingUser.Email = EmailNormalizer.Normalize(updatedUser.Email);
         existingUser.Gender = updatedUser.Gender;
         existingUser.Image = updatedUser.Image;
-
-        if (!string.IsNullOrEmpty(updatedUser.Password))
-        {
-            existingUser.HashedPassword = BCrypt.Net.BCrypt.EnhancedHashPassword(updatedUser.Password, 13);
-            existingUser.AuthVersion++;
-        }
     }
 
     private static ServiceResponse<UserDto> BuildSuccessResponse(

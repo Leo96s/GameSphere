@@ -40,7 +40,7 @@ export const deleteUser = async (userId) =>{
 
 export const getUserByEmail = async (email) => {
     try{
-        const encodedEmail = encodeURIComponent(email); 
+        const encodedEmail = encodeURIComponent(email);
         const response = await api.get(`/User/by-email/${encodedEmail}`);
         return response.data;
 
@@ -49,3 +49,18 @@ export const getUserByEmail = async (email) => {
         throw error;
     }
 }
+
+export const changePassword = async (userId, payload) => {
+    const response = await api.post(`/User/${userId}/password`, payload);
+    return response.data;
+};
+
+export const requestEmailChange = async (userId, payload) => {
+    const response = await api.post(`/User/${userId}/email/request`, payload);
+    return response.data;
+};
+
+export const confirmEmailChange = async (userId, code) => {
+    const response = await api.post(`/User/${userId}/email/confirm`, { code });
+    return response.data;
+};
