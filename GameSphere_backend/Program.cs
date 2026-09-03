@@ -37,6 +37,13 @@ var corsOrigins = configuredCorsOrigins.Length > 0
         ? ["http://localhost:5173", "http://127.0.0.1:5173"]
         : throw new InvalidOperationException("Configuration section 'Cors:AllowedOrigins' is required outside Development.");
 
+var configuredAllowedHosts = config["AllowedHosts"];
+if ((string.IsNullOrWhiteSpace(configuredAllowedHosts) || configuredAllowedHosts == "*")
+    && !builder.Environment.IsDevelopment())
+{
+    throw new InvalidOperationException("Configuration key 'AllowedHosts' must be set explicitly (not '*') outside Development.");
+}
+
 if (Encoding.UTF8.GetByteCount(jwtSecret) < 32)
 {
     throw new InvalidOperationException("Configuration key 'JwtSettings:SecretKey' must contain at least 32 bytes.");

@@ -5,6 +5,7 @@ services:
       JwtSettings__ExpirationMinutes: ${JWT_EXPIRATION_MINUTES:-60}
       Firebase__ProjectId: ${FIREBASE_PROJECT_ID:-gamesphere-9f7dc}
       Cors__AllowedOrigins__0: ${CORS_ALLOWED_ORIGIN:-http://localhost:8080}
+      AllowedHosts: ${API_ALLOWED_HOST:-localhost}
 
   api-prod:
     build:
@@ -20,6 +21,7 @@ services:
       JwtSettings__ExpirationMinutes: ${JWT_EXPIRATION_MINUTES:-60}
       Firebase__ProjectId: ${FIREBASE_PROJECT_ID:-gamesphere-9f7dc}
       Cors__AllowedOrigins__0: ${CORS_ALLOWED_ORIGIN:-http://localhost:8080}
+      AllowedHosts: ${API_ALLOWED_HOST:-localhost}
       InitialAdmin__Email: ${INITIAL_ADMIN_EMAIL:?INITIAL_ADMIN_EMAIL is required}
       InitialAdmin__Password: ${INITIAL_ADMIN_PASSWORD:?INITIAL_ADMIN_PASSWORD is required}
       EmailSettings__SmtpServer: ${SMTP_SERVER:?SMTP_SERVER is required}
