@@ -14,6 +14,8 @@ import {
   isAdmin,
   login,
   logout,
+  recoverAccount,
+  requestAccountRecovery,
   resetPassword,
   sentResetCode,
   social_login,
@@ -165,5 +167,26 @@ describe('authService', () => {
       .rejects.toThrow('Erro ao validar código de recuperação');
     await expect(resetPassword('player@example.test', '123456', 'New-password-123'))
       .rejects.toThrow('Erro ao enviar código de recuperação');
+  });
+
+  it('keeps account recovery requests on the API boundary', async () => {
+    apiMocks.post
+      .mockResolvedValueOnce({ data: true })
+      .mockResolvedValueOnce({ data: true });
+
+    await expect(requestAccountRecovery('player@example.test')).resolves.toEqual(true);
+    await expect(recoverAccount('player@example.test', '123456')).resolves.toEqual(true);
+
+    expect(apiMocks.post).toHaveBeenNthCalledWith(
+      1,
+      '/User/request-account-recovery',
+      'player@example.test',
+      expect.objectContaining({ headers: { 'Content-Type': 'application/json' } }),
+    );
+    expect(apiMocks.post).toHaveBeenNthCalledWith(
+      2,
+      '/User/recover-account',
+      { email: 'player@example.test', code: '123456' },
+    );
   });
 });

@@ -114,3 +114,15 @@ export const resetPassword = async (email, resetCode, newPassword) => {
 
   return response.data;
 };
+
+export const requestAccountRecovery = async (email) => {
+  const response = await api.post('/User/request-account-recovery', email, {
+    headers: { 'Content-Type': 'application/json' },
+  });
+  return response.data;
+};
+
+export const recoverAccount = async (email, code) => {
+  const response = await api.post('/User/recover-account', { email, code });
+  return response.data;
+};

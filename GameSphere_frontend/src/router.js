@@ -7,6 +7,8 @@ import RegisterPage from '@/views/Register/RegisterPage.vue';
 import Profile from '@/views/Profile/ProfilePage.vue';
 import SentCodePage from '@/views/Login/SentCodePage.vue';
 import ResetPassword from '@/views/Login/ResetPassword.vue';
+import AccountRecoverySentCodePage from '@/views/Login/AccountRecoverySentCodePage.vue';
+import AccountRecoveryPage from '@/views/Login/AccountRecoveryPage.vue';
 import QuizCatalogPage from '@/views/Quizzes/QuizCatalogPage.vue';
 import QuizPlayPage from '@/views/Quizzes/QuizPlayPage.vue';
 import QuizResultPage from '@/views/Quizzes/QuizResultPage.vue';
@@ -118,6 +120,24 @@ export const routes = [
     components: {
       header: AppHeader,
       default: ResetPassword,
+      footer: AppFooter,
+    },
+  },
+  {
+    path: '/recoverAccount/sentCode',
+    name: 'accountRecoverySentCode',
+    components: {
+      header: AppHeader,
+      default: AccountRecoverySentCodePage,
+      footer: AppFooter,
+    },
+  },
+  {
+    path: '/recoverAccount/recover',
+    name: 'accountRecover',
+    components: {
+      header: AppHeader,
+      default: AccountRecoveryPage,
       footer: AppFooter,
     },
   },

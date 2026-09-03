@@ -42,8 +42,8 @@
             <Button type="submit" :disabled="isSaving" class="bg-purple-600 text-white hover:bg-purple-700">
               {{ isSaving ? 'Saving...' : 'Save changes' }}
             </Button>
-            <Button type="button" variant="destructive" :disabled="isDeleting" @click="deleteAccount">
-              {{ isDeleting ? 'Deleting...' : 'Delete account' }}
+            <Button type="button" variant="destructive" :disabled="isDeactivating" @click="deactivateAccount">
+              {{ isDeactivating ? 'Deactivating...' : 'Deactivate account' }}
             </Button>
           </div>
         </form>
@@ -131,7 +131,7 @@ import { useToast } from '@/composables/useToast'
 import {
   changePassword,
   confirmEmailChange,
-  deleteUser,
+  deactivateAccount as deactivateAccountRequest,
   editUser,
   getUser,
   requestEmailChange,
@@ -144,7 +144,7 @@ const { success, showError, toastRef } = useToast()
 const user = ref(null)
 const isLoading = ref(true)
 const isSaving = ref(false)
-const isDeleting = ref(false)
+const isDeactivating = ref(false)
 const formError = ref('')
 const form = reactive({
   firstName: '',
@@ -247,18 +247,26 @@ const saveProfile = async () => {
   }
 }
 
-const deleteAccount = async () => {
-  if (!user.value || !window.confirm('Are you sure you want to permanently delete your account?')) return
+const deactivateAccount = async () => {
+  if (!user.value) return
 
-  isDeleting.value = true
+  const confirmed = window.confirm(
+    'Are you sure you want to deactivate your account? You will have 30 days to recover it before your data is permanently anonymized.',
+  )
+  if (!confirmed) return
+
+  const currentPassword = window.prompt('Enter your current password to confirm deactivation:')
+  if (!currentPassword) return
+
+  isDeactivating.value = true
   try {
-    await deleteUser(user.value.id)
+    await deactivateAccountRequest(user.value.id, { currentPassword })
     logout()
     await router.push({ name: 'landing' })
   } catch (error) {
-    showError('Deletion failed', error?.response?.data?.message || 'Unable to delete your account.')
+    showError('Deactivation failed', error?.response?.data?.message || 'Unable to deactivate your account.')
   } finally {
-    isDeleting.value = false
+    isDeactivating.value = false
   }
 }
 

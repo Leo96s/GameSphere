@@ -33,8 +33,8 @@ export const editUser = async (userId, userData) => {
     return response.data;
 };
 
-export const deleteUser = async (userId) =>{
-    const response = await api.delete(`/User/${userId}`);
+export const deactivateAccount = async (userId, payload) => {
+    const response = await api.post(`/User/${userId}/deactivate`, payload);
     return response.data;
 };
 

@@ -3,6 +3,7 @@ using System.Security.Claims;
 using GameSphere_backend.Authorization;
 using GameSphere_backend.Interfaces;
 using GameSphere_backend.Models.FrontendModels;
+using GameSphere_backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,16 +14,19 @@ namespace GameSphere_backend.Controllers;
 public sealed class UserProfileController : ResponseController
 {
     private readonly IUserProfileService _userProfileService;
-    private readonly IUserDeletionService _userDeletionService;
+    private readonly IAccountDeactivationService _accountDeactivationService;
+    private readonly AuthenticationCookieService _cookieService;
 
     public UserProfileController(
         IUserProfileService userProfileService,
-        IUserDeletionService userDeletionService,
+        IAccountDeactivationService accountDeactivationService,
+        AuthenticationCookieService cookieService,
         IConfiguration configuration,
         IWebHostEnvironment environment) : base(configuration, environment)
     {
         _userProfileService = userProfileService ?? throw new ArgumentNullException(nameof(userProfileService));
-        _userDeletionService = userDeletionService ?? throw new ArgumentNullException(nameof(userDeletionService));
+        _accountDeactivationService = accountDeactivationService ?? throw new ArgumentNullException(nameof(accountDeactivationService));
+        _cookieService = cookieService ?? throw new ArgumentNullException(nameof(cookieService));
     }
 
     [Authorize(Policy = ActiveUserRequirement.PolicyName)]
@@ -39,15 +43,20 @@ public sealed class UserProfileController : ResponseController
     }
 
     [Authorize(Policy = ActiveUserRequirement.PolicyName)]
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteEntity(int id)
+    [HttpPost("{id}/deactivate")]
+    public async Task<IActionResult> DeactivateAccount(int id, [FromBody] DeactivateAccountRequest request)
     {
         if (!IsCurrentUser(id))
         {
             return Forbid();
         }
 
-        var serviceResponse = await _userDeletionService.DeleteUserAsync(id);
+        var serviceResponse = await _accountDeactivationService.DeactivateAsync(id, request);
+        if (serviceResponse.Success)
+        {
+            _cookieService.DeleteAccessCookie(Response);
+        }
+
         return HandleResponse(serviceResponse);
     }
 

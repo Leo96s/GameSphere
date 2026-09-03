@@ -159,6 +159,28 @@ namespace GameSphere_backend.Models.BackendModels
         public DateTime? PendingEmailCodeExpiration { get; set; }
 
         /// <summary>
+        /// Gets or sets the date and time when the account was deactivated.
+        /// </summary>
+        public DateTime? DeactivatedAt { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether the account's personal data has been anonymized.
+        /// </summary>
+        public bool IsAnonymized { get; set; }
+
+        /// <summary>
+        /// Gets or sets the hashed account recovery code.
+        /// </summary>
+        public string? RecoveryCodeHash { get; set; }
+
+        public int RecoveryCodeAttempts { get; set; }
+
+        /// <summary>
+        /// Gets or sets the expiration date for the account recovery code.
+        /// </summary>
+        public DateTime? RecoveryCodeExpiration { get; set; }
+
+        /// <summary>
         /// Gets or sets the collection of quizzes created by the user.
         /// </summary>
         /// <value>Collection of Quizz entities.</value>

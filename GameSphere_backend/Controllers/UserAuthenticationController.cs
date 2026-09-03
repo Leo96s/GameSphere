@@ -14,6 +14,7 @@ public sealed class UserAuthenticationController : ResponseController
     private readonly IPasswordLoginService _passwordLoginService;
     private readonly ISocialLoginService _socialLoginService;
     private readonly IPasswordRecoveryService _passwordRecoveryService;
+    private readonly IAccountRecoveryService _accountRecoveryService;
     private readonly IFirebaseTokenVerifier _firebaseTokenVerifier;
     private readonly AuthenticationCookieService _cookieService;
 
@@ -21,6 +22,7 @@ public sealed class UserAuthenticationController : ResponseController
         IPasswordLoginService passwordLoginService,
         ISocialLoginService socialLoginService,
         IPasswordRecoveryService passwordRecoveryService,
+        IAccountRecoveryService accountRecoveryService,
         IFirebaseTokenVerifier firebaseTokenVerifier,
         AuthenticationCookieService cookieService,
         IConfiguration configuration,
@@ -29,6 +31,7 @@ public sealed class UserAuthenticationController : ResponseController
         _passwordLoginService = passwordLoginService ?? throw new ArgumentNullException(nameof(passwordLoginService));
         _socialLoginService = socialLoginService ?? throw new ArgumentNullException(nameof(socialLoginService));
         _passwordRecoveryService = passwordRecoveryService ?? throw new ArgumentNullException(nameof(passwordRecoveryService));
+        _accountRecoveryService = accountRecoveryService ?? throw new ArgumentNullException(nameof(accountRecoveryService));
         _firebaseTokenVerifier = firebaseTokenVerifier ?? throw new ArgumentNullException(nameof(firebaseTokenVerifier));
         _cookieService = cookieService ?? throw new ArgumentNullException(nameof(cookieService));
     }
@@ -84,6 +87,22 @@ public sealed class UserAuthenticationController : ResponseController
     public async Task<IActionResult> ResetPassword([FromBody] Models.FrontendModels.ResetPasswordRequest request)
     {
         var response = await _passwordRecoveryService.ResetPassword(request.Email, request.ResetCode, request.NewPassword);
+        return HandleResponse(response);
+    }
+
+    [HttpPost("request-account-recovery")]
+    [EnableRateLimiting("auth")]
+    public async Task<IActionResult> RequestAccountRecovery([FromBody] string email)
+    {
+        var response = await _accountRecoveryService.RequestRecoveryCode(email);
+        return HandleResponse(response);
+    }
+
+    [HttpPost("recover-account")]
+    [EnableRateLimiting("auth")]
+    public async Task<IActionResult> RecoverAccount([FromBody] RecoverAccountRequest request)
+    {
+        var response = await _accountRecoveryService.RecoverAccount(request.Email, request.Code);
         return HandleResponse(response);
     }
 

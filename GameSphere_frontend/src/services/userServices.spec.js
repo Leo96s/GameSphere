@@ -15,7 +15,7 @@ import {
   changePassword,
   confirmEmailChange,
   createUser,
-  deleteUser,
+  deactivateAccount,
   editUser,
   getUser,
   getUserByEmail,
@@ -35,13 +35,11 @@ describe('userServices', () => {
       .mockResolvedValueOnce({ data: { id: 1 } });
     apiMocks.post.mockResolvedValueOnce({ data: { id: 2 } });
     apiMocks.put.mockResolvedValueOnce({ data: { id: 1 } });
-    apiMocks.delete.mockResolvedValueOnce({ data: undefined });
 
     await expect(getUsers()).resolves.toEqual([{ id: 1 }]);
     await expect(getUser(1)).resolves.toEqual({ id: 1 });
     await expect(createUser({ email: 'player@example.test' })).resolves.toEqual({ id: 2 });
     await expect(editUser(1, { firstName: 'Updated' })).resolves.toEqual({ id: 1 });
-    await expect(deleteUser(1)).resolves.toBeUndefined();
     await expect(getUserByEmail('Player+test@example.test')).resolves.toEqual({ id: 1 });
 
     expect(apiMocks.get).toHaveBeenNthCalledWith(1, '/User');
@@ -52,12 +50,12 @@ describe('userServices', () => {
       expect.objectContaining({ timeout: 10000 }),
     );
     expect(apiMocks.put).toHaveBeenCalledWith('/User/1', { firstName: 'Updated' });
-    expect(apiMocks.delete).toHaveBeenCalledWith('/User/1');
     expect(apiMocks.get).toHaveBeenNthCalledWith(3, '/User/by-email/Player%2Btest%40example.test');
   });
 
-  it('sends credential change requests to their dedicated endpoints', async () => {
+  it('sends credential change and deactivation requests to their dedicated endpoints', async () => {
     apiMocks.post
+      .mockResolvedValueOnce({ data: true })
       .mockResolvedValueOnce({ data: true })
       .mockResolvedValueOnce({ data: true })
       .mockResolvedValueOnce({ data: true });
@@ -69,6 +67,9 @@ describe('userServices', () => {
       requestEmailChange(1, { newEmail: 'new@example.test', currentPassword: 'old-pass' }),
     ).resolves.toEqual(true);
     await expect(confirmEmailChange(1, '123456')).resolves.toEqual(true);
+    await expect(
+      deactivateAccount(1, { currentPassword: 'old-pass' }),
+    ).resolves.toEqual(true);
 
     expect(apiMocks.post).toHaveBeenNthCalledWith(1, '/User/1/password', {
       currentPassword: 'old-pass',
@@ -79,6 +80,9 @@ describe('userServices', () => {
       currentPassword: 'old-pass',
     });
     expect(apiMocks.post).toHaveBeenNthCalledWith(3, '/User/1/email/confirm', { code: '123456' });
+    expect(apiMocks.post).toHaveBeenNthCalledWith(4, '/User/1/deactivate', {
+      currentPassword: 'old-pass',
+    });
   });
 
   it('propagates account creation and lookup failures', async () => {

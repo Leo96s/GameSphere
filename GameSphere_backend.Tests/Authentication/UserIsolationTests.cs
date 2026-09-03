@@ -68,19 +68,6 @@ public sealed class UserIsolationTests : UserAccountTestBase, IClassFixture<Post
     }
 
     [Fact]
-    public async Task User_cannot_delete_another_user()
-    {
-        var (owner, other) = await SeedUsersAsync();
-
-        using var request = CreateAuthorizedRequest(HttpMethod.Delete, $"/api/User/{other.Id}", owner);
-        var response = await Client.SendAsync(request, TestContext.Current.CancellationToken);
-
-        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
-        await using var context = CreateContext();
-        Assert.True(await context.Users.AnyAsync(user => user.Id == other.Id, TestContext.Current.CancellationToken));
-    }
-
-    [Fact]
     public async Task User_can_read_and_update_own_profile()
     {
         var (owner, _) = await SeedUsersAsync();
@@ -132,19 +119,6 @@ public sealed class UserIsolationTests : UserAccountTestBase, IClassFixture<Post
         var persistedUser = await context.Users.SingleAsync(user => user.Id == owner.Id, TestContext.Current.CancellationToken);
         Assert.Equal("Updated", persistedUser.FirstName);
         Assert.Equal(owner.LastName, persistedUser.LastName);
-    }
-
-    [Fact]
-    public async Task User_can_delete_own_account()
-    {
-        var (owner, _) = await SeedUsersAsync();
-
-        using var request = CreateAuthorizedRequest(HttpMethod.Delete, $"/api/User/{owner.Id}", owner);
-        var response = await Client.SendAsync(request, TestContext.Current.CancellationToken);
-
-        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
-        await using var context = CreateContext();
-        Assert.False(await context.Users.AnyAsync(user => user.Id == owner.Id, TestContext.Current.CancellationToken));
     }
 
     [Fact]
