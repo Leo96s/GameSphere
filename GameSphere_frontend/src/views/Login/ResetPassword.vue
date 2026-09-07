@@ -27,7 +27,7 @@
               <FormItem class="mb-4">
                 <FormLabel>New Password</FormLabel>
                 <FormControl>
-                  <Input type="password" placeholder="Minimum 8 characters" v-bind="componentField"
+                  <PasswordInput placeholder="Minimum 8 characters" v-bind="componentField"
                          @focus="clearError('password')"/>
                 </FormControl>
 
@@ -56,7 +56,7 @@
               <FormItem class="mb-6">
                 <FormLabel>Confirm Password</FormLabel>
                 <FormControl>
-                  <Input type="password" placeholder="Repeat the password" v-bind="componentField"
+                  <PasswordInput placeholder="Repeat the password" v-bind="componentField"
                          @focus="clearError('confirmPassword')"/>
                 </FormControl>
                 <FormMessage />
@@ -94,7 +94,7 @@ import * as z from "zod"
 
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Input, PasswordInput } from "@/components/ui/input"
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form"
 import Toast from "@/components/ui/custom/Toast/Toast.vue"
 

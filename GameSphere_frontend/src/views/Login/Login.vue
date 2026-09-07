@@ -37,7 +37,7 @@
               <FormItem class="mb-4">
                 <FormLabel>Password</FormLabel>
                 <FormControl>
-                  <Input type="password" placeholder="Enter your password" v-bind="componentField"
+                  <PasswordInput placeholder="Enter your password" v-bind="componentField"
                          @focus="clearError('password')"/>
                 </FormControl>
                 <FormMessage />
@@ -91,7 +91,7 @@ import { useRouter, RouterLink } from "vue-router"
 import * as z from "zod"
 
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
+import { Input, PasswordInput } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -99,6 +99,7 @@ import Toast from "@/components/ui/custom/Toast/Toast.vue"
 
 import { login, social_login } from "@/services/authService"
 import { auth, googleProvider, githubProvider, signInWithPopup } from "@/services/firebase"
+import { getSocialAuthErrorFeedback } from "@/utils/socialAuthFeedback"
 import { useAppForm} from "@/composables/useAppForm";
 import { useToast } from '@/composables/useToast';
 
@@ -148,8 +149,9 @@ async function handleGoogleLogin() {
     localStorage.setItem("user", JSON.stringify(response.user))
     success("Google Login", "Logged in successfully")
     await router.push("/profile")
-  } catch {
-    showError("Google login failed")
+  } catch (err) {
+    const feedback = getSocialAuthErrorFeedback(err, "Google login failed")
+    if (feedback) showError(feedback.title, feedback.description)
   }
 }
 
@@ -160,8 +162,9 @@ async function handleGithubLogin() {
     localStorage.setItem("user", JSON.stringify(response.user))
     success("GitHub Login", "Logged in successfully")
     await router.push("/profile")
-  } catch {
-    showError("GitHub login failed")
+  } catch (err) {
+    const feedback = getSocialAuthErrorFeedback(err, "GitHub login failed")
+    if (feedback) showError(feedback.title, feedback.description)
   }
 }
 </script>

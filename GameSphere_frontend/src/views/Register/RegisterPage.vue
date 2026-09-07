@@ -57,7 +57,7 @@
               <FormItem class="mb-2">
                 <FormLabel>Password</FormLabel>
                 <FormControl>
-                  <Input type="password" placeholder="Minimum 8 characters" v-bind="componentField"
+                  <PasswordInput placeholder="Minimum 8 characters" v-bind="componentField"
                          @focus="clearError('password')"/>
                 </FormControl>
                 <FormMessage />
@@ -151,7 +151,7 @@ import * as z from 'zod'
 import Toast from '@/components/ui/custom/Toast/Toast.vue'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Input, PasswordInput } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select'
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form'
@@ -161,6 +161,7 @@ import { Gender } from '@/enums/Gender'
 import { createUser } from '@/services/userServices'
 import { social_login } from '@/services/authService'
 import { auth, googleProvider, githubProvider, signInWithPopup } from '@/services/firebase'
+import { getSocialAuthErrorFeedback } from '@/utils/socialAuthFeedback'
 import { useToast } from '@/composables/useToast';
 import { getPasswordStrength } from '@/utils/passwordStrength'
 import { useAppForm } from "@/composables/useAppForm";
@@ -211,8 +212,9 @@ async function registerWithGoogle() {
     await social_login(await user.getIdToken())
     success('Account created via Google!')
     await router.push('/login')
-  } catch {
-    showError('Error registering with Google')
+  } catch (err) {
+    const feedback = getSocialAuthErrorFeedback(err, 'Error registering with Google')
+    if (feedback) showError(feedback.title, feedback.description)
   }
 }
 
@@ -226,8 +228,9 @@ async function registerWithGithub() {
     await social_login(await user.getIdToken())
     success('Account created via GitHub!')
     await router.push('/login')
-  } catch {
-    showError('Error registering with GitHub')
+  } catch (err) {
+    const feedback = getSocialAuthErrorFeedback(err, 'Error registering with GitHub')
+    if (feedback) showError(feedback.title, feedback.description)
   }
 }
 </script>
