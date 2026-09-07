@@ -131,7 +131,7 @@ jobs:
         run: |
           set -euo pipefail
           for attempt in $(seq 1 60); do
-            migrate_id="$(docker compose -f compose.yml -f compose.prod.yml ps -q migrate)"
+            migrate_id="$(docker compose -f compose.yml -f compose.prod.yml ps -a -q migrate)"
             if [ -n "$migrate_id" ]; then
               state="$(docker inspect --format '{{.State.Status}}:{{.State.ExitCode}}' "$migrate_id")"
               if [ "$state" = "exited:0" ]; then
