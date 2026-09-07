@@ -1,3 +1,5 @@
+## v0.12.3 - 2026-09-07
+* fix(deps): resolve npm audit vulnerabilities in frontend lockfile
 ## v0.12.2 - 2026-09-07
 * fix(auth): repair social login and add account linking, password toggle
 * fix(security): require an explicit AllowedHosts outside Development (GAM-52)
