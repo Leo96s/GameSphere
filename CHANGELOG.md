@@ -1,3 +1,5 @@
+## v0.12.5 - 2026-09-07
+* fix(ci): wait for the API to be ready before running Docker E2E tests
 ## v0.12.4 - 2026-09-07
 * fix(ci): detect the migrate container's exit status in Docker E2E job
 ## v0.12.3 - 2026-09-07
