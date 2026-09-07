@@ -147,6 +147,21 @@ jobs:
           docker compose -f compose.yml -f compose.prod.yml ps -a
           exit 1
 
+      - name: Wait for API readiness
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 60); do
+            status="$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/api/quizzes || true)"
+            if [ "$status" = "401" ]; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "API did not become ready in time (last status: $status)"
+          docker compose -f compose.yml -f compose.prod.yml ps -a
+          exit 1
+
       - name: Run Docker smoke and E2E tests
         working-directory: GameSphere_frontend
         run: npm run test:e2e
