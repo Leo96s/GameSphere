@@ -1,3 +1,5 @@
+## v0.12.4 - 2026-09-07
+* fix(ci): detect the migrate container's exit status in Docker E2E job
 ## v0.12.3 - 2026-09-07
 * fix(deps): resolve npm audit vulnerabilities in frontend lockfile
 ## v0.12.2 - 2026-09-07
