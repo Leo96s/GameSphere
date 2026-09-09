@@ -1,3 +1,6 @@
+## v0.12.8 - 2026-09-09
+* fix(deps): bump js-yaml to patch high-severity CPU DoS advisory
+* fix(ci): checkout repository before running the skip-duplicate-run action
 ## v0.12.6 - 2026-09-09
 * chore(ci): update automatic-version-control plugin to v2.11.3
 ## v0.12.5 - 2026-09-07
