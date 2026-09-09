@@ -1,2 +1,2 @@
-## v0.12.5 - 2026-09-07
-* fix(ci): wait for the API to be ready before running Docker E2E tests
+## v0.12.6 - 2026-09-09
+* chore(ci): update automatic-version-control plugin to v2.11.3
