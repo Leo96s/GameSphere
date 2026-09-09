@@ -18,8 +18,19 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  pre_job:
+    name: Skip duplicate runs
+    runs-on: ubuntu-latest
+    outputs:
+      should_skip: ${{ steps.skip.outputs.should_skip }}
+    steps:
+      - id: skip
+        uses: ./.github/actions/skip-duplicate-run
+
   backend:
     name: Backend tests
+    needs: pre_job
+    if: needs.pre_job.outputs.should_skip != 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -39,6 +50,8 @@ jobs:
 
   frontend:
     name: Frontend tests and build
+    needs: pre_job
+    if: needs.pre_job.outputs.should_skip != 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -50,30 +63,30 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: GameSphere_frontend/package-lock.json
+          cache-dependency-path: "GameSphere_frontend/package-lock.json"
 
       - name: Install frontend dependencies
-        working-directory: GameSphere_frontend
+        working-directory: "GameSphere_frontend"
         run: npm ci
 
       - name: Install Chromium for browser tests
-        working-directory: GameSphere_frontend
+        working-directory: "GameSphere_frontend"
         run: npx playwright install --with-deps chromium
 
       - name: Run frontend tests
-        working-directory: GameSphere_frontend
+        working-directory: "GameSphere_frontend"
         run: npm test
 
       - name: Run frontend coverage gate
-        working-directory: GameSphere_frontend
+        working-directory: "GameSphere_frontend"
         run: npm run test:coverage
 
       - name: Audit frontend packages
-        working-directory: GameSphere_frontend
+        working-directory: "GameSphere_frontend"
         run: npm audit --audit-level=high
 
       - name: Build frontend
-        working-directory: GameSphere_frontend
+        working-directory: "GameSphere_frontend"
         run: npm run build
 
   docker-e2e:
@@ -82,27 +95,33 @@ jobs:
       - backend
       - frontend
     runs-on: ubuntu-latest
+    # Nenhum valor abaixo é específico de um projeto: todos vêm de Variables
+    # (não sensíveis) ou Secrets (sensíveis) do repositório GitHub, com um
+    # valor genérico por omissão via "||" para continuar a funcionar sem
+    # nenhuma configuração. Configura em Settings -> Secrets and variables
+    # -> Actions (ver README) para usar os valores reais da tua aplicação —
+    # nenhuma alteração a este ficheiro é necessária.
     env:
-      POSTGRES_DB: gamesphere_ci
-      POSTGRES_USER: gamesphere
-      POSTGRES_PASSWORD: gamesphere-ci-password
-      DATABASE_CONNECTION_STRING: Host=db;Port=5432;Database=gamesphere_ci;Username=gamesphere;Password=gamesphere-ci-password
-      JWT_SECRET: gamesphere-ci-jwt-secret-key-with-at-least-32-bytes
-      JWT_ISSUER: gamesphere-ci
-      JWT_AUDIENCE: gamesphere-ci
-      INITIAL_ADMIN_EMAIL: e2e-admin@example.test
-      INITIAL_ADMIN_PASSWORD: E2e-admin-password-123
-      SMTP_SERVER: smtp.example.test
-      SMTP_PORT: 2525
-      SMTP_SENDER_EMAIL: no-reply@example.test
-      SMTP_SENDER_NAME: GameSphere CI
-      SMTP_USERNAME: ci-user
-      SMTP_PASSWORD: ci-email-password
-      SMTP_ENABLE_SSL: false
-      FIREBASE_PROJECT_ID: gamesphere-9f7dc
-      E2E_BASE_URL: http://localhost:8080
-      E2E_ADMIN_EMAIL: e2e-admin@example.test
-      E2E_ADMIN_PASSWORD: E2e-admin-password-123
+      POSTGRES_DB: ${{ vars.CI_E2E_POSTGRES_DB || 'ci_e2e' }}
+      POSTGRES_USER: ${{ vars.CI_E2E_POSTGRES_USER || 'ci_e2e' }}
+      POSTGRES_PASSWORD: ${{ secrets.CI_E2E_POSTGRES_PASSWORD || 'ci-e2e-password' }}
+      DATABASE_CONNECTION_STRING: ${{ format('Host=db;Port=5432;Database={0};Username={1};Password={2}', vars.CI_E2E_POSTGRES_DB || 'ci_e2e', vars.CI_E2E_POSTGRES_USER || 'ci_e2e', secrets.CI_E2E_POSTGRES_PASSWORD || 'ci-e2e-password') }}
+      JWT_SECRET: ${{ secrets.CI_E2E_JWT_SECRET || 'ci-e2e-jwt-secret-key-with-at-least-32-bytes' }} # gitleaks:allow
+      JWT_ISSUER: ${{ vars.CI_E2E_JWT_ISSUER || 'ci-e2e' }}
+      JWT_AUDIENCE: ${{ vars.CI_E2E_JWT_AUDIENCE || 'ci-e2e' }}
+      INITIAL_ADMIN_EMAIL: ${{ vars.CI_E2E_ADMIN_EMAIL || 'e2e-admin@example.test' }}
+      INITIAL_ADMIN_PASSWORD: ${{ secrets.CI_E2E_ADMIN_PASSWORD || 'E2e-admin-password-123' }}
+      SMTP_SERVER: ${{ vars.CI_E2E_SMTP_SERVER || 'smtp.example.test' }}
+      SMTP_PORT: ${{ vars.CI_E2E_SMTP_PORT || '2525' }}
+      SMTP_SENDER_EMAIL: ${{ vars.CI_E2E_SMTP_SENDER_EMAIL || 'no-reply@example.test' }}
+      SMTP_SENDER_NAME: ${{ vars.CI_E2E_SMTP_SENDER_NAME || 'CI' }}
+      SMTP_USERNAME: ${{ vars.CI_E2E_SMTP_USERNAME || 'ci-user' }}
+      SMTP_PASSWORD: ${{ secrets.CI_E2E_SMTP_PASSWORD || 'ci-e2e-email-password' }}
+      SMTP_ENABLE_SSL: ${{ vars.CI_E2E_SMTP_ENABLE_SSL || 'false' }}
+      FIREBASE_PROJECT_ID: ${{ vars.CI_E2E_FIREBASE_PROJECT_ID || '' }}
+      E2E_BASE_URL: ${{ vars.CI_E2E_BASE_URL || 'http://localhost:8080' }}
+      E2E_ADMIN_EMAIL: ${{ vars.CI_E2E_ADMIN_EMAIL || 'e2e-admin@example.test' }}
+      E2E_ADMIN_PASSWORD: ${{ secrets.CI_E2E_ADMIN_PASSWORD || 'E2e-admin-password-123' }}
 
     steps:
       - name: Check out repository
@@ -113,32 +132,37 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: GameSphere_frontend/package-lock.json
+          cache-dependency-path: "GameSphere_frontend/package-lock.json"
 
       - name: Install frontend dependencies
-        working-directory: GameSphere_frontend
+        working-directory: "GameSphere_frontend"
         run: npm ci
 
       - name: Install Chromium for E2E
-        working-directory: GameSphere_frontend
+        working-directory: "GameSphere_frontend"
         run: npx playwright install --with-deps chromium
 
       - name: Start production Compose stack
         run: docker compose -f compose.yml -f compose.prod.yml up -d --build
 
+      # Nome do serviço de migração no docker-compose, o endpoint de
+      # health-check e o código HTTP esperado vêm todos de Variables do
+      # repositório, com um valor genérico por omissão (ver README).
       - name: Wait for database migration
         shell: bash
+        env:
+          MIGRATE_SERVICE: ${{ vars.CI_E2E_MIGRATE_SERVICE || 'migrate' }}
         run: |
           set -euo pipefail
           for attempt in $(seq 1 60); do
-            migrate_id="$(docker compose -f compose.yml -f compose.prod.yml ps -a -q migrate)"
+            migrate_id="$(docker compose -f compose.yml -f compose.prod.yml ps -a -q "$MIGRATE_SERVICE")"
             if [ -n "$migrate_id" ]; then
               state="$(docker inspect --format '{{.State.Status}}:{{.State.ExitCode}}' "$migrate_id")"
               if [ "$state" = "exited:0" ]; then
                 exit 0
               fi
               if [[ "$state" == exited:* ]]; then
-                docker compose -f compose.yml -f compose.prod.yml logs migrate
+                docker compose -f compose.yml -f compose.prod.yml logs "$MIGRATE_SERVICE"
                 exit 1
               fi
             fi
@@ -149,11 +173,14 @@ jobs:
 
       - name: Wait for API readiness
         shell: bash
+        env:
+          HEALTHCHECK_URL: ${{ format('{0}{1}', vars.CI_E2E_BASE_URL || 'http://localhost:8080', vars.CI_E2E_HEALTHCHECK_PATH || '/health') }}
+          HEALTHCHECK_STATUS: ${{ vars.CI_E2E_HEALTHCHECK_STATUS || '200' }}
         run: |
           set -euo pipefail
           for attempt in $(seq 1 60); do
-            status="$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/api/quizzes || true)"
-            if [ "$status" = "401" ]; then
+            status="$(curl -s -o /dev/null -w '%{http_code}' "$HEALTHCHECK_URL" || true)"
+            if [ "$status" = "$HEALTHCHECK_STATUS" ]; then
               exit 0
             fi
             sleep 2
@@ -163,7 +190,7 @@ jobs:
           exit 1
 
       - name: Run Docker smoke and E2E tests
-        working-directory: GameSphere_frontend
+        working-directory: "GameSphere_frontend"
         run: npm run test:e2e
 
       - name: Show Compose diagnostics on failure
