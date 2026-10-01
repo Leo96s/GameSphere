@@ -140,9 +140,21 @@ EmailSettings__EnableSSL
 `JwtSettings__SecretKey` deve ter pelo menos 32 bytes e todos os valores reais devem ser
 mantidos apenas no gestor de segredos ou no ambiente de execução.
 
+No Infisical, a pasta `/backend` do ambiente `dev` contém estas chaves já no formato .NET, como
+referências aos segredos da raiz (por exemplo `${dev.JWT_SECRET}`), pelo que cada valor só se altera
+num sítio. Para correr a API fora do Docker sem `appsettings.json` com credenciais:
+
+```powershell
+infisical run --env=dev --path=/backend -- dotnet run --project GameSphere_backend
+```
+
+A connection string desta pasta aponta para `localhost:5432`. O serviço `db` do Compose não publica
+essa porta, por isso este modo requer um PostgreSQL acessível localmente nessa porta. Em Git Bash,
+define `MSYS_NO_PATHCONV=1` para que `--path=/backend` não seja convertido num caminho do Windows.
+
 `InitialAdmin__Email` e `InitialAdmin__Password` são obrigatórias para criar ou promover o
 administrador inicial. Em Docker Compose, define `INITIAL_ADMIN_EMAIL` e
-`INITIAL_ADMIN_PASSWORD` no ficheiro `.env` local ou no ambiente de execução. A password não
+`INITIAL_ADMIN_PASSWORD` no Infisical (ou no ficheiro `.env` local) ou no ambiente de execução. A password não
 é registada e deve ter pelo menos 8 caracteres.
 
 O e-mail de cada utilizador é único. A migração cria o índice único sem alterar nem eliminar
@@ -444,7 +456,16 @@ Para recursos como rankings ao vivo ou quizzes com múltiplos jogadores:
 
 Instala o Docker Desktop, que inclui o Docker Compose, e confirma que o daemon do Docker está em execução.
 
-Na raiz do projeto, cria a configuração local a partir do exemplo e substitui todos os valores `CHANGE_ME`. `DATABASE_CONNECTION_STRING` deve ser uma connection string Npgsql completa para o serviço `db`; em produção, fornece-a já formatada pelo gestor de segredos ou CI.
+Os segredos locais vivem no [Infisical](https://eu.infisical.com) (região EU), no ambiente `dev` do projeto GameSphere, com os mesmos nomes de `.env.example`. O repositório versiona apenas `.infisical.json`, que identifica o projeto e não contém segredos. Em cada máquina nova, instala o CLI e autentica-te uma vez:
+
+```powershell
+winget install infisical
+infisical login
+```
+
+Os comandos Docker Compose abaixo são executados através de `infisical run`, que injeta os segredos como variáveis de ambiente no processo do Compose. Os ficheiros Compose não precisam de alterações porque já leem tudo do ambiente.
+
+Como alternativa offline, podes continuar a usar um `.env` local criado a partir do exemplo (substitui todos os valores `CHANGE_ME`) e omitir o prefixo `infisical run --env=dev --`. `DATABASE_CONNECTION_STRING` deve ser uma connection string Npgsql completa para o serviço `db`; em produção, fornece-a já formatada pelo gestor de segredos ou CI.
 
 ```powershell
 Copy-Item .env.example .env
@@ -457,7 +478,7 @@ O ficheiro `.env` é exclusivamente local: não o faças commit nem o copies par
 Inicia o PostgreSQL, aplica as migrações e arranca a API e o frontend com hot reload:
 
 ```powershell
-docker compose -f compose.yml -f compose.dev.yml up --build
+infisical run --env=dev -- docker compose -f compose.yml -f compose.dev.yml up --build
 ```
 
 URLs locais:
@@ -469,13 +490,13 @@ URLs locais:
 Para parar os serviços, preservando o volume do PostgreSQL:
 
 ```powershell
-docker compose -f compose.yml -f compose.dev.yml down
+infisical run --env=dev -- docker compose -f compose.yml -f compose.dev.yml down
 ```
 
 Se precisares de executar as migrações EF Core novamente depois de uma alteração:
 
 ```powershell
-docker compose -f compose.yml -f compose.dev.yml run --rm migrate
+infisical run --env=dev -- docker compose -f compose.yml -f compose.dev.yml run --rm migrate
 ```
 
 ### Validação local das imagens de produção
@@ -483,7 +504,7 @@ docker compose -f compose.yml -f compose.dev.yml run --rm migrate
 Constrói e arranca localmente as imagens de produção com o Nginx como ponto de entrada. Este fluxo usa HTTP apenas em `localhost` e não substitui um deployment público com terminação TLS:
 
 ```powershell
-docker compose -f compose.yml -f compose.prod.yml up --build
+infisical run --env=dev -- docker compose -f compose.yml -f compose.prod.yml up --build
 ```
 
 O CORS da API de producao aceita a origem definida por `CORS_ALLOWED_ORIGIN`; o Compose usa `http://localhost:8080` por defeito. Num deployment publico, substitui-o pela origem HTTPS real do frontend.
@@ -495,7 +516,7 @@ A aplicação fica disponível em <http://localhost:8080>. A API não é publica
 Para parar os serviços, preservando o volume do PostgreSQL:
 
 ```powershell
-docker compose -f compose.yml -f compose.prod.yml down
+infisical run --env=dev -- docker compose -f compose.yml -f compose.prod.yml down
 ```
 
 Os comandos `down` não usam `--volumes`, para que os dados locais do PostgreSQL não sejam removidos.
