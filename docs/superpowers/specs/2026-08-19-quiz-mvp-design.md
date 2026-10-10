@@ -1,5 +1,12 @@
 # Design — MVP de quizzes e administração
 
+> **Nota (GAM-45):** o campo `IsPublished` deixou de existir. O ciclo de vida
+> editorial dos quizzes (rascunho, publicado, retirado, arquivado), as
+> transições, a validação de publicação e a proteção de conteúdo com
+> tentativas estão descritos em
+> [`2026-10-10-quiz-editorial-states-design.md`](2026-10-10-quiz-editorial-states-design.md),
+> que prevalece sobre as referências a publicação neste documento.
+
 ## Objetivo
 
 Entregar o primeiro percurso completo autenticado do produto: um utilizador
