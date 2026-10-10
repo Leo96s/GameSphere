@@ -5,7 +5,10 @@ namespace GameSphere_backend.Interfaces;
 
 public interface IQuizAdministrationService
 {
-    Task<IReadOnlyList<AdminQuizUpsertDto>> GetQuizzesAsync(int page = 1, int pageSize = 50);
+    Task<IReadOnlyList<AdminQuizUpsertDto>> GetQuizzesAsync(
+        int page = 1,
+        int pageSize = 50,
+        bool includeArchived = false);
 
     Task<AdminQuizUpsertDto?> GetQuizByIdAsync(int quizId);
 
@@ -17,6 +20,11 @@ public interface IQuizAdministrationService
         AdminQuizUpsertDto request);
 
     Task<ServiceResponse<bool>> DeleteQuizAsync(int adminId, int quizId);
+
+    Task<ServiceResponse<AdminQuizUpsertDto>> ChangeStatusAsync(
+        int adminId,
+        int quizId,
+        ChangeQuizStatusRequest request);
 
     Task<ServiceResponse<AdminQuestionUpsertDto>> CreateQuestionAsync(
         int adminId,

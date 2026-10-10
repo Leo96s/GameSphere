@@ -9,8 +9,8 @@ internal static class AdminErrorResultMapper
         ControllerBase controller,
         ServiceResponse<T> response) => response.Type switch
         {
-            "NotFound" => controller.NotFound(),
-            "Conflict" => controller.Conflict(),
-            _ => controller.BadRequest()
+            "NotFound" => controller.NotFound(new { message = response.Message }),
+            "Conflict" => controller.Conflict(new { message = response.Message }),
+            _ => controller.BadRequest(new { message = response.Message })
         };
 }

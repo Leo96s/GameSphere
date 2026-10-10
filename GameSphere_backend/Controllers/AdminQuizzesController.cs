@@ -21,16 +21,17 @@ public sealed class AdminQuizzesController : AdminControllerBase
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<AdminQuizUpsertDto>>> GetQuizzes(
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 50)
+        [FromQuery] int pageSize = 50,
+        [FromQuery] bool includeArchived = false)
     {
-        return Ok(await _quizAdministrationService.GetQuizzesAsync(page, pageSize));
+        return Ok(await _quizAdministrationService.GetQuizzesAsync(page, pageSize, includeArchived));
     }
 
     [HttpGet("{id:int}")]
     public async Task<ActionResult<AdminQuizUpsertDto>> GetQuizById(int id)
     {
         var quiz = await _quizAdministrationService.GetQuizByIdAsync(id);
-        return quiz is null ? NotFound() : Ok(quiz);
+        return quiz is null ? NotFound(new { message = "Quiz not found." }) : Ok(quiz);
     }
 
     [HttpPost]
@@ -49,4 +50,11 @@ public sealed class AdminQuizzesController : AdminControllerBase
     public async Task<IActionResult> DeleteQuiz(int id) =>
         await RunAdminDeleteAsync(adminId => _quizAdministrationService.DeleteQuizAsync(adminId, id));
 
+    [HttpPost("{id:int}/status")]
+    public async Task<ActionResult<AdminQuizUpsertDto>> ChangeQuizStatus(
+        int id,
+        [FromBody] ChangeQuizStatusRequest request) =>
+        await RunAdminCommandAsync(
+            adminId => _quizAdministrationService.ChangeStatusAsync(adminId, id, request),
+            quiz => Ok(quiz));
 }

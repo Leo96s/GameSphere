@@ -44,11 +44,17 @@ public sealed class UpdateQuizHandler
                 return QuizAdministrationResponses.Failure<AdminQuizUpsertDto>("NotFound", "Quiz not found.");
             }
 
+            var editFailure = await _context.GetContentEditFailureAsync(quiz);
+            if (editFailure is not null)
+            {
+                await transaction.RollbackAsync();
+                return QuizAdministrationResponses.Failure<AdminQuizUpsertDto>("Conflict", editFailure);
+            }
+
             await _context.Entry(quiz).Collection(candidate => candidate.Questions!).LoadAsync();
 
             quiz.Title = normalized.Title;
             quiz.Difficulty = normalized.Difficulty;
-            quiz.IsPublished = normalized.IsPublished;
 
             if (normalized.Questions is not null)
             {
@@ -62,7 +68,7 @@ public sealed class UpdateQuizHandler
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 
-            return QuizAdministrationResponses.Success(QuizAdministrationMapper.ToDto(quiz), "Ok");
+            return QuizAdministrationResponses.Success(QuizAdministrationMapper.ToDto(quiz, hasAttempts: false), "Ok");
         }
         catch
         {

@@ -1,4 +1,5 @@
 using GameSphere_backend.Data;
+using GameSphere_backend.Enums;
 using GameSphere_backend.Models.FrontendModels;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,18 +14,27 @@ public sealed class GetQuizzesHandler
         _context = context;
     }
 
-    public async Task<IReadOnlyList<AdminQuizUpsertDto>> HandleAsync(int page = 1, int pageSize = 50)
+    public async Task<IReadOnlyList<AdminQuizUpsertDto>> HandleAsync(
+        int page = 1,
+        int pageSize = 50,
+        bool includeArchived = false)
     {
         page = Math.Clamp(page, 1, 10_000);
         pageSize = Math.Clamp(pageSize, 1, 100);
-        var quizzes = await _context.Quizzs
+        var rows = await _context.Quizzs
             .AsNoTracking()
             .Include(quiz => quiz.Questions)
+            .Where(quiz => includeArchived || quiz.Status != QuizStatus.Archived)
             .OrderBy(quiz => quiz.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
+            .Select(quiz => new
+            {
+                Quiz = quiz,
+                HasAttempts = _context.Scores.Any(score => score.QuizzId == quiz.Id)
+            })
             .ToListAsync();
 
-        return quizzes.Select(QuizAdministrationMapper.ToDto).ToArray();
+        return rows.Select(row => QuizAdministrationMapper.ToDto(row.Quiz, row.HasAttempts)).ToArray();
     }
 }

@@ -26,6 +26,8 @@ public sealed class QuizCatalogAccessTests : IClassFixture<PostgreSqlFixture>, I
     private int _publishedQuizId;
     private int _ownerId;
     private string _draftTitle = null!;
+    private int _draftQuizId;
+    private readonly Dictionary<QuizStatus, (int QuizId, int QuestionId, string Title)> _hiddenQuizzes = new();
 
     public QuizCatalogAccessTests(PostgreSqlFixture database)
     {
@@ -114,6 +116,55 @@ public sealed class QuizCatalogAccessTests : IClassFixture<PostgreSqlFixture>, I
         Assert.Equal("[]", largePageBody);
     }
 
+    [Theory]
+    [InlineData(QuizStatus.Draft)]
+    [InlineData(QuizStatus.Unpublished)]
+    [InlineData(QuizStatus.Archived)]
+    public async Task Catalog_list_excludes_non_published_quizzes(QuizStatus status)
+    {
+        using var request = CreateAuthorizedRequest(HttpMethod.Get, "/api/quizzes?pageSize=100");
+
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("Published quiz", body, StringComparison.Ordinal);
+        Assert.DoesNotContain(_hiddenQuizzes[status].Title, body, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData(QuizStatus.Draft)]
+    [InlineData(QuizStatus.Unpublished)]
+    [InlineData(QuizStatus.Archived)]
+    public async Task Catalog_detail_of_a_non_published_quiz_returns_not_found(QuizStatus status)
+    {
+        using var request = CreateAuthorizedRequest(HttpMethod.Get, $"/api/quizzes/{_hiddenQuizzes[status].QuizId}");
+
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Theory]
+    [InlineData(QuizStatus.Draft)]
+    [InlineData(QuizStatus.Unpublished)]
+    [InlineData(QuizStatus.Archived)]
+    public async Task Attempt_on_a_non_published_quiz_returns_not_found_without_persisting_a_score(QuizStatus status)
+    {
+        var hidden = _hiddenQuizzes[status];
+        using var request = CreateAuthorizedRequest(HttpMethod.Post, $"/api/quizzes/{hidden.QuizId}/attempts");
+        request.Content = System.Net.Http.Json.JsonContent.Create(new
+        {
+            answers = new[] { new { questionId = hidden.QuestionId, selectedAnswer = "Hidden answer" } }
+        });
+
+        var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        await using var context = CreateContext();
+        Assert.False(await context.Scores.AnyAsync(score => score.QuizzId == hidden.QuizId, TestContext.Current.CancellationToken));
+    }
+
     private async Task SeedQuizzesAsync()
     {
         await using var context = CreateContext();
@@ -139,7 +190,7 @@ public sealed class QuizCatalogAccessTests : IClassFixture<PostgreSqlFixture>, I
             NumberOfQuests = 1,
             RegistrationDate = DateTime.UtcNow,
             UserId = owner.Id,
-            IsPublished = true,
+            Status = QuizStatus.Published,
             Questions = new List<Question>
             {
                 new()
@@ -159,7 +210,7 @@ public sealed class QuizCatalogAccessTests : IClassFixture<PostgreSqlFixture>, I
             NumberOfQuests = 1,
             RegistrationDate = DateTime.UtcNow,
             UserId = owner.Id,
-            IsPublished = false,
+            Status = QuizStatus.Draft,
             Questions = new List<Question>
             {
                 new()
@@ -172,10 +223,38 @@ public sealed class QuizCatalogAccessTests : IClassFixture<PostgreSqlFixture>, I
             }
         };
 
-        context.Quizzs.AddRange(published, draft);
+        var unpublished = HiddenQuiz(owner.Id, QuizStatus.Unpublished, $"Unpublished quiz {seedSuffix}");
+        var archived = HiddenQuiz(owner.Id, QuizStatus.Archived, $"Archived quiz {seedSuffix}");
+
+        context.Quizzs.AddRange(published, draft, unpublished, archived);
         await context.SaveChangesAsync(TestContext.Current.CancellationToken);
         _publishedQuizId = published.Id;
+        _draftQuizId = draft.Id;
+        _hiddenQuizzes[QuizStatus.Draft] = (draft.Id, draft.Questions!.First().Id, draft.Title);
+        _hiddenQuizzes[QuizStatus.Unpublished] = (unpublished.Id, unpublished.Questions!.First().Id, unpublished.Title);
+        _hiddenQuizzes[QuizStatus.Archived] = (archived.Id, archived.Questions!.First().Id, archived.Title);
     }
+
+    private static Quizz HiddenQuiz(int ownerId, QuizStatus status, string title) => new()
+    {
+        Title = title,
+        Difficulty = Difficulty.MEDIUM,
+        NumberOfQuests = 1,
+        RegistrationDate = DateTime.UtcNow,
+        UserId = ownerId,
+        Status = status,
+        Questions = new List<Question>
+        {
+            new()
+            {
+                Description = $"{status} question",
+                TypeOfAnswer = TypeOfAnswer.MULTIPLEOPTION,
+                Answers = ["Hidden answer", "Other answer"],
+                CorrectAnswer = "Hidden answer",
+            }
+        }
+    };
+
 
     private AppDbContext CreateContext()
     {

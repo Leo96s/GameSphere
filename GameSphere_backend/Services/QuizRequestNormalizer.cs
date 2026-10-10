@@ -57,7 +57,6 @@ public sealed class QuizRequestNormalizer
             Title = title,
             Difficulty = request.Difficulty,
             NumberOfQuests = request.NumberOfQuests,
-            IsPublished = request.IsPublished,
             Questions = questions
         };
         message = string.Empty;
