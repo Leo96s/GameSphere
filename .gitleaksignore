@@ -1,0 +1,7 @@
+# Reviewed gitleaks false positives (format: commit:file:rule:line).
+
+# CI-only placeholder default for JWT_SECRET when the repository secret is unset; never used outside the E2E job.
+002b337f0bedc87c29b404dfa14790aa6a615cc3:.github/workflows/ci.yml:generic-api-key:122
+
+# Firebase web apiKey: public client identifier shipped in the browser bundle, not a secret.
+ed5850663047c6e9fd1e8f609cb0ea4086cf96a5:GameSphere_frontend/src/services/firebase.js:gcp-api-key:10
