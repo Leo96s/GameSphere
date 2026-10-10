@@ -66,7 +66,6 @@ test('registered user can log in and complete a published quiz', {
         title: quizTitle,
         difficulty: 0,
         numberOfQuests: 1,
-        isPublished: true,
       },
     });
     const quiz = await expectJson(quizResponse, 201);
@@ -82,6 +81,12 @@ test('registered user can log in and complete a published quiz', {
       },
     });
     await expectJson(questionResponse, 201);
+
+    const publishResponse = await adminRequest.post(`${baseUrl}/api/admin/quizzes/${quizId}/status`, {
+      data: { status: 1 },
+    });
+    const publishedQuiz = await expectJson(publishResponse, 200);
+    assert.equal(publishedQuiz.status, 1);
 
     const registrationResponse = await userRequest.post(`${baseUrl}/api/User`, {
       data: {
@@ -113,6 +118,9 @@ test('registered user can log in and complete a published quiz', {
       await userRequest.delete(`${baseUrl}/api/User/${userId}`).catch(() => undefined);
     }
     if (quizId) {
+      await adminRequest.post(`${baseUrl}/api/admin/quizzes/${quizId}/status`, {
+        data: { status: 2 },
+      }).catch(() => undefined);
       await adminRequest.delete(`${baseUrl}/api/admin/quizzes/${quizId}`).catch(() => undefined);
     }
     await adminContext.close();
