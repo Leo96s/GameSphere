@@ -53,7 +53,12 @@ public sealed class QuizzesController : ControllerBase
 
         if (!result.Success)
         {
-            return result.Type == "NotFound" ? NotFound() : BadRequest();
+            return result.Type switch
+            {
+                "NotFound" => NotFound(),
+                "Conflict" => Conflict(new { message = result.Message }),
+                _ => BadRequest()
+            };
         }
 
         return Ok(result.Data);

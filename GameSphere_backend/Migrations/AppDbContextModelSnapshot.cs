@@ -120,14 +120,14 @@ namespace GameSphere_backend.Migrations
                     b.Property<int>("Difficulty")
                         .HasColumnType("integer");
 
-                    b.Property<bool>("IsPublished")
-                        .HasColumnType("boolean");
-
                     b.Property<int>("NumberOfQuests")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("RegistrationDate")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Title")
                         .IsRequired()

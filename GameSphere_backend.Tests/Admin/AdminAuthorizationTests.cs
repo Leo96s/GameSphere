@@ -62,8 +62,7 @@ public sealed class AdminAuthorizationTests : AdminQuizAdministrationTestBase, I
         using var writeRequest = CreateRequest(HttpMethod.Post, "/api/admin/quizzes", UserRole.Admin, InactiveAdminId, new
         {
             title = "Inactive admin quiz",
-            difficulty = (int)Difficulty.EASY,
-            isPublished = false
+            difficulty = (int)Difficulty.EASY
         });
 
         var readResponse = await Client.SendAsync(readRequest, TestContext.Current.CancellationToken);
@@ -93,8 +92,7 @@ public sealed class AdminAuthorizationTests : AdminQuizAdministrationTestBase, I
         var result = await controller.CreateQuiz(new AdminQuizUpsertDto
         {
             Title = "Claim fallback quiz",
-            Difficulty = Difficulty.EASY,
-            IsPublished = false
+            Difficulty = Difficulty.EASY
         });
 
         Assert.IsType<CreatedAtActionResult>(result.Result);
@@ -294,7 +292,10 @@ public sealed class AdminAuthorizationTests : AdminQuizAdministrationTestBase, I
     {
         public int? CapturedAdminId { get; private set; }
 
-        public Task<IReadOnlyList<AdminQuizUpsertDto>> GetQuizzesAsync(int page = 1, int pageSize = 50)
+        public Task<IReadOnlyList<AdminQuizUpsertDto>> GetQuizzesAsync(
+            int page = 1,
+            int pageSize = 50,
+            bool includeArchived = false)
             => Task.FromResult<IReadOnlyList<AdminQuizUpsertDto>>([]);
 
         public Task<AdminQuizUpsertDto?> GetQuizByIdAsync(int quizId)
@@ -311,7 +312,7 @@ public sealed class AdminAuthorizationTests : AdminQuizAdministrationTestBase, I
                     Id = 123,
                     Title = request.Title,
                     Difficulty = request.Difficulty,
-                    IsPublished = request.IsPublished
+                    Status = QuizStatus.Draft
                 }
             });
         }
@@ -324,6 +325,12 @@ public sealed class AdminAuthorizationTests : AdminQuizAdministrationTestBase, I
 
         public Task<ServiceResponse<bool>> DeleteQuizAsync(int adminId, int quizId)
             => Task.FromResult(new ServiceResponse<bool> { Success = false, Type = "NotFound" });
+
+        public Task<ServiceResponse<AdminQuizUpsertDto>> ChangeStatusAsync(
+            int adminId,
+            int quizId,
+            ChangeQuizStatusRequest request)
+            => Task.FromResult(new ServiceResponse<AdminQuizUpsertDto> { Success = false, Type = "NotFound" });
 
         public Task<ServiceResponse<AdminQuestionUpsertDto>> CreateQuestionAsync(
             int adminId,

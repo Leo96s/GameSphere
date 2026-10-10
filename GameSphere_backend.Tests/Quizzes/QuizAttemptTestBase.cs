@@ -120,7 +120,7 @@ public abstract class QuizAttemptTestBase : IAsyncLifetime
             NumberOfQuests = 2,
             RegistrationDate = DateTime.UtcNow,
             UserId = owner.Id,
-            IsPublished = true,
+            Status = QuizStatus.Published,
             Questions = new List<Question>
             {
                 new()
@@ -146,7 +146,7 @@ public abstract class QuizAttemptTestBase : IAsyncLifetime
             NumberOfQuests = 1,
             RegistrationDate = DateTime.UtcNow,
             UserId = owner.Id,
-            IsPublished = false,
+            Status = QuizStatus.Draft,
             Questions = new List<Question>
             {
                 new()
@@ -165,7 +165,7 @@ public abstract class QuizAttemptTestBase : IAsyncLifetime
             NumberOfQuests = 0,
             RegistrationDate = DateTime.UtcNow,
             UserId = owner.Id,
-            IsPublished = true,
+            Status = QuizStatus.Published,
             Questions = []
         };
 

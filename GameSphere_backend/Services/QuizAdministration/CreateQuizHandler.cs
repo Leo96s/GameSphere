@@ -1,4 +1,5 @@
 using GameSphere_backend.Data;
+using GameSphere_backend.Enums;
 using GameSphere_backend.Models.BackendModels;
 using GameSphere_backend.Models.FrontendModels;
 using GameSphere_backend.ServicesResponses;
@@ -37,7 +38,7 @@ public sealed class CreateQuizHandler
             {
                 Title = normalized.Title,
                 Difficulty = normalized.Difficulty,
-                IsPublished = normalized.IsPublished,
+                Status = QuizStatus.Draft,
                 NumberOfQuests = 0,
                 RegistrationDate = DateTime.UtcNow,
                 UserId = adminId,
@@ -52,7 +53,7 @@ public sealed class CreateQuizHandler
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 
-            return QuizAdministrationResponses.Success(QuizAdministrationMapper.ToDto(quiz), "Created");
+            return QuizAdministrationResponses.Success(QuizAdministrationMapper.ToDto(quiz, hasAttempts: false), "Created");
         }
         catch
         {

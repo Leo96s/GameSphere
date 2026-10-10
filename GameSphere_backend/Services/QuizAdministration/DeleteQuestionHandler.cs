@@ -40,6 +40,13 @@ public sealed class DeleteQuestionHandler
                 return QuizAdministrationResponses.Failure<bool>("NotFound", "Quiz not found.");
             }
 
+            var editFailure = await _context.GetContentEditFailureAsync(quiz);
+            if (editFailure is not null)
+            {
+                await transaction.RollbackAsync();
+                return QuizAdministrationResponses.Failure<bool>("Conflict", editFailure);
+            }
+
             var question = await _context.Set<Question>().SingleOrDefaultAsync(candidate => candidate.Id == questionId);
             if (question is null)
             {

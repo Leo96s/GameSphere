@@ -44,6 +44,13 @@ public sealed class CreateQuestionHandler
                 return QuizAdministrationResponses.Failure<AdminQuestionUpsertDto>("NotFound", "Quiz not found.");
             }
 
+            var editFailure = await _context.GetContentEditFailureAsync(quiz);
+            if (editFailure is not null)
+            {
+                await transaction.RollbackAsync();
+                return QuizAdministrationResponses.Failure<AdminQuestionUpsertDto>("Conflict", editFailure);
+            }
+
             var question = QuizAdministrationMapper.ToEntity(normalized, quizId);
             _context.Set<Question>().Add(question);
             await _context.SaveChangesAsync();
