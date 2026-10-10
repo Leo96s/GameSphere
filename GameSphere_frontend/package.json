@@ -4,7 +4,8 @@
   "type": "module",
   "overrides": {
     "vue": "$vue",
-    "@vue/compiler-sfc": "$vue"
+    "@vue/compiler-sfc": "$vue",
+    "@grpc/grpc-js": "^1.13.6"
   },
   "private": true,
   "scripts": {
