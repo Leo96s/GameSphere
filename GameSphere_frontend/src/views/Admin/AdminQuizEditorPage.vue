@@ -17,34 +17,39 @@
               <p class="text-sm font-semibold text-primary">Editor de conteúdo</p>
               <h1 class="mt-1 text-3xl font-bold tracking-tight">{{ quiz.title || 'Quiz sem título' }}</h1>
             </div>
-            <span :class="publicationClass(quiz.isPublished)" class="inline-flex w-fit items-center rounded-full px-3 py-1.5 text-sm font-semibold">
-              {{ quiz.isPublished ? 'Publicado' : 'Rascunho' }}
+            <span :class="statusClass(quiz.status)" class="inline-flex w-fit items-center rounded-full px-3 py-1.5 text-sm font-semibold">
+              {{ quizStatusLabel(quiz.status) }}
             </span>
           </div>
 
-          <form class="mt-7 grid gap-5 sm:grid-cols-2" @submit.prevent="saveQuiz">
-            <div class="sm:col-span-2">
-              <label class="text-sm font-medium" for="quiz-title">Título</label>
-              <input id="quiz-title" v-model.trim="quiz.title" class="mt-2 w-full rounded-md border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" maxlength="100" required>
-            </div>
-            <div>
-              <label class="text-sm font-medium" for="quiz-difficulty">Dificuldade</label>
-              <select id="quiz-difficulty" v-model.number="quiz.difficulty" class="mt-2 w-full rounded-md border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                <option :value="0">Fácil</option>
-                <option :value="1">Médio</option>
-                <option :value="2">Difícil</option>
-              </select>
-            </div>
-            <label class="flex items-center gap-3 self-end rounded-md border p-3 text-sm font-medium">
-              <input v-model="quiz.isPublished" class="size-4 accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" type="checkbox">
-              Publicar este quiz
-            </label>
-            <p v-if="quizError" class="sm:col-span-2 text-sm text-destructive" role="alert">{{ quizError }}</p>
-            <div class="sm:col-span-2">
-              <button class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" type="submit" :disabled="isSavingQuiz">
-                {{ isSavingQuiz ? 'A guardar…' : 'Guardar quiz' }}
-              </button>
-            </div>
+          <p v-if="quiz.hasAttempts" class="mt-5 rounded-lg border bg-muted/50 p-4 text-sm text-muted-foreground" role="status">
+            Este quiz já tem tentativas e o conteúdo não pode ser alterado. Podes retirá-lo ou arquivá-lo.
+          </p>
+          <p v-else-if="!isEditable" class="mt-5 rounded-lg border bg-muted/50 p-4 text-sm text-muted-foreground" role="status">
+            Só é possível editar quizzes em rascunho ou retirados. Retira este quiz na lista de quizzes (ou restaura-o, se estiver arquivado) para alterar o conteúdo.
+          </p>
+
+          <form class="mt-7" @submit.prevent="saveQuiz">
+            <fieldset class="grid gap-5 sm:grid-cols-2" :disabled="!isEditable">
+              <div class="sm:col-span-2">
+                <label class="text-sm font-medium" for="quiz-title">Título</label>
+                <input id="quiz-title" v-model.trim="quiz.title" class="mt-2 w-full rounded-md border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" maxlength="100" required>
+              </div>
+              <div>
+                <label class="text-sm font-medium" for="quiz-difficulty">Dificuldade</label>
+                <select id="quiz-difficulty" v-model.number="quiz.difficulty" class="mt-2 w-full rounded-md border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                  <option :value="0">Fácil</option>
+                  <option :value="1">Médio</option>
+                  <option :value="2">Difícil</option>
+                </select>
+              </div>
+              <p v-if="quizError" class="sm:col-span-2 text-sm text-destructive" role="alert">{{ quizError }}</p>
+              <div class="sm:col-span-2">
+                <button class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" type="submit" :disabled="isSavingQuiz">
+                  {{ isSavingQuiz ? 'A guardar…' : 'Guardar quiz' }}
+                </button>
+              </div>
+            </fieldset>
           </form>
         </header>
 
@@ -54,7 +59,7 @@
               <p class="text-sm font-semibold text-primary">Conteúdo</p>
               <h2 id="questions-heading" class="mt-1 text-2xl font-bold tracking-tight">Perguntas</h2>
             </div>
-            <button v-if="!newQuestion" class="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" type="button" @click="startQuestion">
+            <button v-if="!newQuestion && isEditable" class="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" type="button" @click="startQuestion">
               Adicionar pergunta
             </button>
           </div>
@@ -62,7 +67,7 @@
           <p v-if="questionError" class="mt-5 rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive" role="alert">{{ questionError }}</p>
           <p v-if="!newQuestion && quiz.questions.length === 0" class="mt-5 rounded-xl border border-dashed bg-card p-6 text-muted-foreground">Ainda não existem perguntas. Adiciona pelo menos uma antes de publicar.</p>
 
-          <div class="mt-5 space-y-4">
+          <fieldset class="mt-5 space-y-4" :disabled="!isEditable">
             <AdminQuestionEditor
               v-if="newQuestion"
               :question="newQuestion"
@@ -81,7 +86,7 @@
               @save="saveQuestion(question.id, $event)"
               @delete="removeQuestion(question.id)"
             />
-          </div>
+          </fieldset>
         </section>
       </template>
     </div>
@@ -89,14 +94,17 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import AdminQuestionEditor from '@/views/Admin/AdminQuestionEditor.vue';
 import {
   createQuestion,
   deleteQuestion,
+  QUIZ_STATUS,
   getAdminErrorMessage,
-  listAdminQuizzes,
+  getAdminQuiz,
+  isQuizContentEditable,
+  quizStatusLabel,
   updateQuestion,
   updateQuiz,
 } from '@/services/adminQuizService';
@@ -112,7 +120,9 @@ const quizError = ref('');
 const questionError = ref('');
 const newQuestion = ref(null);
 
-const publicationClass = (isPublished) => isPublished
+const isEditable = computed(() => isQuizContentEditable(quiz.value?.status, quiz.value?.hasAttempts));
+
+const statusClass = (status) => status === QUIZ_STATUS.PUBLISHED
   ? 'bg-primary/15 text-primary ring-1 ring-primary/25'
   : 'bg-muted text-muted-foreground ring-1 ring-border';
 
@@ -120,12 +130,13 @@ const loadQuiz = async () => {
   isLoading.value = true;
   errorMessage.value = '';
   try {
-    const quizzes = await listAdminQuizzes();
-    quiz.value = quizzes.find((candidate) => candidate.id === Number(route.params.id)) ?? null;
-    if (!quiz.value) errorMessage.value = 'O quiz pedido não existe ou já foi apagado.';
-    else quiz.value.questions ??= [];
+    quiz.value = await getAdminQuiz(Number(route.params.id));
+    quiz.value.questions ??= [];
   } catch (error) {
-    errorMessage.value = getAdminErrorMessage(error);
+    quiz.value = null;
+    errorMessage.value = error?.response?.status === 404
+      ? 'O quiz pedido não existe ou já foi apagado.'
+      : getAdminErrorMessage(error);
   } finally {
     isLoading.value = false;
   }
@@ -139,7 +150,6 @@ const saveQuiz = async () => {
     const updated = await updateQuiz(quiz.value.id, {
       title: quiz.value.title,
       difficulty: quiz.value.difficulty,
-      isPublished: quiz.value.isPublished,
     });
     quiz.value = { ...quiz.value, ...updated, questions: updated.questions ?? quiz.value.questions };
   } catch (error) {
