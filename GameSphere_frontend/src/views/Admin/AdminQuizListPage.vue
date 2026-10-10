@@ -7,9 +7,15 @@
           <h1 class="mt-1 text-3xl font-bold tracking-tight sm:text-4xl">Quizzes curados</h1>
           <p class="mt-3 max-w-2xl text-muted-foreground">Cria e revê o conteúdo antes de o tornar visível no catálogo.</p>
         </div>
-        <button class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" type="button" @click="showCreateForm = !showCreateForm">
-          {{ showCreateForm ? 'Fechar criação' : 'Criar quiz' }}
-        </button>
+        <div class="flex flex-wrap items-center gap-4">
+          <label class="flex items-center gap-2 text-sm font-medium">
+            <input v-model="includeArchived" class="size-4 accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" type="checkbox" @change="loadQuizzes">
+            Mostrar arquivados
+          </label>
+          <button class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" type="button" @click="showCreateForm = !showCreateForm">
+            {{ showCreateForm ? 'Fechar criação' : 'Criar quiz' }}
+          </button>
+        </div>
       </header>
 
       <form v-if="showCreateForm" class="mt-6 rounded-xl border bg-card p-5 shadow-sm" @submit.prevent="handleCreate">
@@ -52,18 +58,28 @@
             <div class="min-w-0">
               <div class="flex flex-wrap items-center gap-2">
                 <h2 class="truncate text-lg font-semibold">{{ quiz.title }}</h2>
-                <span :class="publicationClass(quiz.isPublished)" class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold">
-                  {{ publicationLabel(quiz.isPublished) }}
+                <span :class="statusClass(quiz.status)" class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold">
+                  {{ quizStatusLabel(quiz.status) }}
+                </span>
+                <span v-if="quiz.hasAttempts" class="inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground ring-1 ring-border">
+                  Com tentativas
                 </span>
               </div>
               <p class="mt-2 text-sm text-muted-foreground">{{ quiz.numberOfQuests }} {{ quiz.numberOfQuests === 1 ? 'pergunta' : 'perguntas' }} · {{ difficultyLabel(quiz.difficulty) }}</p>
             </div>
             <div class="flex flex-wrap gap-2">
               <router-link :to="{ name: 'admin-quiz-editor', params: { id: quiz.id } }" class="rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Editar</router-link>
-              <button class="rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50" type="button" :disabled="changingQuizId === quiz.id" @click="togglePublication(quiz)">
-                {{ changingQuizId === quiz.id ? 'A guardar…' : quiz.isPublished ? 'Despublicar' : 'Publicar' }}
+              <button
+                v-for="action in quizStatusActions(quiz.status)"
+                :key="action.status"
+                class="rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                type="button"
+                :disabled="changingQuizId === quiz.id"
+                @click="handleStatusChange(quiz, action.status)"
+              >
+                {{ changingQuizId === quiz.id ? 'A guardar…' : action.label }}
               </button>
-              <button class="rounded-md border border-destructive/40 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50" type="button" :disabled="changingQuizId === quiz.id" @click="handleDelete(quiz)">Apagar</button>
+              <button v-if="!quiz.hasAttempts && quiz.status !== QUIZ_STATUS.PUBLISHED" class="rounded-md border border-destructive/40 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50" type="button" :disabled="changingQuizId === quiz.id" @click="handleDelete(quiz)">Apagar</button>
             </div>
           </div>
         </li>
@@ -76,11 +92,14 @@
 import { onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import {
+  QUIZ_STATUS,
+  changeQuizStatus,
   createQuiz,
   deleteQuiz,
   getAdminErrorMessage,
   listAdminQuizzes,
-  updateQuiz,
+  quizStatusActions,
+  quizStatusLabel,
 } from '@/services/adminQuizService';
 
 const router = useRouter();
@@ -90,11 +109,11 @@ const isCreating = ref(false);
 const showCreateForm = ref(false);
 const changingQuizId = ref(null);
 const errorMessage = ref('');
+const includeArchived = ref(false);
 const newQuiz = reactive({ title: '', difficulty: 0 });
 
 const difficultyLabel = (difficulty) => ({ 0: 'Fácil', 1: 'Médio', 2: 'Difícil' }[difficulty] ?? 'Sem dificuldade');
-const publicationLabel = (isPublished) => (isPublished ? 'Publicado' : 'Rascunho');
-const publicationClass = (isPublished) => isPublished
+const statusClass = (status) => status === QUIZ_STATUS.PUBLISHED
   ? 'bg-primary/15 text-primary ring-1 ring-primary/25'
   : 'bg-muted text-muted-foreground ring-1 ring-border';
 
@@ -102,7 +121,7 @@ const loadQuizzes = async () => {
   isLoading.value = true;
   errorMessage.value = '';
   try {
-    quizzes.value = await listAdminQuizzes();
+    quizzes.value = await listAdminQuizzes({ includeArchived: includeArchived.value });
   } catch (error) {
     errorMessage.value = getAdminErrorMessage(error);
   } finally {
@@ -115,7 +134,7 @@ const handleCreate = async () => {
   isCreating.value = true;
   errorMessage.value = '';
   try {
-    const quiz = await createQuiz({ title: newQuiz.title, difficulty: newQuiz.difficulty, isPublished: false });
+    const quiz = await createQuiz({ title: newQuiz.title, difficulty: newQuiz.difficulty });
     await router.push({ name: 'admin-quiz-editor', params: { id: quiz.id } });
   } catch (error) {
     errorMessage.value = getAdminErrorMessage(error);
@@ -124,16 +143,14 @@ const handleCreate = async () => {
   }
 };
 
-const togglePublication = async (quiz) => {
+const handleStatusChange = async (quiz, status) => {
   changingQuizId.value = quiz.id;
   errorMessage.value = '';
   try {
-    const updated = await updateQuiz(quiz.id, {
-      title: quiz.title,
-      difficulty: quiz.difficulty,
-      isPublished: !quiz.isPublished,
-    });
-    quizzes.value = quizzes.value.map((currentQuiz) => currentQuiz.id === updated.id ? updated : currentQuiz);
+    const updated = await changeQuizStatus(quiz.id, status);
+    quizzes.value = !includeArchived.value && updated.status === QUIZ_STATUS.ARCHIVED
+      ? quizzes.value.filter((currentQuiz) => currentQuiz.id !== updated.id)
+      : quizzes.value.map((currentQuiz) => currentQuiz.id === updated.id ? updated : currentQuiz);
   } catch (error) {
     errorMessage.value = getAdminErrorMessage(error);
   } finally {
