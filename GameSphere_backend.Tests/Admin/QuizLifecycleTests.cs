@@ -26,7 +26,6 @@ public sealed class QuizLifecycleTests : AdminQuizAdministrationTestBase, IClass
         {
             title = "Curated geography quiz",
             difficulty = (int)Difficulty.EASY,
-            isPublished = false,
             questions = new[]
             {
                 new
@@ -44,7 +43,8 @@ public sealed class QuizLifecycleTests : AdminQuizAdministrationTestBase, IClass
         using var createdDocument = JsonDocument.Parse(createdBody);
         var quizId = createdDocument.RootElement.GetProperty("id").GetInt32();
         Assert.Equal(1, createdDocument.RootElement.GetProperty("numberOfQuests").GetInt32());
-        Assert.False(createdDocument.RootElement.GetProperty("isPublished").GetBoolean());
+        Assert.Equal((int)QuizStatus.Draft, createdDocument.RootElement.GetProperty("status").GetInt32());
+        Assert.False(createdDocument.RootElement.TryGetProperty("isPublished", out _));
 
         await AssertQuizOwnerAsync(quizId, AdminId);
 
@@ -52,7 +52,6 @@ public sealed class QuizLifecycleTests : AdminQuizAdministrationTestBase, IClass
         {
             title = "Published geography quiz",
             difficulty = (int)Difficulty.MEDIUM,
-            isPublished = true,
             questions = new[]
             {
                 new
@@ -75,14 +74,8 @@ public sealed class QuizLifecycleTests : AdminQuizAdministrationTestBase, IClass
 
         Assert.Equal(HttpStatusCode.OK, updatedQuiz.StatusCode);
         using var updatedDocument = JsonDocument.Parse(updatedBody);
-        Assert.True(updatedDocument.RootElement.GetProperty("isPublished").GetBoolean());
+        Assert.Equal((int)QuizStatus.Draft, updatedDocument.RootElement.GetProperty("status").GetInt32());
         Assert.Equal(2, updatedDocument.RootElement.GetProperty("numberOfQuests").GetInt32());
-
-        var listResponse = await SendAdminRequestAsync(HttpMethod.Get, "/api/admin/quizzes");
-        var listBody = await listResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-
-        Assert.Equal(HttpStatusCode.OK, listResponse.StatusCode);
-        Assert.Contains("Published geography quiz", listBody, StringComparison.Ordinal);
 
         var createdQuestion = await SendAdminRequestAsync(HttpMethod.Post, $"/api/admin/quizzes/{quizId}/questions", new
         {
@@ -113,17 +106,25 @@ public sealed class QuizLifecycleTests : AdminQuizAdministrationTestBase, IClass
         Assert.Equal(HttpStatusCode.NoContent, deletedQuestion.StatusCode);
         await AssertQuizQuestionCountAsync(quizId, 2);
 
-        var unpublishedQuiz = await SendAdminRequestAsync(HttpMethod.Put, $"/api/admin/quizzes/{quizId}", new
-        {
-            title = "Published geography quiz",
-            difficulty = (int)Difficulty.MEDIUM,
-            isPublished = false
-        });
-        var unpublishedBody = await unpublishedQuiz.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var published = await ChangeStatusAsync(quizId, QuizStatus.Published);
+        var publishedBody = await published.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
-        Assert.Equal(HttpStatusCode.OK, unpublishedQuiz.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, published.StatusCode);
+        using var publishedDocument = JsonDocument.Parse(publishedBody);
+        Assert.Equal((int)QuizStatus.Published, publishedDocument.RootElement.GetProperty("status").GetInt32());
+
+        var listResponse = await SendAdminRequestAsync(HttpMethod.Get, "/api/admin/quizzes");
+        var listBody = await listResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, listResponse.StatusCode);
+        Assert.Contains("Published geography quiz", listBody, StringComparison.Ordinal);
+
+        var unpublished = await ChangeStatusAsync(quizId, QuizStatus.Unpublished);
+        var unpublishedBody = await unpublished.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, unpublished.StatusCode);
         using var unpublishedDocument = JsonDocument.Parse(unpublishedBody);
-        Assert.False(unpublishedDocument.RootElement.GetProperty("isPublished").GetBoolean());
+        Assert.Equal((int)QuizStatus.Unpublished, unpublishedDocument.RootElement.GetProperty("status").GetInt32());
 
         var deletedQuiz = await SendAdminRequestAsync(HttpMethod.Delete, $"/api/admin/quizzes/{quizId}");
 
@@ -137,8 +138,7 @@ public sealed class QuizLifecycleTests : AdminQuizAdministrationTestBase, IClass
         var invalidQuiz = await SendAdminRequestAsync(HttpMethod.Post, "/api/admin/quizzes", new
         {
             title = " ",
-            difficulty = (int)Difficulty.EASY,
-            isPublished = false
+            difficulty = (int)Difficulty.EASY
         });
 
         Assert.Equal(HttpStatusCode.BadRequest, invalidQuiz.StatusCode);
@@ -218,6 +218,7 @@ public sealed class QuizLifecycleTests : AdminQuizAdministrationTestBase, IClass
         var response = await SendAdminRequestAsync(HttpMethod.Delete, $"/api/admin/quizzes/{quizId}");
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.False(string.IsNullOrWhiteSpace(await ReadErrorMessageAsync(response)));
         await AssertQuizQuestionCountAsync(quizId, 0);
     }
 }

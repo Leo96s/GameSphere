@@ -1,4 +1,5 @@
 using GameSphere_backend.Data;
+using GameSphere_backend.Enums;
 using GameSphere_backend.Models.BackendModels;
 using GameSphere_backend.ServicesResponses;
 using Microsoft.EntityFrameworkCore;
@@ -31,6 +32,14 @@ public sealed class DeleteQuizHandler
             {
                 await transaction.RollbackAsync();
                 return QuizAdministrationResponses.Failure<bool>("NotFound", "Quiz not found.");
+            }
+
+            if (quiz.Status == QuizStatus.Published)
+            {
+                await transaction.RollbackAsync();
+                return QuizAdministrationResponses.Failure<bool>(
+                    "Conflict",
+                    "Unpublish the quiz before deleting it.");
             }
 
             if (await _context.Scores.AnyAsync(score => score.QuizzId == quizId))

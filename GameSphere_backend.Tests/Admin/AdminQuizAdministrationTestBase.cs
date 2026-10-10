@@ -54,14 +54,102 @@ public abstract class AdminQuizAdministrationTestBase : IAsyncLifetime
         var response = await SendAdminRequestAsync(HttpMethod.Post, "/api/admin/quizzes", new
         {
             title = $"Empty quiz {Guid.NewGuid():N}",
-            difficulty = (int)Difficulty.EASY,
-            isPublished = false
+            difficulty = (int)Difficulty.EASY
         });
         var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.Created, response.StatusCode);
         using var document = JsonDocument.Parse(body);
         return document.RootElement.GetProperty("id").GetInt32();
+    }
+
+    protected async Task<int> CreateQuizWithQuestionAsync()
+    {
+        var response = await SendAdminRequestAsync(HttpMethod.Post, "/api/admin/quizzes", new
+        {
+            title = $"Quiz with content {Guid.NewGuid():N}",
+            difficulty = (int)Difficulty.EASY,
+            questions = new[]
+            {
+                new
+                {
+                    description = "Capital of Portugal?",
+                    typeOfAnswer = (int)TypeOfAnswer.MULTIPLEOPTION,
+                    answers = new[] { "Lisbon", "Porto" },
+                    correctAnswer = "Lisbon"
+                }
+            }
+        });
+        var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(System.Net.HttpStatusCode.Created, response.StatusCode);
+        using var document = JsonDocument.Parse(body);
+        return document.RootElement.GetProperty("id").GetInt32();
+    }
+
+    protected Task<HttpResponseMessage> ChangeStatusAsync(int quizId, QuizStatus status)
+        => SendAdminRequestAsync(HttpMethod.Post, $"/api/admin/quizzes/{quizId}/status", new { status = (int)status });
+
+    protected async Task SetQuizStatusAsync(int quizId, QuizStatus status)
+    {
+        await using var context = CreateContext();
+        var quiz = await context.Quizzs.SingleAsync(candidate => candidate.Id == quizId, TestContext.Current.CancellationToken);
+        quiz.Status = status;
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+    }
+
+    protected async Task<QuizStatus> GetQuizStatusAsync(int quizId)
+    {
+        await using var context = CreateContext();
+        return await context.Quizzs
+            .Where(quiz => quiz.Id == quizId)
+            .Select(quiz => quiz.Status)
+            .SingleAsync(TestContext.Current.CancellationToken);
+    }
+
+    protected async Task<int> FirstQuestionIdAsync(int quizId)
+    {
+        await using var context = CreateContext();
+        return await context.Set<Question>()
+            .Where(question => question.QuizzId == quizId)
+            .OrderBy(question => question.Id)
+            .Select(question => question.Id)
+            .FirstAsync(TestContext.Current.CancellationToken);
+    }
+
+    protected async Task AddAttemptAsync(int quizId)
+    {
+        await using var context = CreateContext();
+        var player = new User
+        {
+            Email = $"player-{Guid.NewGuid():N}@example.test",
+            FirstName = "Test",
+            LastName = "Player",
+            HashedPassword = "Test-password-123",
+            RegistrationDate = DateTime.UtcNow,
+            Gender = Gender.OUTRO,
+            isActive = true,
+            Role = UserRole.User
+        };
+        context.Users.Add(player);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        context.Scores.Add(new Score
+        {
+            UserId = player.Id,
+            QuizzId = quizId,
+            GameId = null,
+            Points = 1,
+            Date = DateTime.UtcNow
+        });
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+    }
+
+    protected static async Task<string?> ReadErrorMessageAsync(HttpResponseMessage response)
+    {
+        var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        Assert.False(string.IsNullOrWhiteSpace(body), $"Expected a {{ message }} body for {(int)response.StatusCode}.");
+        using var document = JsonDocument.Parse(body);
+        return document.RootElement.GetProperty("message").GetString();
     }
 
     protected async Task<HttpResponseMessage> SendAdminRequestAsync(HttpMethod method, string uri, object? payload = null)

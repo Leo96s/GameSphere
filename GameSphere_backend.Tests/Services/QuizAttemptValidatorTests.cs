@@ -121,7 +121,7 @@ public sealed class QuizAttemptValidatorTests
         Title = "Attempt validation quiz",
         Difficulty = Difficulty.EASY,
         NumberOfQuests = questions?.Count ?? 0,
-        IsPublished = true,
+        Status = QuizStatus.Published,
         RegistrationDate = DateTime.UtcNow,
         UserId = 20,
         Questions = questions

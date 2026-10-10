@@ -1,4 +1,5 @@
 using GameSphere_backend.Data;
+using GameSphere_backend.Http;
 using GameSphere_backend.Authorization;
 using GameSphere_backend.Interfaces;
 using GameSphere_backend.Models.FrontendModels;
@@ -62,7 +63,9 @@ builder.Services.AddCors(options =>
     });
 });
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews()
+    .ConfigureApiBehaviorOptions(options =>
+        options.InvalidModelStateResponseFactory = InvalidModelStateResponse.Create);
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 options.UseNpgsql(connectionString)
@@ -97,6 +100,7 @@ builder.Services.AddScoped<IQuizCatalogService, QuizCatalogService>();
 builder.Services.AddScoped<IQuestionShapeValidator, QuestionShapeValidator>();
 builder.Services.AddScoped<IQuestionAnswersValidator, QuestionAnswersValidator>();
 builder.Services.AddScoped<ICorrectAnswerValidator, CorrectAnswerValidator>();
+builder.Services.AddScoped<IQuizPublicationValidator, QuizPublicationValidator>();
 builder.Services.AddScoped<QuestionRequestNormalizer>();
 builder.Services.AddScoped<QuizRequestNormalizer>();
 builder.Services.AddScoped<GetQuizzesHandler>();
@@ -104,6 +108,7 @@ builder.Services.AddScoped<GetQuizByIdHandler>();
 builder.Services.AddScoped<CreateQuizHandler>();
 builder.Services.AddScoped<UpdateQuizHandler>();
 builder.Services.AddScoped<DeleteQuizHandler>();
+builder.Services.AddScoped<ChangeQuizStatusHandler>();
 builder.Services.AddScoped<CreateQuestionHandler>();
 builder.Services.AddScoped<UpdateQuestionHandler>();
 builder.Services.AddScoped<DeleteQuestionHandler>();

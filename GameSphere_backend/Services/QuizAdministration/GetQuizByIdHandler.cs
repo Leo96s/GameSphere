@@ -20,6 +20,6 @@ public sealed class GetQuizByIdHandler
             .Include(candidate => candidate.Questions)
             .SingleOrDefaultAsync(candidate => candidate.Id == quizId);
 
-        return quiz is null ? null : QuizAdministrationMapper.ToDto(quiz);
+        return quiz is null ? null : QuizAdministrationMapper.ToDto(quiz, await _context.HasAttemptsAsync(quiz.Id));
     }
 }

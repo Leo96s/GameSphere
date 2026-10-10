@@ -14,13 +14,14 @@ internal static class QuizAdministrationMapper
         QuizzId = quizId
     };
 
-    public static AdminQuizUpsertDto ToDto(Quizz source) => new()
+    public static AdminQuizUpsertDto ToDto(Quizz source, bool hasAttempts) => new()
     {
         Id = source.Id,
         Title = source.Title,
         Difficulty = source.Difficulty,
         NumberOfQuests = source.NumberOfQuests,
-        IsPublished = source.IsPublished,
+        Status = source.Status,
+        HasAttempts = hasAttempts,
         Questions = source.Questions?
             .OrderBy(question => question.Id)
             .Select(ToDto)

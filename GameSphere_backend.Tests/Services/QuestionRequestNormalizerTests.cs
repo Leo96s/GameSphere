@@ -134,8 +134,7 @@ public sealed class QuestionRequestNormalizerTests
     private static AdminQuizUpsertDto ValidQuiz() => new()
     {
         Title = "Valid quiz",
-        Difficulty = Difficulty.EASY,
-        IsPublished = false
+        Difficulty = Difficulty.EASY
     };
 
     private static AdminQuestionUpsertDto ValidQuestion() => new()

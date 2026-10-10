@@ -12,6 +12,7 @@ public sealed class QuizAdministrationService : IQuizAdministrationService
     private readonly CreateQuizHandler _createQuizHandler;
     private readonly UpdateQuizHandler _updateQuizHandler;
     private readonly DeleteQuizHandler _deleteQuizHandler;
+    private readonly ChangeQuizStatusHandler _changeQuizStatusHandler;
     private readonly CreateQuestionHandler _createQuestionHandler;
     private readonly UpdateQuestionHandler _updateQuestionHandler;
     private readonly DeleteQuestionHandler _deleteQuestionHandler;
@@ -22,6 +23,7 @@ public sealed class QuizAdministrationService : IQuizAdministrationService
         CreateQuizHandler createQuizHandler,
         UpdateQuizHandler updateQuizHandler,
         DeleteQuizHandler deleteQuizHandler,
+        ChangeQuizStatusHandler changeQuizStatusHandler,
         CreateQuestionHandler createQuestionHandler,
         UpdateQuestionHandler updateQuestionHandler,
         DeleteQuestionHandler deleteQuestionHandler)
@@ -31,13 +33,17 @@ public sealed class QuizAdministrationService : IQuizAdministrationService
         _createQuizHandler = createQuizHandler;
         _updateQuizHandler = updateQuizHandler;
         _deleteQuizHandler = deleteQuizHandler;
+        _changeQuizStatusHandler = changeQuizStatusHandler;
         _createQuestionHandler = createQuestionHandler;
         _updateQuestionHandler = updateQuestionHandler;
         _deleteQuestionHandler = deleteQuestionHandler;
     }
 
-    public async Task<IReadOnlyList<AdminQuizUpsertDto>> GetQuizzesAsync(int page = 1, int pageSize = 50)
-        => await _getQuizzesHandler.HandleAsync(page, pageSize);
+    public async Task<IReadOnlyList<AdminQuizUpsertDto>> GetQuizzesAsync(
+        int page = 1,
+        int pageSize = 50,
+        bool includeArchived = false)
+        => await _getQuizzesHandler.HandleAsync(page, pageSize, includeArchived);
 
     public async Task<AdminQuizUpsertDto?> GetQuizByIdAsync(int quizId)
         => await _getQuizByIdHandler.HandleAsync(quizId);
@@ -53,6 +59,12 @@ public sealed class QuizAdministrationService : IQuizAdministrationService
 
     public async Task<ServiceResponse<bool>> DeleteQuizAsync(int adminId, int quizId)
         => await _deleteQuizHandler.HandleAsync(adminId, quizId);
+
+    public async Task<ServiceResponse<AdminQuizUpsertDto>> ChangeStatusAsync(
+        int adminId,
+        int quizId,
+        ChangeQuizStatusRequest request)
+        => await _changeQuizStatusHandler.HandleAsync(adminId, quizId, request);
 
     public async Task<ServiceResponse<AdminQuestionUpsertDto>> CreateQuestionAsync(
         int adminId,

@@ -1,10 +1,13 @@
 using GameSphere_backend.Data;
+using GameSphere_backend.Enums;
 using GameSphere_backend.Interfaces;
 using GameSphere_backend.Mappers;
 using GameSphere_backend.Models.BackendModels;
 using GameSphere_backend.Models.FrontendModels;
+using GameSphere_backend.Services.QuizAdministration;
 using GameSphere_backend.ServicesResponses;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace GameSphere_backend.Services;
 
@@ -33,7 +36,7 @@ public sealed class QuizCatalogService : IQuizCatalogService
         pageSize = Math.Clamp(pageSize, 1, 100);
         var quizzes = await _context.Quizzs
             .AsNoTracking()
-            .Where(quiz => quiz.IsPublished)
+            .Where(quiz => quiz.Status == QuizStatus.Published)
             .OrderBy(quiz => quiz.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
@@ -47,7 +50,7 @@ public sealed class QuizCatalogService : IQuizCatalogService
         var quiz = await _context.Quizzs
             .AsNoTracking()
             .Include(quiz => quiz.Questions)
-            .SingleOrDefaultAsync(quiz => quiz.Id == id && quiz.IsPublished);
+            .SingleOrDefaultAsync(quiz => quiz.Id == id && quiz.Status == QuizStatus.Published);
 
         return quiz is null ? null : QuizPlayerMapper.ToPlayQuiz(quiz);
     }
@@ -57,20 +60,44 @@ public sealed class QuizCatalogService : IQuizCatalogService
         int userId,
         QuizAttemptRequest request)
     {
-        var quiz = await _context.Quizzs
-            .Include(candidate => candidate.Questions)
-            .SingleOrDefaultAsync(candidate => candidate.Id == quizId && candidate.IsPublished);
-
-        var validation = _attemptValidator.Validate(quiz, request);
-        if (!validation.Success)
+        // The shared row lock serialises the attempt with administrative changes (FOR UPDATE) on the same quiz:
+        // either the score is saved first and the content guard sees it, or the attempt waits and re-reads the status.
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+        int correctAnswers;
+        ValidatedQuizAttempt attempt;
+        try
         {
-            return Failure(validation.Type!, validation.Message!);
+            // Bounded wait: if an admin operation holds FOR UPDATE for too long the attempt fails with 409 instead of hanging.
+            await _context.Database.ExecuteSqlRawAsync("SET LOCAL lock_timeout = '5s'");
+            await _context.GetQuizForShareAsync(quizId);
+
+            var quiz = await _context.Quizzs
+                .Include(candidate => candidate.Questions)
+                .SingleOrDefaultAsync(candidate => candidate.Id == quizId && candidate.Status == QuizStatus.Published);
+
+            var validation = _attemptValidator.Validate(quiz, request);
+            if (!validation.Success)
+            {
+                await transaction.RollbackAsync();
+                return Failure(validation.Type!, validation.Message!);
+            }
+
+            attempt = validation.Data!;
+            correctAnswers = _attemptScorer.CountCorrectAnswers(attempt);
+
+            await _attemptPersistenceService.SaveScoreAsync(userId, quiz!.Id, correctAnswers);
+            await transaction.CommitAsync();
         }
-
-        var attempt = validation.Data!;
-        var correctAnswers = _attemptScorer.CountCorrectAnswers(attempt);
-
-        await _attemptPersistenceService.SaveScoreAsync(userId, quiz!.Id, correctAnswers);
+        catch (Exception exception) when (IsLockNotAvailable(exception))
+        {
+            await transaction.RollbackAsync();
+            return Failure("Conflict", "The quiz is being updated. Please try again.");
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
 
         return new ServiceResponse<QuizAttemptResultDto>
         {
@@ -85,6 +112,24 @@ public sealed class QuizCatalogService : IQuizCatalogService
                     : correctAnswers * 100m / attempt.Questions.Count
             }
         };
+    }
+
+    private static bool IsLockNotAvailable(Exception exception)
+    {
+        for (var current = exception; current is not null; current = current.InnerException!)
+        {
+            if (current is PostgresException { SqlState: PostgresErrorCodes.LockNotAvailable })
+            {
+                return true;
+            }
+
+            if (current.InnerException is null)
+            {
+                break;
+            }
+        }
+
+        return false;
     }
 
     private static ServiceResponse<QuizAttemptResultDto> Failure(string type, string message) => new()
