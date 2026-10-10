@@ -11,6 +11,7 @@ services:
       JwtSettings__Issuer: ${JWT_ISSUER:?JWT_ISSUER is required}
       JwtSettings__Audience: ${JWT_AUDIENCE:?JWT_AUDIENCE is required}
       JwtSettings__ExpirationMinutes: ${JWT_EXPIRATION_MINUTES:-60}
+      Firebase__ProjectId: ${FIREBASE_PROJECT_ID:-gamesphere-9f7dc}
       InitialAdmin__Email: ${INITIAL_ADMIN_EMAIL:?INITIAL_ADMIN_EMAIL is required}
       InitialAdmin__Password: ${INITIAL_ADMIN_PASSWORD:?INITIAL_ADMIN_PASSWORD is required}
       EmailSettings__SmtpServer: ${SMTP_SERVER:?SMTP_SERVER is required}
@@ -27,6 +28,8 @@ services:
       - "127.0.0.1:5095:8080"
     volumes:
       - ./GameSphere_backend:/src
+      - api-dev-bin:/src/bin
+      - api-dev-obj:/src/obj
       - nuget-packages:/root/.nuget/packages
 
   frontend-dev:
@@ -45,5 +48,7 @@ services:
       - frontend-node-modules:/app/node_modules
 
 volumes:
+  api-dev-bin:
+  api-dev-obj:
   frontend-node-modules:
   nuget-packages:
