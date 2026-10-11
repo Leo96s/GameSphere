@@ -33,7 +33,7 @@ public sealed class QuizzesController : ControllerBase
     {
         var quiz = await _quizCatalogService.GetPublishedByIdAsync(id);
 
-        return quiz is null ? NotFound() : Ok(quiz);
+        return quiz is null ? NotFound(new { message = "Quiz not found." }) : Ok(quiz);
     }
 
     [HttpPost("{id:int}/attempts")]
@@ -55,7 +55,7 @@ public sealed class QuizzesController : ControllerBase
         {
             return result.Type switch
             {
-                "NotFound" => NotFound(),
+                "NotFound" => NotFound(new { message = "Quiz not found." }),
                 "Conflict" => Conflict(new { message = result.Message }),
                 _ => BadRequest()
             };
