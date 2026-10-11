@@ -1,22 +1,23 @@
 <script>
 export const validateQuestion = (question) => {
-  const answers = question.answers.map((answer) => answer.trim()).filter(Boolean);
+  const answers = (question.answers ?? []).map((answer) => answer.trim()).filter(Boolean);
   const correctAnswer = question.correctAnswer?.trim();
+
+  if (!question.description?.trim()) {
+    return 'Escreve a pergunta antes de a guardar.';
+  }
 
   if (answers.length < 2) {
     return 'Indica pelo menos duas opções.';
   }
 
-  if (new Set(answers).size !== answers.length) {
+  const normalizedAnswers = answers.map((answer) => answer.toLocaleLowerCase('pt-PT'));
+  if (new Set(normalizedAnswers).size !== answers.length) {
     return 'Cada opção tem de ser diferente.';
   }
 
   if (!answers.includes(correctAnswer)) {
     return 'A resposta correta tem de constar nas opções.';
-  }
-
-  if (!question.description?.trim()) {
-    return 'Escreve a pergunta antes de a guardar.';
   }
 
   return '';

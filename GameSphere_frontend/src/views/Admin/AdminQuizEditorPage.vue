@@ -107,6 +107,7 @@ import {
   quizStatusLabel,
   updateQuestion,
   updateQuiz,
+  validateQuizDetails,
 } from '@/services/adminQuizService';
 
 const route = useRoute();
@@ -144,8 +145,9 @@ const loadQuiz = async () => {
 
 const saveQuiz = async () => {
   if (!quiz.value || isSavingQuiz.value) return;
+  quizError.value = validateQuizDetails(quiz.value);
+  if (quizError.value) return;
   isSavingQuiz.value = true;
-  quizError.value = '';
   try {
     const updated = await updateQuiz(quiz.value.id, {
       title: quiz.value.title,

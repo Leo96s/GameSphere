@@ -39,6 +39,8 @@
         </div>
       </form>
 
+      <p v-if="actionError" class="mt-6 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm font-medium text-destructive" role="alert">{{ actionError }}</p>
+
       <p v-if="isLoading" class="mt-6 rounded-xl border bg-card p-6 text-muted-foreground" role="status">A carregar quizzes…</p>
 
       <div v-else-if="errorMessage" class="mt-6 rounded-xl border border-destructive/30 bg-destructive/5 p-6" role="alert">
@@ -100,6 +102,7 @@ import {
   listAdminQuizzes,
   quizStatusActions,
   quizStatusLabel,
+  validateQuizDetails,
 } from '@/services/adminQuizService';
 
 const router = useRouter();
@@ -109,6 +112,7 @@ const isCreating = ref(false);
 const showCreateForm = ref(false);
 const changingQuizId = ref(null);
 const errorMessage = ref('');
+const actionError = ref('');
 const includeArchived = ref(false);
 const newQuiz = reactive({ title: '', difficulty: 0 });
 
@@ -130,14 +134,15 @@ const loadQuizzes = async () => {
 };
 
 const handleCreate = async () => {
-  if (!newQuiz.title || isCreating.value) return;
+  if (isCreating.value) return;
+  actionError.value = validateQuizDetails(newQuiz);
+  if (actionError.value) return;
   isCreating.value = true;
-  errorMessage.value = '';
   try {
     const quiz = await createQuiz({ title: newQuiz.title, difficulty: newQuiz.difficulty });
     await router.push({ name: 'admin-quiz-editor', params: { id: quiz.id } });
   } catch (error) {
-    errorMessage.value = getAdminErrorMessage(error);
+    actionError.value = getAdminErrorMessage(error);
   } finally {
     isCreating.value = false;
   }
@@ -145,14 +150,14 @@ const handleCreate = async () => {
 
 const handleStatusChange = async (quiz, status) => {
   changingQuizId.value = quiz.id;
-  errorMessage.value = '';
+  actionError.value = '';
   try {
     const updated = await changeQuizStatus(quiz.id, status);
     quizzes.value = !includeArchived.value && updated.status === QUIZ_STATUS.ARCHIVED
       ? quizzes.value.filter((currentQuiz) => currentQuiz.id !== updated.id)
       : quizzes.value.map((currentQuiz) => currentQuiz.id === updated.id ? updated : currentQuiz);
   } catch (error) {
-    errorMessage.value = getAdminErrorMessage(error);
+    actionError.value = getAdminErrorMessage(error);
   } finally {
     changingQuizId.value = null;
   }
@@ -161,12 +166,12 @@ const handleStatusChange = async (quiz, status) => {
 const handleDelete = async (quiz) => {
   if (!window.confirm(`Apagar o quiz “${quiz.title}”? Esta ação não pode ser desfeita.`)) return;
   changingQuizId.value = quiz.id;
-  errorMessage.value = '';
+  actionError.value = '';
   try {
     await deleteQuiz(quiz.id);
     quizzes.value = quizzes.value.filter((currentQuiz) => currentQuiz.id !== quiz.id);
   } catch (error) {
-    errorMessage.value = getAdminErrorMessage(error);
+    actionError.value = getAdminErrorMessage(error);
   } finally {
     changingQuizId.value = null;
   }
