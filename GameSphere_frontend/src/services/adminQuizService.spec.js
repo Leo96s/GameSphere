@@ -25,6 +25,7 @@ import {
   deleteQuiz,
   getAdminErrorMessage,
   getAdminQuiz,
+  getQuizPreview,
   isQuizContentEditable,
   listAdminQuizzes,
   quizStatusActions,
@@ -101,6 +102,13 @@ describe('adminQuizService', () => {
 
     await expect(getAdminQuiz(7)).resolves.toEqual({ id: 7, status: QUIZ_STATUS.DRAFT });
     expect(apiMocks.get).toHaveBeenCalledWith('/admin/quizzes/7');
+  });
+
+  it('carrega a pré-visualização do quiz pelo endpoint de administração', async () => {
+    apiMocks.get.mockResolvedValueOnce({ data: { id: 7, title: 'Quiz', questions: [] } });
+
+    await expect(getQuizPreview(7)).resolves.toEqual({ id: 7, title: 'Quiz', questions: [] });
+    expect(apiMocks.get).toHaveBeenCalledWith('/admin/quizzes/7/preview');
   });
 
   it('muda o estado pelo endpoint dedicado, só com o estado no corpo', async () => {

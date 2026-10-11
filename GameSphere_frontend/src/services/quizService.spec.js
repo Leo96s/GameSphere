@@ -9,7 +9,7 @@ vi.mock('./api', () => ({
   default: apiMocks,
 }));
 
-import { getQuiz, listQuizzes, submitAttempt } from './quizService';
+import { getQuiz, getQuizPlayErrorMessage, isQuizUnavailableError, listQuizzes, submitAttempt } from './quizService';
 
 describe('quizService', () => {
   beforeEach(() => vi.clearAllMocks());
@@ -27,5 +27,35 @@ describe('quizService', () => {
     expect(apiMocks.get).toHaveBeenNthCalledWith(1, '/quizzes');
     expect(apiMocks.get).toHaveBeenNthCalledWith(2, '/quizzes/1');
     expect(apiMocks.post).toHaveBeenCalledWith('/quizzes/1/attempts', { answers: [] });
+  });
+
+  describe('getQuizPlayErrorMessage', () => {
+    const fallback = 'Tenta novamente.';
+
+    it('mostra que o quiz já não está disponível quando o pedido dá 404', () => {
+      expect(getQuizPlayErrorMessage({ response: { status: 404, data: { message: 'Quiz not found.' } } }, fallback))
+        .toBe('Este quiz já não está disponível.');
+      expect(getQuizPlayErrorMessage({ response: { status: 404 } }, fallback))
+        .toBe('Este quiz já não está disponível.');
+    });
+
+    it('mantém a mensagem do backend para os outros erros', () => {
+      expect(getQuizPlayErrorMessage({ response: { status: 409, data: { message: 'Já submetido.' } } }, fallback))
+        .toBe('Já submetido.');
+    });
+
+    it('usa o fallback quando não há resposta', () => {
+      expect(getQuizPlayErrorMessage(new Error('rede'), fallback)).toBe(fallback);
+      expect(getQuizPlayErrorMessage(undefined, fallback)).toBe(fallback);
+    });
+  });
+
+  describe('isQuizUnavailableError', () => {
+    it('identifica apenas respostas 404', () => {
+      expect(isQuizUnavailableError({ response: { status: 404 } })).toBe(true);
+      expect(isQuizUnavailableError({ response: { status: 409 } })).toBe(false);
+      expect(isQuizUnavailableError(new Error('rede'))).toBe(false);
+      expect(isQuizUnavailableError(undefined)).toBe(false);
+    });
   });
 });

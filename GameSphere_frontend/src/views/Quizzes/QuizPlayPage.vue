@@ -25,19 +25,7 @@
         </div>
 
         <form v-else class="mt-8" @submit.prevent="handleSubmit">
-          <fieldset class="space-y-5">
-            <legend class="sr-only">Perguntas do quiz</legend>
-            <article v-for="(question, index) in quiz.questions" :key="question.id" class="border-t pt-5 first:border-t-0 first:pt-0">
-              <p class="text-sm font-medium text-muted-foreground">Pergunta {{ index + 1 }}</p>
-              <h2 class="mt-1 text-lg font-semibold">{{ question.description }}</h2>
-              <div class="mt-4 space-y-2" role="radiogroup" :aria-label="`Respostas para a pergunta ${index + 1}`">
-                <label v-for="answer in question.answers" :key="answer" class="flex cursor-pointer items-center gap-3 rounded-lg border p-3 text-sm transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary/5">
-                  <input class="size-4 accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" type="radio" :name="`question-${question.id}`" :value="answer" :checked="selectedAnswer(question.id) === answer" @change="selectAnswer(question.id, answer)">
-                  <span>{{ answer }}</span>
-                </label>
-              </div>
-            </article>
-          </fieldset>
+          <QuizQuestionList :questions="quiz.questions" :selected-answers="selectedAnswers" @select="selectAnswer" />
 
           <p v-if="submitError" class="mt-5 text-sm text-destructive" role="alert">{{ submitError }}</p>
           <button class="mt-8 inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-3 font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" type="submit" :disabled="!isAttemptComplete || isSubmitting">
@@ -53,7 +41,8 @@
 import { computed, onMounted, ref, shallowRef } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useQuizAttempt } from '@/composables/useQuizAttempt';
-import { getQuiz, submitAttempt } from '@/services/quizService';
+import QuizQuestionList from '@/components/Quizzes/QuizQuestionList.vue';
+import { getQuiz, getQuizPlayErrorMessage, isQuizUnavailableError, submitAttempt } from '@/services/quizService';
 
 const route = useRoute();
 const router = useRouter();
@@ -71,8 +60,9 @@ const progressPercent = computed(() => quiz.value?.questions.length
   : 0);
 const progressLabel = computed(() => `Progresso: ${answeredQuestions.value} de ${quiz.value?.questions.length ?? 0}`);
 
-const selectedAnswer = (questionId) => attempt.value?.toRequest().answers
-  .find((answer) => answer.questionId === questionId)?.selectedAnswer;
+const selectedAnswers = computed(() => Object.fromEntries(
+  (attempt.value?.toRequest().answers ?? []).map((answer) => [answer.questionId, answer.selectedAnswer]),
+));
 
 const selectAnswer = (questionId, answer) => {
   attempt.value?.selectAnswer(questionId, answer);
@@ -86,7 +76,7 @@ const loadQuiz = async () => {
     quiz.value = await getQuiz(route.params.id);
     attempt.value = useQuizAttempt(quiz.value);
   } catch (error) {
-    errorMessage.value = error?.response?.data?.message ?? 'Confirma a ligação e tenta novamente.';
+    errorMessage.value = getQuizPlayErrorMessage(error, 'Confirma a ligação e tenta novamente.');
   } finally {
     isLoading.value = false;
   }
@@ -107,7 +97,12 @@ const handleSubmit = async () => {
       state: { quizResult: result },
     });
   } catch (error) {
-    submitError.value = error?.response?.data?.message ?? 'Não foi possível submeter a tentativa. Tenta novamente.';
+    if (isQuizUnavailableError(error)) {
+      attempt.value?.clear();
+      errorMessage.value = getQuizPlayErrorMessage(error);
+      return;
+    }
+    submitError.value = getQuizPlayErrorMessage(error, 'Não foi possível submeter a tentativa. Tenta novamente.');
   } finally {
     isSubmitting.value = false;
   }

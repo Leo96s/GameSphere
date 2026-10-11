@@ -46,6 +46,8 @@ export const listAdminQuizzes = ({ includeArchived = false } = {}) => readData(i
 
 export const getAdminQuiz = (id) => readData(api.get(`/admin/quizzes/${id}`));
 
+export const getQuizPreview = (id) => readData(api.get(`/admin/quizzes/${id}/preview`));
+
 export const createQuiz = (quiz) => readData(api.post('/admin/quizzes', quiz));
 
 export const updateQuiz = (id, quiz) => readData(api.put(`/admin/quizzes/${id}`, quiz));
