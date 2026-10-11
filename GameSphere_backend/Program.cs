@@ -97,6 +97,7 @@ builder.Services.AddScoped<QuizAttemptValidator>();
 builder.Services.AddScoped<QuizAttemptScorer>();
 builder.Services.AddScoped<QuizAttemptPersistenceService>();
 builder.Services.AddScoped<IQuizCatalogService, QuizCatalogService>();
+builder.Services.AddScoped<IEditorialTextValidator, EditorialTextValidator>();
 builder.Services.AddScoped<IQuestionShapeValidator, QuestionShapeValidator>();
 builder.Services.AddScoped<IQuestionAnswersValidator, QuestionAnswersValidator>();
 builder.Services.AddScoped<ICorrectAnswerValidator, CorrectAnswerValidator>();
