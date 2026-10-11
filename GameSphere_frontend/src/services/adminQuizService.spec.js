@@ -31,6 +31,7 @@ import {
   quizStatusLabel,
   updateQuestion,
   updateQuiz,
+  validateQuizDetails,
 } from './adminQuizService';
 import { validateQuestion } from '@/views/Admin/AdminQuestionEditor.vue';
 
@@ -64,7 +65,7 @@ describe('adminQuizService', () => {
   });
 
   it('explica quando uma resposta correta não está nas opções', () => {
-    expect(validateQuestion({ answers: ['A', 'B'], correctAnswer: 'C' }))
+    expect(validateQuestion({ description: 'Qual?', answers: ['A', 'B'], correctAnswer: 'C' }))
       .toBe('A resposta correta tem de constar nas opções.');
   });
 
@@ -77,9 +78,9 @@ describe('adminQuizService', () => {
     expect(getAdminErrorMessage({ response: { status: 401 } }))
       .toBe('A tua sessão terminou. Inicia sessão novamente.');
     expect(getAdminErrorMessage({ response: { data: { message: 'Validation failed' } } }))
-      .toBe('Validation failed');
+      .toBe('Não foi possível concluir a alteração. Tenta novamente.');
     expect(getAdminErrorMessage({ response: { data: { detail: 'Details' } } }))
-      .toBe('Details');
+      .toBe('Não foi possível concluir a alteração. Tenta novamente.');
     expect(getAdminErrorMessage({})).toBe('Não foi possível concluir a alteração. Tenta novamente.');
   });
 
@@ -114,9 +115,9 @@ describe('adminQuizService', () => {
     apiMocks.post.mockRejectedValueOnce(error);
 
     await expect(changeQuizStatus(3, QUIZ_STATUS.ARCHIVED)).rejects.toBe(error);
-    expect(getAdminErrorMessage(error)).toBe('Cannot change quiz status from Published to Archived.');
+    expect(getAdminErrorMessage(error)).toBe('Não é possível mudar o estado de «Publicado» para «Arquivado».');
     expect(getAdminErrorMessage({ response: { status: 400, data: { message: 'Question 2: The correct answer must be one of the question options.' } } }))
-      .toBe('Question 2: The correct answer must be one of the question options.');
+      .toBe('Pergunta 2: A resposta correta tem de constar nas opções.');
   });
 
   it('usa os mesmos valores numéricos de estado que o backend', () => {
@@ -168,6 +169,36 @@ describe('adminQuizService', () => {
 
   it('mostra a mensagem do backend nos 400 uniformes { message }', () => {
     const error = { response: { status: 400, data: { message: 'The request body is invalid.' } } };
-    expect(getAdminErrorMessage(error)).toBe('The request body is invalid.');
+    expect(getAdminErrorMessage(error)).toBe('Os dados enviados não são válidos.');
+  });
+
+  it('traduz uma mensagem conhecida com prefixo de pergunta desconhecida para o fallback', () => {
+    expect(getAdminErrorMessage({ response: { status: 400, data: { message: 'Question 3: Something else.' } } }))
+      .toBe('Não foi possível concluir a alteração. Tenta novamente.');
+  });
+
+  it('valida os detalhes do quiz antes de gravar', () => {
+    expect(validateQuizDetails({ title: '', difficulty: 0 })).toBe('Indica o título do quiz.');
+    expect(validateQuizDetails({ title: '   ', difficulty: 0 })).toBe('Indica o título do quiz.');
+    expect(validateQuizDetails({ difficulty: 0 })).toBe('Indica o título do quiz.');
+    expect(validateQuizDetails()).toBe('Indica o título do quiz.');
+    expect(validateQuizDetails({ title: 'A'.repeat(101), difficulty: 0 }))
+      .toBe('O título do quiz não pode ter mais de 100 caracteres.');
+    expect(validateQuizDetails({ title: 'Quiz', difficulty: 3 })).toBe('Escolhe uma dificuldade válida.');
+    expect(validateQuizDetails({ title: 'Quiz', difficulty: undefined })).toBe('Escolhe uma dificuldade válida.');
+    expect(validateQuizDetails({ title: 'A'.repeat(100), difficulty: 2 })).toBe('');
+    expect(validateQuizDetails({ title: '  Quiz  ', difficulty: 1 })).toBe('');
+  });
+
+  it('valida a pergunta pela ordem enunciado, opções, duplicados e resposta correta', () => {
+    const valid = { description: 'Capital?', answers: ['Lisboa', 'Porto'], correctAnswer: 'Lisboa' };
+
+    expect(validateQuestion({ ...valid, description: '  ' })).toBe('Escreve a pergunta antes de a guardar.');
+    expect(validateQuestion({ ...valid, description: undefined })).toBe('Escreve a pergunta antes de a guardar.');
+    expect(validateQuestion({ ...valid, answers: ['Lisboa', ' '] })).toBe('Indica pelo menos duas opções.');
+    expect(validateQuestion({ ...valid, answers: ['Paris', ' paris '], correctAnswer: 'Paris' }))
+      .toBe('Cada opção tem de ser diferente.');
+    expect(validateQuestion({ ...valid, correctAnswer: 'Faro' })).toBe('A resposta correta tem de constar nas opções.');
+    expect(validateQuestion(valid)).toBe('');
   });
 });
