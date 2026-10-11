@@ -196,6 +196,39 @@ toda a API (`InvalidModelStateResponse`):
   quizzes com tentativas e nos quizzes publicados.
 - As mensagens de erro do backend são mostradas ao administrador.
 
+## Autoria de rascunhos e contrato público
+
+**Caracteres do texto editorial.** O título, o enunciado, as opções e a
+resposta correta rejeitam caracteres de controlo (categoria `Cc`) e caracteres
+invisíveis ou de direção: U+200B, U+200C, U+200E, U+200F, U+202A–U+202E,
+U+2060–U+2064, U+2066–U+2069 e U+FEFF. A mensagem é
+`The text contains unsupported control or invisible characters.`. Só o
+enunciado aceita `\t`, `\n` e `\r`. O ZWJ (U+200D) é permitido para manter os
+emojis compostos. O HTML continua a ser guardado como texto e o Vue escapa-o.
+
+**Unicidade das opções.** A comparação ignora maiúsculas e minúsculas
+("Paris" e "paris" são duplicados). A resposta correta continua a ser
+comparada de forma exata com as opções. Como a validação de publicação
+reutiliza este validador, um rascunho já gravado com duplicados deste tipo tem
+de ser corrigido antes de ser publicado.
+
+**Rascunho incompleto.** "Incompleto" significa um quiz sem perguntas: grava-se
+(201), mas não aparece no catálogo público nem no detalhe (404).
+
+**Garantias da GAM-48.** O jogador nunca recebe a resposta correta. Há duas
+guardas: um teste de reflexão que falha se um tipo devolvido por um controller
+que não seja de administração ganhar uma propriedade `CorrectAnswer`, e testes
+HTTP sobre a lista, o detalhe, o resultado de uma tentativa e os corpos de erro
+que verificam a ausência do campo e do texto da resposta correta. Os tipos
+`QuestionDto` e `QuestionMapper`, que continham `CorrectAnswer` e não eram
+usados, foram removidos.
+
+**Tradução no frontend.** A interface de administração traduz para PT-PT as
+mensagens conhecidas do backend (`adminErrorMessages.js`), incluindo o prefixo
+`Question N:` e as transições de estado. Mensagens desconhecidas mostram o
+fallback PT-PT. O título (`validateQuizDetails`) e a pergunta
+(`validateQuestion`) são validados no cliente antes do pedido.
+
 ## Testes
 
 As regras estão cobertas por testes unitários (matriz de transições e
