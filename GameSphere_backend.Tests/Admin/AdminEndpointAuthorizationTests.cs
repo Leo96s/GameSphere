@@ -24,6 +24,7 @@ public sealed class AdminEndpointAuthorizationTests : AdminQuizAdministrationTes
     {
         yield return ["GET", "/api/admin/quizzes", false];
         yield return ["GET", "/api/admin/quizzes/{quiz}", false];
+        yield return ["GET", "/api/admin/quizzes/{quiz}/preview", false];
         yield return ["POST", "/api/admin/quizzes", true];
         yield return ["PUT", "/api/admin/quizzes/{quiz}", true];
         yield return ["DELETE", "/api/admin/quizzes/{quiz}", false];

@@ -106,6 +106,7 @@ builder.Services.AddScoped<QuestionRequestNormalizer>();
 builder.Services.AddScoped<QuizRequestNormalizer>();
 builder.Services.AddScoped<GetQuizzesHandler>();
 builder.Services.AddScoped<GetQuizByIdHandler>();
+builder.Services.AddScoped<GetQuizPreviewHandler>();
 builder.Services.AddScoped<CreateQuizHandler>();
 builder.Services.AddScoped<UpdateQuizHandler>();
 builder.Services.AddScoped<DeleteQuizHandler>();

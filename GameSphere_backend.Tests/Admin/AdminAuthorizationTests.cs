@@ -8,6 +8,7 @@ using System.Net;
 using System.Net.Http;
 using System.Security.Claims;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using GameSphere_backend.Controllers;
 using GameSphere_backend.Data;
@@ -300,6 +301,11 @@ public sealed class AdminAuthorizationTests : AdminQuizAdministrationTestBase, I
 
         public Task<AdminQuizUpsertDto?> GetQuizByIdAsync(int quizId)
             => Task.FromResult<AdminQuizUpsertDto?>(null);
+
+        public Task<ServiceResponse<QuizPlayDto>> GetQuizPreviewAsync(
+            int quizId,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult(new ServiceResponse<QuizPlayDto> { Success = false, Type = "NotFound" });
 
         public Task<ServiceResponse<AdminQuizUpsertDto>> CreateQuizAsync(int adminId, AdminQuizUpsertDto request)
         {
