@@ -475,6 +475,16 @@ O ficheiro `.env` é exclusivamente local: não o faças commit nem o copies par
 
 ### Desenvolvimento
 
+O frontend de desenvolvimento corre em HTTPS, porque o login social do Firebase exige que o handler `/__/auth/*` seja servido no mesmo domínio da app. Instala o [mkcert](https://github.com/FiloSottile/mkcert) e gera o certificado local uma vez por máquina (a pasta `certs/` está no `.gitignore`):
+
+```powershell
+mkcert -install
+mkdir certs
+mkcert -cert-file certs/localhost.pem -key-file certs/localhost-key.pem localhost 127.0.0.1 ::1
+```
+
+Sem a pasta `certs/` o `docker compose up` falha de propósito (o bind mount não a cria), em vez de o Vite correr em HTTP sem proxies.
+
 Inicia o PostgreSQL, aplica as migrações e arranca a API e o frontend com hot reload:
 
 ```powershell
@@ -483,8 +493,8 @@ infisical run --env=dev -- docker compose -f compose.yml -f compose.dev.yml up -
 
 URLs locais:
 
-- Frontend: <http://localhost:5173>
-- API: <http://localhost:5095>
+- Frontend: <https://localhost:5173>
+- API: <https://localhost:5173/api> (via proxy do Vite) ou diretamente em <http://localhost:5095>
 - Swagger: <http://localhost:5095/swagger>
 
 Para parar os serviços, preservando o volume do PostgreSQL:
@@ -498,6 +508,16 @@ Se precisares de executar as migrações EF Core novamente depois de uma altera�
 ```powershell
 infisical run --env=dev -- docker compose -f compose.yml -f compose.dev.yml run --rm migrate
 ```
+
+### Login social (Firebase)
+
+O popup do Google e do GitHub usa o handler do Firebase (`/__/auth/handler`). Se o handler estiver em `gamesphere-9f7dc.firebaseapp.com`, browsers que bloqueiam armazenamento de terceiros (Vivaldi, Brave, Safari) deixam o popup em branco. Por isso, em dev o `authDomain` é `localhost:5173` (`VITE_FIREBASE_AUTH_DOMAIN`) e o Vite faz proxy de `/__/auth` e `/__/firebase` para o domínio Firebase do projeto. O Nginx de produção tem as mesmas locations para um futuro domínio próprio.
+
+Configurações externas necessárias (uma vez):
+
+1. Google Cloud Console, cliente OAuth Web do Firebase: URI de redirecionamento autorizado `https://localhost:5173/__/auth/handler` e origem JavaScript `https://localhost:5173`.
+2. GitHub, OAuth App ligada ao Firebase: Authorization callback URL `https://localhost:5173/__/auth/handler`. Até haver domínio de produção, o GitHub fica a funcionar só em dev.
+3. Firebase Console, Authentication, Authorized domains: confirma que `localhost` está na lista (vem por omissão).
 
 ### Validação local das imagens de produção
 
