@@ -12,6 +12,8 @@ FROM dependencies AS build
 COPY . ./
 ARG VITE_API_BASE_URL=/api
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+ARG VITE_FIREBASE_AUTH_DOMAIN=gamesphere-9f7dc.firebaseapp.com
+ENV VITE_FIREBASE_AUTH_DOMAIN=${VITE_FIREBASE_AUTH_DOMAIN}
 RUN npm run build
 
 FROM nginx:1.27-alpine AS production
