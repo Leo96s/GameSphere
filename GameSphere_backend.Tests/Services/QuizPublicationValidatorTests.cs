@@ -140,10 +140,76 @@ public sealed class QuizPublicationValidatorTests
         Assert.StartsWith("Question 2: ", CreateValidator().Validate(Quiz(Multiple(1), second, third)), StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void Title_with_forbidden_characters_is_rejected_without_prefix()
+    {
+        var quiz = Quiz(Multiple(1));
+        quiz.Title = "Bad\u202Etitle";
+
+        Assert.Equal(EditorialTextValidator.UnsupportedCharactersMessage, CreateValidator().Validate(quiz));
+    }
+
+    [Fact]
+    public void Title_with_a_line_break_is_rejected()
+    {
+        var quiz = Quiz(Multiple(1));
+        quiz.Title = "Line\nbreak";
+
+        Assert.Equal(EditorialTextValidator.UnsupportedCharactersMessage, CreateValidator().Validate(quiz));
+    }
+
+    [Fact]
+    public void Description_with_forbidden_characters_is_rejected_with_the_question_number()
+    {
+        var invalid = Multiple(2);
+        invalid.Description = "Bad\u202E?";
+
+        Assert.Equal(
+            "Question 2: " + EditorialTextValidator.UnsupportedCharactersMessage,
+            CreateValidator().Validate(Quiz(Multiple(1), invalid)));
+    }
+
+    [Fact]
+    public void Description_with_line_breaks_is_accepted()
+    {
+        var question = Multiple(1);
+        question.Description = "Line one\nLine two";
+
+        Assert.Null(CreateValidator().Validate(Quiz(question)));
+    }
+
+    [Fact]
+    public void Option_with_forbidden_characters_or_line_breaks_is_rejected_with_the_question_number()
+    {
+        var forbidden = Multiple(1);
+        forbidden.Answers = ["Option A", "Option\u200BB"];
+        var lineBreak = Multiple(1);
+        lineBreak.Answers = ["Option A", "Option\nB"];
+
+        Assert.Equal(
+            "Question 1: " + EditorialTextValidator.UnsupportedCharactersMessage,
+            CreateValidator().Validate(Quiz(forbidden)));
+        Assert.Equal(
+            "Question 1: " + EditorialTextValidator.UnsupportedCharactersMessage,
+            CreateValidator().Validate(Quiz(lineBreak)));
+    }
+
+    [Fact]
+    public void Correct_answer_with_forbidden_characters_is_rejected_with_the_question_number()
+    {
+        var invalid = Multiple(1);
+        invalid.CorrectAnswer = "Option\u202EA";
+
+        Assert.Equal(
+            "Question 1: " + EditorialTextValidator.UnsupportedCharactersMessage,
+            CreateValidator().Validate(Quiz(invalid)));
+    }
+
     private static QuizPublicationValidator CreateValidator() => new(
         new QuestionShapeValidator(),
         new QuestionAnswersValidator(),
-        new CorrectAnswerValidator());
+        new CorrectAnswerValidator(),
+        new EditorialTextValidator());
 
     private static Quizz Quiz(params Question[] questions) => new()
     {
