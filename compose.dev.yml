@@ -6,6 +6,8 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
+      Cors__AllowedOrigins__0: https://localhost:5173
+      Cors__AllowedOrigins__1: https://127.0.0.1:5173
       ConnectionStrings__GameSphereDB: ${DATABASE_CONNECTION_STRING:?DATABASE_CONNECTION_STRING is required}
       JwtSettings__SecretKey: ${JWT_SECRET:?JWT_SECRET is required}
       JwtSettings__Issuer: ${JWT_ISSUER:?JWT_ISSUER is required}
@@ -37,7 +39,11 @@ services:
       context: ./GameSphere_frontend
       target: development
     environment:
-      VITE_API_BASE_URL: http://localhost:5095/api
+      VITE_API_BASE_URL: /api
+      VITE_FIREBASE_AUTH_DOMAIN: localhost:5173
+      DEV_HTTPS_CERT_FILE: /certs/localhost.pem
+      DEV_HTTPS_KEY_FILE: /certs/localhost-key.pem
+      DEV_API_PROXY_TARGET: http://api-dev:8080
     depends_on:
       api-dev:
         condition: service_started
@@ -45,6 +51,12 @@ services:
       - "127.0.0.1:5173:5173"
     volumes:
       - ./GameSphere_frontend:/app
+      - type: bind
+        source: ./certs
+        target: /certs
+        read_only: true
+        bind:
+          create_host_path: false
       - frontend-node-modules:/app/node_modules
 
 volumes:

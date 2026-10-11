@@ -25,3 +25,7 @@ GameSphere_backend/.env.*
 
 # Local orchestration artifacts
 .superpowers/
+
+# Local HTTPS certificates (mkcert)
+certs/
+*.pem
