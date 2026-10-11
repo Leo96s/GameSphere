@@ -17,9 +17,12 @@
               <p class="text-sm font-semibold text-primary">Editor de conteúdo</p>
               <h1 class="mt-1 text-3xl font-bold tracking-tight">{{ quiz.title || 'Quiz sem título' }}</h1>
             </div>
-            <span :class="statusClass(quiz.status)" class="inline-flex w-fit items-center rounded-full px-3 py-1.5 text-sm font-semibold">
-              {{ quizStatusLabel(quiz.status) }}
-            </span>
+            <div class="flex flex-wrap items-center gap-3">
+              <router-link :to="{ name: 'admin-quiz-preview', params: { id: quiz.id } }" class="rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Pré-visualizar</router-link>
+              <span :class="statusClass(quiz.status)" class="inline-flex w-fit items-center rounded-full px-3 py-1.5 text-sm font-semibold">
+                {{ quizStatusLabel(quiz.status) }}
+              </span>
+            </div>
           </div>
 
           <p v-if="quiz.hasAttempts" class="mt-5 rounded-lg border bg-muted/50 p-4 text-sm text-muted-foreground" role="status">
