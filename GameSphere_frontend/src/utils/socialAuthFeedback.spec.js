@@ -22,10 +22,28 @@ describe("getSocialAuthErrorFeedback", () => {
     expect(feedback.description).toMatch(/already connected/i)
   })
 
-  it("falls back to the generic title for unknown errors", () => {
-    expect(getSocialAuthErrorFeedback({ code: "auth/network-request-failed" }, "Login failed")).toEqual({
+  it("asks the user to allow pop-ups when the browser blocked it", () => {
+    expect(getSocialAuthErrorFeedback({ code: "auth/popup-blocked" }, "Login failed")).toEqual({
+      title: "Login failed",
+      description: "Allow pop-ups for this site and try again.",
+    })
+  })
+
+  it("shows only the Firebase error code for unknown errors", () => {
+    expect(getSocialAuthErrorFeedback({ code: "auth/network-request-failed", message: "secret" }, "Login failed")).toEqual({
+      title: "Login failed",
+      description: "Error code: auth/network-request-failed",
+    })
+  })
+
+  it("does not expose non-Firebase error codes (e.g. axios ERR_BAD_REQUEST)", () => {
+    expect(getSocialAuthErrorFeedback({ code: "ERR_BAD_REQUEST", message: "x" }, "Login failed")).toEqual({
       title: "Login failed",
     })
+  })
+
+  it("falls back to the generic title when there is no error code", () => {
+    expect(getSocialAuthErrorFeedback({ message: "boom" }, "Login failed")).toEqual({ title: "Login failed" })
     expect(getSocialAuthErrorFeedback(undefined, "Login failed")).toEqual({ title: "Login failed" })
   })
 })

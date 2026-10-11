@@ -19,8 +19,15 @@ export function getSocialAuthErrorFeedback(error, fallbackTitle) {
         title: fallbackTitle,
         description: "This account is already connected to a different user.",
       }
+    case "auth/popup-blocked":
+      return {
+        title: fallbackTitle,
+        description: "Allow pop-ups for this site and try again.",
+      }
     default:
-      return { title: fallbackTitle }
+      return typeof error?.code === "string" && error.code.startsWith("auth/")
+        ? { title: fallbackTitle, description: `Error code: ${error.code}` }
+        : { title: fallbackTitle }
   }
 }
 
