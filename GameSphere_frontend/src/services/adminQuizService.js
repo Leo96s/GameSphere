@@ -1,4 +1,5 @@
 import api from './api';
+import { translateAdminMessage } from './adminErrorMessages';
 
 const readData = (request) => request.then((response) => response.data);
 
@@ -71,7 +72,28 @@ export const getAdminErrorMessage = (error) => {
     return 'A tua sessão terminou. Inicia sessão novamente.';
   }
 
-  return error?.response?.data?.message
-    ?? error?.response?.data?.detail
-    ?? 'Não foi possível concluir a alteração. Tenta novamente.';
+  const backendMessage = error?.response?.data?.message ?? error?.response?.data?.detail;
+
+  return translateAdminMessage(
+    backendMessage,
+    (name) => quizStatusLabel(QUIZ_STATUS[name.toUpperCase()]),
+  ) ?? 'Não foi possível concluir a alteração. Tenta novamente.';
+};
+
+export const validateQuizDetails = ({ title, difficulty } = {}) => {
+  const trimmedTitle = typeof title === 'string' ? title.trim() : '';
+
+  if (!trimmedTitle) {
+    return 'Indica o título do quiz.';
+  }
+
+  if (trimmedTitle.length > 100) {
+    return 'O título do quiz não pode ter mais de 100 caracteres.';
+  }
+
+  if (![0, 1, 2].includes(Number(difficulty))) {
+    return 'Escolhe uma dificuldade válida.';
+  }
+
+  return '';
 };
