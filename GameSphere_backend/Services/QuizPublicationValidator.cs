@@ -14,15 +14,18 @@ public sealed class QuizPublicationValidator : IQuizPublicationValidator
     private readonly IQuestionShapeValidator _shapeValidator;
     private readonly IQuestionAnswersValidator _answersValidator;
     private readonly ICorrectAnswerValidator _correctAnswerValidator;
+    private readonly IEditorialTextValidator _textValidator;
 
     public QuizPublicationValidator(
         IQuestionShapeValidator shapeValidator,
         IQuestionAnswersValidator answersValidator,
-        ICorrectAnswerValidator correctAnswerValidator)
+        ICorrectAnswerValidator correctAnswerValidator,
+        IEditorialTextValidator textValidator)
     {
         _shapeValidator = shapeValidator;
         _answersValidator = answersValidator;
         _correctAnswerValidator = correctAnswerValidator;
+        _textValidator = textValidator;
     }
 
     public string? Validate(Quizz quiz)
@@ -35,6 +38,12 @@ public sealed class QuizPublicationValidator : IQuizPublicationValidator
         if (quiz.Title.Trim().Length > 100)
         {
             return "The quiz title cannot exceed 100 characters.";
+        }
+
+        var titleMessage = _textValidator.Validate(quiz.Title, allowLineBreaks: false);
+        if (titleMessage is not null)
+        {
+            return titleMessage;
         }
 
         if (!Enum.IsDefined(quiz.Difficulty))
@@ -67,6 +76,15 @@ public sealed class QuizPublicationValidator : IQuizPublicationValidator
         if (shapeMessage is not null)
         {
             return shapeMessage;
+        }
+
+        var textMessage = _textValidator.Validate(candidate.Description, allowLineBreaks: true)
+            ?? candidate.Answers.Select(answer => _textValidator.Validate(answer, allowLineBreaks: false))
+                .FirstOrDefault(message => message is not null)
+            ?? _textValidator.Validate(candidate.CorrectAnswer, allowLineBreaks: false);
+        if (textMessage is not null)
+        {
+            return textMessage;
         }
 
         var answersMessage = _answersValidator.ValidateAndNormalize(candidate, out var answers);
