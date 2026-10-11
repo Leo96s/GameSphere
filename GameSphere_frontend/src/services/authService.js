@@ -1,4 +1,5 @@
 import api from './api';
+import { auth, signOut } from './firebase';
 
 const userKey = 'user';
 
@@ -65,6 +66,11 @@ export const social_login = async (idToken) => {
 
 export const logout = () => {
   void api.post('/User/logout').catch(() => undefined);
+  try {
+    void Promise.resolve(signOut(auth)).catch(() => undefined);
+  } catch {
+    // Firebase sign-out is best effort; the local logout must still complete.
+  }
   localStorage.removeItem(userKey);
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new Event('user-logged-out'));

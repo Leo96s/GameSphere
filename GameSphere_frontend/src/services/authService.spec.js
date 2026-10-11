@@ -8,6 +8,13 @@ vi.mock('./api', () => ({
   default: apiMocks,
 }));
 
+const firebaseMocks = vi.hoisted(() => ({
+  auth: { currentUser: null },
+  signOut: vi.fn(),
+}));
+
+vi.mock('./firebase', () => firebaseMocks);
+
 import {
   getCurrentRole,
   getCurrentUser,
@@ -93,6 +100,31 @@ describe('authService', () => {
 
     expect(apiMocks.post).toHaveBeenCalledWith('/User/logout');
     expect(localStorage.getItem('user')).toBeNull();
+  });
+
+  it('also signs out of Firebase', () => {
+    apiMocks.post.mockResolvedValueOnce({ data: null });
+    firebaseMocks.signOut.mockResolvedValueOnce(undefined);
+
+    logout();
+
+    expect(firebaseMocks.signOut).toHaveBeenCalledWith(firebaseMocks.auth);
+  });
+
+  it('does not break logout when the Firebase sign-out fails', async () => {
+    storage.set('user', JSON.stringify({ id: 7, role: 0 }));
+    apiMocks.post.mockResolvedValueOnce({ data: null });
+    firebaseMocks.signOut.mockRejectedValueOnce(new Error('firebase failure'));
+
+    expect(() => logout()).not.toThrow();
+    await Promise.resolve();
+    expect(localStorage.getItem('user')).toBeNull();
+
+    apiMocks.post.mockResolvedValueOnce({ data: null });
+    firebaseMocks.signOut.mockImplementationOnce(() => {
+      throw new Error('sync failure');
+    });
+    expect(() => logout()).not.toThrow();
   });
 
   it('does not surface a failed logout request to the caller', async () => {
