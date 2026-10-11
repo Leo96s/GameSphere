@@ -35,7 +35,7 @@ var configuredCorsOrigins = config.GetSection("Cors:AllowedOrigins")
 var corsOrigins = configuredCorsOrigins.Length > 0
     ? configuredCorsOrigins
     : builder.Environment.IsDevelopment()
-        ? ["http://localhost:5173", "http://127.0.0.1:5173"]
+        ? ["http://localhost:5173", "http://127.0.0.1:5173", "https://localhost:5173", "https://127.0.0.1:5173"]
         : throw new InvalidOperationException("Configuration section 'Cors:AllowedOrigins' is required outside Development.");
 
 var configuredAllowedHosts = config["AllowedHosts"];

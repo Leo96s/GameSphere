@@ -8,7 +8,7 @@ import { getAuth, GoogleAuthProvider, GithubAuthProvider, signInWithPopup, signI
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyAvH8Q1_Hdn1WvYtd3UqO-DAwsG_LBMBV8",
-  authDomain: "gamesphere-9f7dc.firebaseapp.com",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "gamesphere-9f7dc.firebaseapp.com",
   projectId: "gamesphere-9f7dc",
   storageBucket: "gamesphere-9f7dc.firebasestorage.app",
   messagingSenderId: "608557567508",
