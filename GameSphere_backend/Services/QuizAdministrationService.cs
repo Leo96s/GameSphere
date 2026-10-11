@@ -9,6 +9,7 @@ public sealed class QuizAdministrationService : IQuizAdministrationService
 {
     private readonly GetQuizzesHandler _getQuizzesHandler;
     private readonly GetQuizByIdHandler _getQuizByIdHandler;
+    private readonly GetQuizPreviewHandler _getQuizPreviewHandler;
     private readonly CreateQuizHandler _createQuizHandler;
     private readonly UpdateQuizHandler _updateQuizHandler;
     private readonly DeleteQuizHandler _deleteQuizHandler;
@@ -20,6 +21,7 @@ public sealed class QuizAdministrationService : IQuizAdministrationService
     public QuizAdministrationService(
         GetQuizzesHandler getQuizzesHandler,
         GetQuizByIdHandler getQuizByIdHandler,
+        GetQuizPreviewHandler getQuizPreviewHandler,
         CreateQuizHandler createQuizHandler,
         UpdateQuizHandler updateQuizHandler,
         DeleteQuizHandler deleteQuizHandler,
@@ -30,6 +32,7 @@ public sealed class QuizAdministrationService : IQuizAdministrationService
     {
         _getQuizzesHandler = getQuizzesHandler;
         _getQuizByIdHandler = getQuizByIdHandler;
+        _getQuizPreviewHandler = getQuizPreviewHandler;
         _createQuizHandler = createQuizHandler;
         _updateQuizHandler = updateQuizHandler;
         _deleteQuizHandler = deleteQuizHandler;
@@ -47,6 +50,11 @@ public sealed class QuizAdministrationService : IQuizAdministrationService
 
     public async Task<AdminQuizUpsertDto?> GetQuizByIdAsync(int quizId)
         => await _getQuizByIdHandler.HandleAsync(quizId);
+
+    public async Task<ServiceResponse<QuizPlayDto>> GetQuizPreviewAsync(
+        int quizId,
+        CancellationToken cancellationToken = default)
+        => await _getQuizPreviewHandler.HandleAsync(quizId, cancellationToken);
 
     public async Task<ServiceResponse<AdminQuizUpsertDto>> CreateQuizAsync(int adminId, AdminQuizUpsertDto request)
         => await _createQuizHandler.HandleAsync(adminId, request);
