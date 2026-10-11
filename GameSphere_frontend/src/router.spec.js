@@ -46,3 +46,14 @@ describe('quiz result route', () => {
     });
   });
 });
+
+describe('admin quiz preview route', () => {
+  it('exige autenticação e papel de administrador', () => {
+    const previewRoute = routes.find((route) => route.name === 'admin-quiz-preview');
+
+    expect(previewRoute).toMatchObject({
+      path: '/admin/quizzes/:id/preview',
+      meta: { requiresAuth: true, requiresAdmin: true },
+    });
+  });
+});
