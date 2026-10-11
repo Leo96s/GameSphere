@@ -14,6 +14,7 @@ import QuizPlayPage from '@/views/Quizzes/QuizPlayPage.vue';
 import QuizResultPage from '@/views/Quizzes/QuizResultPage.vue';
 import AdminQuizListPage from '@/views/Admin/AdminQuizListPage.vue';
 import AdminQuizEditorPage from '@/views/Admin/AdminQuizEditorPage.vue';
+import AdminQuizPreviewPage from '@/views/Admin/AdminQuizPreviewPage.vue';
 import { getCurrentRole, getCurrentUser } from '@/services/authService';
 
 const getToken = () => getCurrentUser();
@@ -103,6 +104,12 @@ export const routes = [
     path: '/admin/quizzes/:id',
     name: 'admin-quiz-editor',
     component: AdminQuizEditorPage,
+    meta: { requiresAuth: true, requiresAdmin: true },
+  },
+  {
+    path: '/admin/quizzes/:id/preview',
+    name: 'admin-quiz-preview',
+    component: AdminQuizPreviewPage,
     meta: { requiresAuth: true, requiresAdmin: true },
   },
   {

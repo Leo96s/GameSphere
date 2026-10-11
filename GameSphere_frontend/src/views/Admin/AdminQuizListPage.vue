@@ -71,6 +71,7 @@
             </div>
             <div class="flex flex-wrap gap-2">
               <router-link :to="{ name: 'admin-quiz-editor', params: { id: quiz.id } }" class="rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Editar</router-link>
+              <router-link :to="{ name: 'admin-quiz-preview', params: { id: quiz.id } }" class="rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Pré-visualizar</router-link>
               <button
                 v-for="action in quizStatusActions(quiz.status)"
                 :key="action.status"
