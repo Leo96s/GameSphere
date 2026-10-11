@@ -12,6 +12,8 @@ public interface IQuizAdministrationService
 
     Task<AdminQuizUpsertDto?> GetQuizByIdAsync(int quizId);
 
+    Task<ServiceResponse<QuizPlayDto>> GetQuizPreviewAsync(int quizId, CancellationToken cancellationToken = default);
+
     Task<ServiceResponse<AdminQuizUpsertDto>> CreateQuizAsync(int adminId, AdminQuizUpsertDto request);
 
     Task<ServiceResponse<AdminQuizUpsertDto>> UpdateQuizAsync(

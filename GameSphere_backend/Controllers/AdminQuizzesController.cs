@@ -34,6 +34,13 @@ public sealed class AdminQuizzesController : AdminControllerBase
         return quiz is null ? NotFound(new { message = "Quiz not found." }) : Ok(quiz);
     }
 
+    [HttpGet("{id:int}/preview")]
+    public async Task<ActionResult<QuizPlayDto>> GetQuizPreview(int id, CancellationToken cancellationToken)
+    {
+        var result = await _quizAdministrationService.GetQuizPreviewAsync(id, cancellationToken);
+        return result.Success && result.Data is not null ? Ok(result.Data) : ToErrorResult(result);
+    }
+
     [HttpPost]
     public async Task<ActionResult<AdminQuizUpsertDto>> CreateQuiz([FromBody] AdminQuizUpsertDto request) =>
         await RunAdminCommandAsync(
