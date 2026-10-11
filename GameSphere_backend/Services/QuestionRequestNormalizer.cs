@@ -7,15 +7,18 @@ public sealed class QuestionRequestNormalizer
     private readonly IQuestionShapeValidator _shapeValidator;
     private readonly IQuestionAnswersValidator _answersValidator;
     private readonly ICorrectAnswerValidator _correctAnswerValidator;
+    private readonly IEditorialTextValidator _textValidator;
 
     public QuestionRequestNormalizer(
         IQuestionShapeValidator shapeValidator,
         IQuestionAnswersValidator answersValidator,
-        ICorrectAnswerValidator correctAnswerValidator)
+        ICorrectAnswerValidator correctAnswerValidator,
+        IEditorialTextValidator textValidator)
     {
         _shapeValidator = shapeValidator;
         _answersValidator = answersValidator;
         _correctAnswerValidator = correctAnswerValidator;
+        _textValidator = textValidator;
     }
 
     public bool TryNormalize(
@@ -32,6 +35,17 @@ public sealed class QuestionRequestNormalizer
         }
 
         var candidate = request!;
+        var textMessage = _textValidator.Validate(candidate.Description, allowLineBreaks: true)
+            ?? candidate.Answers
+                .Select(answer => _textValidator.Validate(answer, allowLineBreaks: false))
+                .FirstOrDefault(result => result is not null)
+            ?? _textValidator.Validate(candidate.CorrectAnswer, allowLineBreaks: false);
+        if (textMessage is not null)
+        {
+            message = textMessage;
+            return false;
+        }
+
         var answersMessage = _answersValidator.ValidateAndNormalize(candidate, out var answers);
         if (answersMessage is not null)
         {

@@ -189,7 +189,7 @@ public abstract class QuizAttemptTestBase : IAsyncLifetime
         isActive = true
     };
 
-    private static string GenerateToken(int userId)
+    protected static string GenerateToken(int userId)
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>

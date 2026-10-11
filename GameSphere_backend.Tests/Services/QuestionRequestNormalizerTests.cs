@@ -104,6 +104,11 @@ public sealed class QuestionRequestNormalizerTests
         ];
         yield return
         [
+            ValidQuestion().WithAnswers(["Paris", "paris"]),
+            "Each question option must be unique and non-empty."
+        ];
+        yield return
+        [
             ValidQuestion().WithAnswers(["Option A", " "]),
             "Each question option must be unique and non-empty."
         ];
@@ -124,12 +129,13 @@ public sealed class QuestionRequestNormalizerTests
         ];
     }
 
-    private static QuizRequestNormalizer CreateQuizNormalizer() => new(CreateQuestionNormalizer());
+    private static QuizRequestNormalizer CreateQuizNormalizer() => new(CreateQuestionNormalizer(), new EditorialTextValidator());
 
     private static QuestionRequestNormalizer CreateQuestionNormalizer() => new(
         new QuestionShapeValidator(),
         new QuestionAnswersValidator(),
-        new CorrectAnswerValidator());
+        new CorrectAnswerValidator(),
+        new EditorialTextValidator());
 
     private static AdminQuizUpsertDto ValidQuiz() => new()
     {

@@ -13,7 +13,7 @@ public sealed class QuestionAnswersValidator : IQuestionAnswersValidator
     {
         answers = request.Answers.Select(answer => answer?.Trim() ?? string.Empty).ToArray();
         if (answers.Any(answer => string.IsNullOrWhiteSpace(answer) || answer.Length > 500) ||
-            answers.Distinct(StringComparer.Ordinal).Count() != answers.Length)
+            answers.Distinct(StringComparer.OrdinalIgnoreCase).Count() != answers.Length)
         {
             return "Each question option must be unique and non-empty.";
         }

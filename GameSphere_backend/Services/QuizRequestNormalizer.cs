@@ -5,10 +5,14 @@ namespace GameSphere_backend.Services;
 public sealed class QuizRequestNormalizer
 {
     private readonly QuestionRequestNormalizer _questionRequestNormalizer;
+    private readonly IEditorialTextValidator _textValidator;
 
-    public QuizRequestNormalizer(QuestionRequestNormalizer questionRequestNormalizer)
+    public QuizRequestNormalizer(
+        QuestionRequestNormalizer questionRequestNormalizer,
+        IEditorialTextValidator textValidator)
     {
         _questionRequestNormalizer = questionRequestNormalizer;
+        _textValidator = textValidator;
     }
 
     public bool TryNormalize(
@@ -24,6 +28,13 @@ public sealed class QuizRequestNormalizer
         }
 
         var title = request.Title.Trim();
+        var titleMessage = _textValidator.Validate(title, allowLineBreaks: false);
+        if (titleMessage is not null)
+        {
+            message = titleMessage;
+            return false;
+        }
+
         if (title.Length > 100 || !Enum.IsDefined(request.Difficulty))
         {
             message = "The quiz contains an invalid title or difficulty.";
