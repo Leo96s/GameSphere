@@ -229,6 +229,30 @@ mensagens conhecidas do backend (`adminErrorMessages.js`), incluindo o prefixo
 fallback PT-PT. O título (`validateQuizDetails`) e a pergunta
 (`validateQuestion`) são validados no cliente antes do pedido.
 
+## Pré-visualização
+
+Endpoint: `GET /api/admin/quizzes/{id}/preview`, no `AdminQuizzesController`
+(política `ActiveAdmin`). Devolve o contrato de jogador (`QuizPlayDto`,
+construído por `QuizPlayerMapper`, sem `correctAnswer`) para quizzes em
+qualquer estado, com as perguntas ordenadas por id. Um id inexistente dá 404
+com `{ "message": "Quiz not found." }`. Não grava nada.
+
+Correção local: a página `/admin/quizzes/:id/preview` carrega em paralelo a
+pré-visualização e o detalhe admin (respostas certas e estado). O botão
+"Verificar respostas" corre no browser (`gradeQuizPreview`, comparação exata
+com `===`), mostra "Certa"/"Errada", a resposta correta e "X de N certas".
+Não cria Score nem tentativa.
+
+Ações de estado: a página mostra as ações de `quizStatusActions(status)`
+(Publicar, Retirar, Arquivar, Restaurar). Os erros aparecem em PT-PT num
+alerta próprio, sem esconder a pré-visualização. A lista e o editor têm uma
+ligação "Pré-visualizar".
+
+404 do jogador: o detalhe e a tentativa de um quiz inexistente ou não
+publicado devolvem `{ "message": "Quiz not found." }`, igual nos dois casos
+para não revelar rascunhos. O ecrã de jogo mostra "Este quiz já não está
+disponível.".
+
 ## Testes
 
 As regras estão cobertas por testes unitários (matriz de transições e
