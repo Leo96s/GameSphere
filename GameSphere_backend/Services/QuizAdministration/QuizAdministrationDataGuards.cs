@@ -28,6 +28,13 @@ internal static class QuizAdministrationDataGuards
     public static async Task<bool> HasAttemptsAsync(this AppDbContext context, int quizId) =>
         await context.Scores.AnyAsync(score => score.QuizzId == quizId);
 
+    public static bool IsContentKeyUniqueViolation(DbUpdateException exception) =>
+        exception.InnerException is PostgresException
+        {
+            SqlState: PostgresErrorCodes.UniqueViolation,
+            ConstraintName: "IX_Quizzs_ContentKey"
+        };
+
     public static bool IsForeignKeyViolation(DbUpdateException exception) =>
         exception.InnerException is PostgresException { SqlState: PostgresErrorCodes.ForeignKeyViolation };
 }

@@ -25,3 +25,6 @@ pnpm-debug.log*
 
 *storybook.log
 storybook-static
+
+.vitest-attachments/
+__screenshots__/

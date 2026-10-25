@@ -15,6 +15,14 @@ namespace GameSphere_backend.Models.BackendModels
 
         public Difficulty Difficulty { get; set; }
 
+        public QuizCategory Category { get; set; }
+
+        /// <summary>
+        /// Stable technical identifier of curated quizzes (slug). Null for quizzes created by hand; unique when present.
+        /// </summary>
+        [MaxLength(100, ErrorMessage = "The field 'contentKey' has to be less than 100 characters.")]
+        public string? ContentKey { get; set; }
+
         public int NumberOfQuests { get; set; }
 
         public QuizStatus Status { get; set; }

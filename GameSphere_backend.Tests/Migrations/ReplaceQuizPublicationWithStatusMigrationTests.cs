@@ -55,7 +55,8 @@ public sealed class ReplaceQuizPublicationWithStatusMigrationTests : IAsyncLifet
         Assert.Equal(0, await ReadIntAsync(
             "SELECT COUNT(*)::int FROM information_schema.columns WHERE table_name = 'Quizzs' AND column_name = 'Status' AND is_nullable = 'YES'"));
 
-        Assert.Empty(await context.Database.GetPendingMigrationsAsync(cancellationToken));
+        // Later migrations may still be pending; only this one must be applied.
+        Assert.DoesNotContain(StatusMigration, await context.Database.GetPendingMigrationsAsync(cancellationToken));
     }
 
     [Fact]

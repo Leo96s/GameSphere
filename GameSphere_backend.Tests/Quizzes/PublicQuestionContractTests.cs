@@ -12,6 +12,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using GameSphere_backend.Controllers;
 using GameSphere_backend.Tests.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Xunit;
 
@@ -102,6 +103,43 @@ public sealed class PublicQuestionContractTests : QuizAttemptTestBase, IClassFix
         {
             Assert.DoesNotContain(marker, body, StringComparison.Ordinal);
         }
+    }
+
+    [Fact]
+    public async Task Catalog_item_and_play_quiz_expose_the_category()
+    {
+        var list = await ReadAsync(HttpMethod.Get, "/api/quizzes?pageSize=100", null, HttpStatusCode.OK);
+        var detail = await ReadAsync(HttpMethod.Get, $"/api/quizzes/{PublishedQuizId}", null, HttpStatusCode.OK);
+
+        var listed = JsonDocument.Parse(list).RootElement.EnumerateArray()
+            .Single(item => item.GetProperty("id").GetInt32() == PublishedQuizId);
+        Assert.Equal((int)GameSphere_backend.Enums.QuizCategory.SCIENCE, listed.GetProperty("category").GetInt32());
+        Assert.Equal(
+            (int)GameSphere_backend.Enums.QuizCategory.SCIENCE,
+            JsonDocument.Parse(detail).RootElement.GetProperty("category").GetInt32());
+    }
+
+    [Fact]
+    public async Task Catalog_item_and_play_quiz_do_not_expose_the_content_key()
+    {
+        var key = $"contract-{Guid.NewGuid():N}";
+        await using (var context = CreateContext())
+        {
+            var quiz = await context.Quizzs.SingleAsync(candidate => candidate.Id == PublishedQuizId, TestContext.Current.CancellationToken);
+            quiz.ContentKey = key;
+            await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        var list = await ReadAsync(HttpMethod.Get, "/api/quizzes?pageSize=100", null, HttpStatusCode.OK);
+        var detail = await ReadAsync(HttpMethod.Get, $"/api/quizzes/{PublishedQuizId}", null, HttpStatusCode.OK);
+
+        Assert.Single(
+            JsonDocument.Parse(list).RootElement.EnumerateArray(),
+            item => item.GetProperty("id").GetInt32() == PublishedQuizId);
+        Assert.DoesNotContain("contentkey", list, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("contentkey", detail, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(key, list, StringComparison.Ordinal);
+        Assert.DoesNotContain(key, detail, StringComparison.Ordinal);
     }
 
     [Fact]

@@ -1,6 +1,7 @@
 {
-  "title": "Geografia — Rios e Montanhas",
-  "category": "Geografia",
+  "contentKey": "geografia-rios-e-montanhas",
+  "title": "Rios e Montanhas",
+  "category": "GEOGRAPHY",
   "difficulty": "MEDIUM",
   "provenance": {
     "source": "original",

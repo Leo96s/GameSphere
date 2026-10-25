@@ -29,6 +29,18 @@ describe('quizService', () => {
     expect(apiMocks.post).toHaveBeenCalledWith('/quizzes/1/attempts', { answers: [] });
   });
 
+  it('sends only the defined catalog filters as query params', async () => {
+    apiMocks.get.mockResolvedValue({ data: [] });
+
+    await listQuizzes({ category: 0, difficulty: null });
+    await listQuizzes({ category: 1, difficulty: 2 });
+    await listQuizzes({});
+
+    expect(apiMocks.get).toHaveBeenNthCalledWith(1, '/quizzes', { params: { category: 0 } });
+    expect(apiMocks.get).toHaveBeenNthCalledWith(2, '/quizzes', { params: { category: 1, difficulty: 2 } });
+    expect(apiMocks.get).toHaveBeenNthCalledWith(3, '/quizzes');
+  });
+
   describe('getQuizPlayErrorMessage', () => {
     const fallback = 'Tenta novamente.';
 

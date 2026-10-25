@@ -75,6 +75,16 @@
             /// </remarks>
             public DbSet<Score> Scores { get; set; }
 
+            protected override void OnModelCreating(ModelBuilder modelBuilder)
+            {
+                base.OnModelCreating(modelBuilder);
+
+                modelBuilder.Entity<Quizz>()
+                    .HasIndex(quiz => quiz.ContentKey)
+                    .IsUnique()
+                    .HasFilter("\"ContentKey\" IS NOT NULL");
+            }
+
             // Additional DbSets can be added here as the application grows
             // public DbSet<NewEntity> NewEntities { get; set; }
 

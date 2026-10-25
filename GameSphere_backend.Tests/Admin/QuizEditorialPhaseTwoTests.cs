@@ -48,9 +48,9 @@ public sealed class QuizEditorialPhaseTwoTests : AdminQuizAdministrationTestBase
     public static TheoryData<string, string, string> InvalidAdminBodies() => new()
     {
         { "POST", "/api/admin/quizzes", "{\"title\": \"Broken" },
-        { "POST", "/api/admin/quizzes", "{\"title\": 123, \"difficulty\": 0}" },
-        { "POST", "/api/admin/quizzes", "{\"title\": \"Valid\", \"difficulty\": \"not-a-number\"}" },
-        { "POST", "/api/admin/quizzes", "{\"title\": \"Valid\", \"difficulty\": 0, \"questions\": {}}" },
+        { "POST", "/api/admin/quizzes", "{\"title\": 123, \"difficulty\": 0, \"category\": 1}" },
+        { "POST", "/api/admin/quizzes", "{\"title\": \"Valid\", \"difficulty\": \"not-a-number\", \"category\": 1}" },
+        { "POST", "/api/admin/quizzes", "{\"title\": \"Valid\", \"difficulty\": 0, \"category\": 1, \"questions\": {}}" },
         { "STATUS", "", "{\"status\": " },
         { "STATUS", "", "{\"status\": \"Bogus\"}" },
         { "STATUS", "", "{\"status\": true}" },
@@ -90,7 +90,7 @@ public sealed class QuizEditorialPhaseTwoTests : AdminQuizAdministrationTestBase
         var response = await SendAdminRequestAsync(HttpMethod.Post, "/api/admin/quizzes", new
         {
             title = new string('x', 101),
-            difficulty = (int)Difficulty.EASY
+            difficulty = (int)Difficulty.EASY, category = (int)QuizCategory.GEOGRAPHY
         });
 
         await AssertOnlyMessageAsync(
@@ -230,7 +230,7 @@ public sealed class QuizEditorialPhaseTwoTests : AdminQuizAdministrationTestBase
         var response = await SendAdminRequestAsync(HttpMethod.Post, "/api/admin/quizzes", new
         {
             title = $"Flag quiz {Guid.NewGuid():N}",
-            difficulty = (int)Difficulty.EASY,
+            difficulty = (int)Difficulty.EASY, category = (int)QuizCategory.GEOGRAPHY,
             hasAttempts = true
         });
 
@@ -247,7 +247,7 @@ public sealed class QuizEditorialPhaseTwoTests : AdminQuizAdministrationTestBase
         var response = await SendAdminRequestAsync(HttpMethod.Put, $"/api/admin/quizzes/{quizId}", new
         {
             title = $"Renamed {Guid.NewGuid():N}",
-            difficulty = (int)Difficulty.EASY,
+            difficulty = (int)Difficulty.EASY, category = (int)QuizCategory.GEOGRAPHY,
             hasAttempts = true
         });
 

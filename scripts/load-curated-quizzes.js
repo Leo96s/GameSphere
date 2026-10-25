@@ -10,10 +10,24 @@ const PAGE_SIZE = 50;
 const MAX_PAGES = 10000; // alinhado com o clamp de page em GetQuizzesHandler.cs
 
 const DIFFICULTY = { EASY: 0, MEDIUM: 1, HARD: 2 };
+// Espelha Enums/QuizCategory.cs (guardado como inteiro).
+const CATEGORY = {
+  GENERAL_KNOWLEDGE: 0,
+  GEOGRAPHY: 1,
+  HISTORY: 2,
+  SCIENCE: 3,
+  SPORTS: 4,
+  ENTERTAINMENT: 5,
+  TECHNOLOGY: 6,
+  VIDEO_GAMES: 7,
+};
 const TYPE_OF_ANSWER = { MULTIPLEOPTION: 0, TRUEORFALSE: 1 };
 const STATUS = { Draft: 0, Published: 1, Unpublished: 2, Archived: 3 };
 
 const MAX_TITLE = 100;
+const MAX_CONTENT_KEY = 100;
+// Espelha QuizRequestNormalizer.cs: slug em minusculas, com hifens simples entre grupos.
+const CONTENT_KEY_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const MAX_QUESTIONS = 100;
 const MAX_DESCRIPTION = 2000;
 const MIN_ANSWERS = 2;
@@ -142,6 +156,15 @@ function validateQuiz(quiz, fileName) {
     return errors;
   }
 
+  const expectedKey = fileName.replace(/\.json$/, '');
+  if (typeof quiz.contentKey !== 'string'
+    || quiz.contentKey.length > MAX_CONTENT_KEY
+    || !CONTENT_KEY_PATTERN.test(quiz.contentKey)) {
+    fail(`contentKey inválida (${JSON.stringify(quiz.contentKey)}): tem de ser um slug (a-z, 0-9 e hífens) com até ${MAX_CONTENT_KEY} caracteres`);
+  } else if (quiz.contentKey !== expectedKey) {
+    fail(`contentKey "${quiz.contentKey}" tem de ser igual ao nome do ficheiro sem .json ("${expectedKey}")`);
+  }
+
   if (!isNonEmptyString(quiz.title)) {
     fail('título em falta');
   } else {
@@ -152,11 +175,10 @@ function validateQuiz(quiz, fileName) {
     if (hasForbiddenChars(title, false)) {
       fail('título com quebras de linha, caracteres de controlo ou invisíveis');
     }
-    if (!isNonEmptyString(quiz.category)) {
-      fail('category em falta');
-    } else if (!title.startsWith(`${quiz.category} — `)) {
-      fail(`o título tem de começar por "${quiz.category} — "`);
-    }
+  }
+
+  if (!Object.hasOwn(CATEGORY, quiz.category)) {
+    fail(`category inválida (${JSON.stringify(quiz.category)})`);
   }
 
   if (!Object.hasOwn(DIFFICULTY, quiz.difficulty)) {
@@ -194,8 +216,10 @@ function validateQuiz(quiz, fileName) {
 
 function toUpsertPayload(quiz) {
   return {
+    contentKey: quiz.contentKey,
     title: dotnetTrim(quiz.title),
     difficulty: DIFFICULTY[quiz.difficulty],
+    category: CATEGORY[quiz.category],
     numberOfQuests: quiz.questions.length,
     questions: quiz.questions.map((question) => ({
       // O backend valida os tamanhos no texto bruto, por isso o texto já vai aparado.
@@ -296,9 +320,13 @@ function createApiClient({ baseUrl, fetchImpl = globalThis.fetch }) {
 // Compara o ficheiro revisto com o quiz guardado no servidor, depois de aplicar a mesma
 // normalização que o backend (trim .NET de título, descrição, respostas e resposta certa).
 // Devolve a primeira diferença encontrada, ou null se o conteúdo for igual.
+const sameTextValue = (a, b) => dotnetTrim(String(a ?? '')) === dotnetTrim(String(b ?? ''));
+
 function findContentDifference(quiz, serverQuiz) {
   const local = toUpsertPayload(quiz);
+  if (!sameTextValue(local.title, serverQuiz.title)) return 'title';
   if (local.difficulty !== serverQuiz.difficulty) return 'difficulty';
+  if (local.category !== serverQuiz.category) return 'category';
 
   const localQuestions = local.questions;
   const serverQuestions = Array.isArray(serverQuiz.questions) ? serverQuiz.questions : [];
@@ -328,26 +356,13 @@ function statusName(status) {
   return name || String(status);
 }
 
-function pickByTitle(items, publishing) {
-  const groups = new Map();
+function pickByKey(items) {
+  const byKey = new Map();
   for (const item of items) {
-    const key = dotnetTrim(String(item.title));
-    groups.set(key, [...(groups.get(key) || []), item]);
+    if (typeof item.contentKey !== 'string' || item.contentKey === '') continue;
+    byKey.set(item.contentKey, item);
   }
-  const byTitle = new Map();
-  for (const [key, group] of groups) {
-    if (!publishing) {
-      byTitle.set(key, group[0]);
-      continue;
-    }
-    // Com publicação: uma cópia Published ganha sempre; senão o Draft/Unpublished de maior id.
-    const published = group.find((item) => item.status === STATUS.Published);
-    const publishable = group
-      .filter((item) => item.status === STATUS.Draft || item.status === STATUS.Unpublished)
-      .sort((a, b) => b.id - a.id)[0];
-    byTitle.set(key, published || publishable || group[0]);
-  }
-  return byTitle;
+  return byKey;
 }
 
 function validateBaseUrl(value) {
@@ -448,6 +463,17 @@ async function run({ args = [], env = {}, contentDir, client, log = console.log 
       log(`ERRO título duplicado "${title}" nos ficheiros: ${files.join(', ')}`);
     }
   }
+  const filesByKey = new Map();
+  for (const entry of entries) {
+    if (!entry.valid) continue;
+    filesByKey.set(entry.quiz.contentKey, [...(filesByKey.get(entry.quiz.contentKey) || []), entry.fileName]);
+  }
+  for (const [contentKey, files] of filesByKey) {
+    if (files.length > 1) {
+      invalid += 1;
+      log(`ERRO contentKey duplicada "${contentKey}" nos ficheiros: ${files.join(', ')}`);
+    }
+  }
   if (invalid > 0) {
     log(`${invalid} ficheiro(s) inválido(s).`);
     return 1;
@@ -476,13 +502,22 @@ async function run({ args = [], env = {}, contentDir, client, log = console.log 
   try {
     await api.login(email, password);
     const existing = await api.listQuizzes();
-    const byTitle = pickByTitle(existing, options.publish);
+    const byKey = pickByKey(existing);
+    const keylessByTitle = new Map();
+    for (const item of existing) {
+      if (typeof item.contentKey === 'string' && item.contentKey !== '') continue;
+      const key = dotnetTrim(String(item.title));
+      keylessByTitle.set(key, [...(keylessByTitle.get(key) || []), item]);
+    }
 
     const counts = { created: 0, skipped: 0, published: 0, refused: 0, failed: 0 };
     let difference;
     for (const { quiz } of entries) {
       const title = dotnetTrim(quiz.title);
-      const found = byTitle.get(title);
+      const found = byKey.get(quiz.contentKey);
+      for (const lookalike of keylessByTitle.get(title) || []) {
+        log(`AVISO "${title}": existe no servidor um quiz sem contentKey com o mesmo título (id ${lookalike.id}, estado ${statusName(lookalike.status)}); não é usado, a correspondência é só pela contentKey "${quiz.contentKey}"`);
+      }
 
       if (!options.publish) {
         if (found) {
@@ -492,7 +527,7 @@ async function run({ args = [], env = {}, contentDir, client, log = console.log 
         }
         try {
           const created = await api.createQuiz(toUpsertPayload(quiz));
-          byTitle.set(title, created);
+          byKey.set(quiz.contentKey, created);
           counts.created += 1;
           log(`CRIADO "${title}": rascunho com id ${created.id}`);
         } catch (error) {

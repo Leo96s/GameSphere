@@ -1,6 +1,7 @@
 {
-  "title": "História — Século XX",
-  "category": "História",
+  "contentKey": "historia-seculo-xx",
+  "title": "Século XX",
+  "category": "HISTORY",
   "difficulty": "MEDIUM",
   "provenance": {
     "source": "original",

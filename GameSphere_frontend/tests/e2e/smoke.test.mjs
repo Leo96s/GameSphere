@@ -65,6 +65,7 @@ test('registered user can log in and complete a published quiz', {
       data: {
         title: quizTitle,
         difficulty: 0,
+        category: 0,
         numberOfQuests: 1,
       },
     });

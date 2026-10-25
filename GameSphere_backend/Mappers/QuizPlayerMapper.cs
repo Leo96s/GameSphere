@@ -10,6 +10,7 @@ public static class QuizPlayerMapper
         Id = quiz.Id,
         Title = quiz.Title,
         Difficulty = quiz.Difficulty,
+        Category = quiz.Category,
         NumberOfQuests = quiz.NumberOfQuests,
     };
 
@@ -18,6 +19,7 @@ public static class QuizPlayerMapper
         Id = quiz.Id,
         Title = quiz.Title,
         Difficulty = quiz.Difficulty,
+        Category = quiz.Category,
         Questions = (quiz.Questions ?? []).Select(ToQuestion).ToArray(),
     };
 

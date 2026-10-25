@@ -1,6 +1,7 @@
 {
-  "title": "Geografia — Capitais da Europa",
-  "category": "Geografia",
+  "contentKey": "geografia-capitais-da-europa",
+  "title": "Capitais da Europa",
+  "category": "GEOGRAPHY",
   "difficulty": "EASY",
   "provenance": {
     "source": "original",

@@ -1,6 +1,7 @@
 {
-  "title": "Ciência — Verdadeiro ou Falso",
-  "category": "Ciência",
+  "contentKey": "ciencia-verdadeiro-ou-falso",
+  "title": "Ciência em Verdadeiro ou Falso",
+  "category": "SCIENCE",
   "difficulty": "EASY",
   "provenance": {
     "source": "original",

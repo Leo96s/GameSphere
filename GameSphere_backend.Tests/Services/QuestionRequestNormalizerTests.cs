@@ -80,6 +80,16 @@ public sealed class QuestionRequestNormalizerTests
         ];
         yield return
         [
+            ValidQuiz().WithCategory(null),
+            "The quiz category is invalid."
+        ];
+        yield return
+        [
+            ValidQuiz().WithCategory((QuizCategory)99),
+            "The quiz category is invalid."
+        ];
+        yield return
+        [
             ValidQuiz().WithQuestions(Enumerable.Range(0, 101).Select(_ => ValidQuestion()).ToList()),
             "A quiz cannot contain more than 100 questions."
         ];
@@ -140,7 +150,8 @@ public sealed class QuestionRequestNormalizerTests
     private static AdminQuizUpsertDto ValidQuiz() => new()
     {
         Title = "Valid quiz",
-        Difficulty = Difficulty.EASY
+        Difficulty = Difficulty.EASY,
+        Category = QuizCategory.GEOGRAPHY
     };
 
     private static AdminQuestionUpsertDto ValidQuestion() => new()
@@ -163,6 +174,12 @@ file static class AdminQuizUpsertDtoTestExtensions
     public static AdminQuizUpsertDto WithDifficulty(this AdminQuizUpsertDto source, Difficulty difficulty)
     {
         source.Difficulty = difficulty;
+        return source;
+    }
+
+    public static AdminQuizUpsertDto WithCategory(this AdminQuizUpsertDto source, QuizCategory? category)
+    {
+        source.Category = category;
         return source;
     }
 

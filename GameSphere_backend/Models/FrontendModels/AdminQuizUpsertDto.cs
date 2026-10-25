@@ -13,6 +13,14 @@ public sealed class AdminQuizUpsertDto
 
     public Difficulty Difficulty { get; set; }
 
+    [Required(ErrorMessage = "The quiz category is invalid.")]
+    public QuizCategory? Category { get; set; }
+
+    /// <summary>
+    /// Optional stable slug used by the content loader. Immutable once set; never exposed publicly.
+    /// </summary>
+    public string? ContentKey { get; set; }
+
     public int NumberOfQuests { get; set; }
 
     /// <summary>

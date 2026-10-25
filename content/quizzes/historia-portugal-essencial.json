@@ -1,6 +1,7 @@
 {
-  "title": "História — Portugal Essencial",
-  "category": "História",
+  "contentKey": "historia-portugal-essencial",
+  "title": "Portugal Essencial",
+  "category": "HISTORY",
   "difficulty": "EASY",
   "provenance": {
     "source": "original",

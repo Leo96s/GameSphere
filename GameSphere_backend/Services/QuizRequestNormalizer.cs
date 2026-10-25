@@ -1,9 +1,13 @@
+using System.Text.RegularExpressions;
 using GameSphere_backend.Models.FrontendModels;
 
 namespace GameSphere_backend.Services;
 
-public sealed class QuizRequestNormalizer
+public sealed partial class QuizRequestNormalizer
 {
+    [GeneratedRegex("^[a-z0-9]+(-[a-z0-9]+)*\\z", RegexOptions.CultureInvariant)]
+    private static partial Regex ContentKeyPattern();
+
     private readonly QuestionRequestNormalizer _questionRequestNormalizer;
     private readonly IEditorialTextValidator _textValidator;
 
@@ -41,6 +45,19 @@ public sealed class QuizRequestNormalizer
             return false;
         }
 
+        if (request.Category is not { } category || !Enum.IsDefined(category))
+        {
+            message = "The quiz category is invalid.";
+            return false;
+        }
+
+        if (request.ContentKey is not null
+            && (request.ContentKey.Length > 100 || !ContentKeyPattern().IsMatch(request.ContentKey)))
+        {
+            message = "The quiz content key is invalid.";
+            return false;
+        }
+
         if (request.Questions?.Count > 100)
         {
             message = "A quiz cannot contain more than 100 questions.";
@@ -67,6 +84,8 @@ public sealed class QuizRequestNormalizer
             Id = request.Id,
             Title = title,
             Difficulty = request.Difficulty,
+            Category = category,
+            ContentKey = request.ContentKey,
             NumberOfQuests = request.NumberOfQuests,
             Questions = questions
         };

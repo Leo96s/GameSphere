@@ -37,7 +37,7 @@ public sealed class QuizDraftValidationTests : AdminQuizAdministrationTestBase, 
         var response = await SendAdminRequestAsync(
             HttpMethod.Post,
             "/api/admin/quizzes",
-            new { title = "Valid title", difficulty = 99 });
+            new { title = "Valid title", difficulty = 99, category = 1 });
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.False(string.IsNullOrWhiteSpace(await ReadErrorMessageAsync(response)));
@@ -287,7 +287,7 @@ public sealed class QuizDraftValidationTests : AdminQuizAdministrationTestBase, 
     private Task<HttpResponseMessage> PutQuestionAsync(int questionId, object payload) =>
         SendAdminRequestAsync(HttpMethod.Put, $"/api/admin/questions/{questionId}", payload);
 
-    private static object QuizPayload(string title) => new { title, difficulty = (int)Difficulty.EASY };
+    private static object QuizPayload(string title) => new { title, difficulty = (int)Difficulty.EASY, category = (int)QuizCategory.GEOGRAPHY };
 
     private static object QuestionPayload(
         string description = "Capital of Portugal?",
