@@ -1,5 +1,6 @@
 import api from './api';
 import { translateAdminMessage } from './adminErrorMessages';
+import { isQuizCategory } from '@/enums/quiz';
 
 const readData = (request) => request.then((response) => response.data);
 
@@ -82,7 +83,10 @@ export const getAdminErrorMessage = (error) => {
   ) ?? 'Não foi possível concluir a alteração. Tenta novamente.';
 };
 
-export const validateQuizDetails = ({ title, difficulty } = {}) => {
+const isWholeNumber = (value) =>
+  Number.isInteger(value) || (typeof value === 'string' && /^\d+$/.test(value));
+
+export const validateQuizDetails = ({ title, difficulty, category } = {}) => {
   const trimmedTitle = typeof title === 'string' ? title.trim() : '';
 
   if (!trimmedTitle) {
@@ -93,8 +97,12 @@ export const validateQuizDetails = ({ title, difficulty } = {}) => {
     return 'O título do quiz não pode ter mais de 100 caracteres.';
   }
 
-  if (![0, 1, 2].includes(Number(difficulty))) {
+  if (!isWholeNumber(difficulty) || ![0, 1, 2].includes(Number(difficulty))) {
     return 'Escolhe uma dificuldade válida.';
+  }
+
+  if (!isWholeNumber(category) || !isQuizCategory(Number(category))) {
+    return 'Escolhe uma categoria válida.';
   }
 
   return '';

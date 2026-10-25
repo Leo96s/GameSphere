@@ -13,6 +13,13 @@ describe('adminErrorMessages', () => {
     });
   });
 
+  it('traduz a mensagem de categoria inválida', () => {
+    expect(translateAdminMessage('The quiz category is invalid.')).toBe('A categoria do quiz não é válida.');
+    expect(translateAdminMessage('The quiz content key is invalid.')).toBe('A chave de conteúdo do quiz não é válida.');
+    expect(translateAdminMessage('A quiz with this content key already exists.')).toBe('Já existe um quiz com esta chave de conteúdo.');
+    expect(translateAdminMessage('The quiz content key cannot be changed.')).toBe('A chave de conteúdo do quiz não pode ser alterada.');
+  });
+
   it('traduz o prefixo de pergunta e o resto da mensagem', () => {
     expect(translateAdminMessage('Question 4: A quiz title is required.'))
       .toBe('Pergunta 4: Indica o título do quiz.');

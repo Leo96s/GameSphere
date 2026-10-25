@@ -248,7 +248,7 @@ public sealed class QuizStatusTransitionTests : AdminQuizAdministrationTestBase,
         var response = await SendAdminRequestAsync(HttpMethod.Post, "/api/admin/quizzes", new
         {
             title = $"Sneaky quiz {Guid.NewGuid():N}",
-            difficulty = (int)Difficulty.EASY,
+            difficulty = (int)Difficulty.EASY, category = (int)QuizCategory.GEOGRAPHY,
             status = (int)QuizStatus.Published,
             isPublished = true,
             questions = new[]
@@ -283,7 +283,7 @@ public sealed class QuizStatusTransitionTests : AdminQuizAdministrationTestBase,
         var response = await SendAdminRequestAsync(HttpMethod.Put, $"/api/admin/quizzes/{quizId}", new
         {
             title = "Renamed quiz",
-            difficulty = (int)Difficulty.HARD,
+            difficulty = (int)Difficulty.HARD, category = (int)QuizCategory.GEOGRAPHY,
             status = (int)sent,
             isPublished = true
         });

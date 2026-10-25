@@ -63,7 +63,7 @@ public sealed class AdminAuthorizationTests : AdminQuizAdministrationTestBase, I
         using var writeRequest = CreateRequest(HttpMethod.Post, "/api/admin/quizzes", UserRole.Admin, InactiveAdminId, new
         {
             title = "Inactive admin quiz",
-            difficulty = (int)Difficulty.EASY
+            difficulty = (int)Difficulty.EASY, category = (int)QuizCategory.GEOGRAPHY
         });
 
         var readResponse = await Client.SendAsync(readRequest, TestContext.Current.CancellationToken);

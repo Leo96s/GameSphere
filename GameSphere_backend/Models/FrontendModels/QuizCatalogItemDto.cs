@@ -10,5 +10,7 @@ public sealed class QuizCatalogItemDto
 
     public Difficulty Difficulty { get; init; }
 
+    public QuizCategory Category { get; init; }
+
     public int NumberOfQuests { get; init; }
 }

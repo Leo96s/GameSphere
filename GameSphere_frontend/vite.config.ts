@@ -55,7 +55,22 @@ export default defineConfig({
       test: {
         name: 'unit',
         environment: 'node',
-        include: ['src/**/*.spec.js']
+        include: ['src/**/*.spec.js'],
+        exclude: ['**/node_modules/**', 'src/**/*.browser.spec.js']
+      }
+    }, {
+      extends: true,
+      test: {
+        name: 'component',
+        include: ['src/**/*.browser.spec.js'],
+        browser: {
+          enabled: true,
+          headless: true,
+          provider: playwright({}),
+          instances: [{
+            browser: 'chromium'
+          }]
+        }
       }
     }, {
       extends: true,
@@ -89,7 +104,7 @@ export default defineConfig({
         'src/utils/passwordStrength.ts',
         'src/utils/socialAuthFeedback.js',
       ],
-      exclude: ['src/**/*.spec.js'],
+      exclude: ['src/**/*.spec.js', 'src/**/*.browser.spec.js'],
       thresholds: {
         statements: 75,
         lines: 75,

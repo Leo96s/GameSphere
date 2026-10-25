@@ -20,7 +20,7 @@
 
       <form v-if="showCreateForm" class="mt-6 rounded-xl border bg-card p-5 shadow-sm" @submit.prevent="handleCreate">
         <h2 class="font-semibold">Novo quiz</h2>
-        <div class="mt-4 grid gap-4 sm:grid-cols-[1fr_12rem_auto] sm:items-end">
+        <div class="mt-4 grid gap-4 sm:grid-cols-[1fr_12rem_12rem_auto] sm:items-end">
           <div>
             <label class="text-sm font-medium" for="new-quiz-title">Título</label>
             <input id="new-quiz-title" v-model.trim="newQuiz.title" class="mt-2 w-full rounded-md border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" maxlength="100" required>
@@ -28,9 +28,14 @@
           <div>
             <label class="text-sm font-medium" for="new-quiz-difficulty">Dificuldade</label>
             <select id="new-quiz-difficulty" v-model.number="newQuiz.difficulty" class="mt-2 w-full rounded-md border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-              <option :value="0">Fácil</option>
-              <option :value="1">Médio</option>
-              <option :value="2">Difícil</option>
+              <option v-for="option in DIFFICULTIES" :key="option.value" :value="option.value">{{ option.label }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-sm font-medium" for="new-quiz-category">Categoria</label>
+            <select id="new-quiz-category" v-model="newQuiz.category" class="mt-2 w-full rounded-md border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" required>
+              <option value="" disabled>Escolhe uma categoria</option>
+              <option v-for="option in QUIZ_CATEGORIES" :key="option.value" :value="option.value">{{ option.label }}</option>
             </select>
           </div>
           <button class="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50" type="submit" :disabled="isCreating">
@@ -67,7 +72,7 @@
                   Com tentativas
                 </span>
               </div>
-              <p class="mt-2 text-sm text-muted-foreground">{{ quiz.numberOfQuests }} {{ quiz.numberOfQuests === 1 ? 'pergunta' : 'perguntas' }} · {{ difficultyLabel(quiz.difficulty) }}</p>
+              <p class="mt-2 text-sm text-muted-foreground">{{ quizCategoryLabel(quiz.category) }} · {{ quiz.numberOfQuests }} {{ quiz.numberOfQuests === 1 ? 'pergunta' : 'perguntas' }} · {{ difficultyLabel(quiz.difficulty) }}</p>
             </div>
             <div class="flex flex-wrap gap-2">
               <router-link :to="{ name: 'admin-quiz-editor', params: { id: quiz.id } }" class="rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Editar</router-link>
@@ -94,6 +99,7 @@
 <script setup>
 import { onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { DIFFICULTIES, QUIZ_CATEGORIES, difficultyLabel, quizCategoryLabel } from '@/enums/quiz';
 import {
   QUIZ_STATUS,
   changeQuizStatus,
@@ -115,9 +121,8 @@ const changingQuizId = ref(null);
 const errorMessage = ref('');
 const actionError = ref('');
 const includeArchived = ref(false);
-const newQuiz = reactive({ title: '', difficulty: 0 });
+const newQuiz = reactive({ title: '', difficulty: 0, category: '' });
 
-const difficultyLabel = (difficulty) => ({ 0: 'Fácil', 1: 'Médio', 2: 'Difícil' }[difficulty] ?? 'Sem dificuldade');
 const statusClass = (status) => status === QUIZ_STATUS.PUBLISHED
   ? 'bg-primary/15 text-primary ring-1 ring-primary/25'
   : 'bg-muted text-muted-foreground ring-1 ring-border';
@@ -140,7 +145,7 @@ const handleCreate = async () => {
   if (actionError.value) return;
   isCreating.value = true;
   try {
-    const quiz = await createQuiz({ title: newQuiz.title, difficulty: newQuiz.difficulty });
+    const quiz = await createQuiz({ title: newQuiz.title, difficulty: newQuiz.difficulty, category: Number(newQuiz.category) });
     await router.push({ name: 'admin-quiz-editor', params: { id: quiz.id } });
   } catch (error) {
     actionError.value = getAdminErrorMessage(error);

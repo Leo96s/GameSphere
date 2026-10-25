@@ -117,6 +117,7 @@ public abstract class QuizAttemptTestBase : IAsyncLifetime
         {
             Title = $"Attempt quiz {suffix}",
             Difficulty = Difficulty.EASY,
+            Category = QuizCategory.SCIENCE,
             NumberOfQuests = 2,
             RegistrationDate = DateTime.UtcNow,
             UserId = owner.Id,

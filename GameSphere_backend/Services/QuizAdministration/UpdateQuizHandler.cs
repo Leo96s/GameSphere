@@ -51,10 +51,19 @@ public sealed class UpdateQuizHandler
                 return QuizAdministrationResponses.Failure<AdminQuizUpsertDto>("Conflict", editFailure);
             }
 
+            if (normalized.ContentKey is not null && normalized.ContentKey != quiz.ContentKey)
+            {
+                await transaction.RollbackAsync();
+                return QuizAdministrationResponses.Failure<AdminQuizUpsertDto>(
+                    "BadRequest",
+                    "The quiz content key cannot be changed.");
+            }
+
             await _context.Entry(quiz).Collection(candidate => candidate.Questions!).LoadAsync();
 
             quiz.Title = normalized.Title;
             quiz.Difficulty = normalized.Difficulty;
+            quiz.Category = normalized.Category!.Value;
 
             if (normalized.Questions is not null)
             {

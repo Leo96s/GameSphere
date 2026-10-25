@@ -41,9 +41,13 @@
               <div>
                 <label class="text-sm font-medium" for="quiz-difficulty">Dificuldade</label>
                 <select id="quiz-difficulty" v-model.number="quiz.difficulty" class="mt-2 w-full rounded-md border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                  <option :value="0">Fácil</option>
-                  <option :value="1">Médio</option>
-                  <option :value="2">Difícil</option>
+                  <option v-for="option in DIFFICULTIES" :key="option.value" :value="option.value">{{ option.label }}</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-sm font-medium" for="quiz-category">Categoria</label>
+                <select id="quiz-category" v-model.number="quiz.category" class="mt-2 w-full rounded-md border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" required>
+                  <option v-for="option in QUIZ_CATEGORIES" :key="option.value" :value="option.value">{{ option.label }}</option>
                 </select>
               </div>
               <p v-if="quizError" class="sm:col-span-2 text-sm text-destructive" role="alert">{{ quizError }}</p>
@@ -100,6 +104,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import AdminQuestionEditor from '@/views/Admin/AdminQuestionEditor.vue';
+import { DIFFICULTIES, QUIZ_CATEGORIES } from '@/enums/quiz';
 import {
   createQuestion,
   deleteQuestion,
@@ -155,6 +160,7 @@ const saveQuiz = async () => {
     const updated = await updateQuiz(quiz.value.id, {
       title: quiz.value.title,
       difficulty: quiz.value.difficulty,
+      category: quiz.value.category,
     });
     quiz.value = { ...quiz.value, ...updated, questions: updated.questions ?? quiz.value.questions };
   } catch (error) {

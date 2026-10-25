@@ -117,7 +117,7 @@ public sealed class AdminEndpointAuthorizationTests : AdminQuizAdministrationTes
     private static object Payload() => new
     {
         title = "Unauthorized change",
-        difficulty = (int)Difficulty.HARD,
+        difficulty = (int)Difficulty.HARD, category = (int)QuizCategory.GEOGRAPHY,
         status = (int)QuizStatus.Published,
         description = "Unauthorized question?",
         typeOfAnswer = (int)TypeOfAnswer.MULTIPLEOPTION,

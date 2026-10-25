@@ -27,8 +27,9 @@ function question(overrides = {}) {
 
 function quiz(overrides = {}) {
   return {
-    title: 'Geografia — Capitais da Europa',
-    category: 'Geografia',
+    contentKey: 'a',
+    title: 'Capitais da Europa',
+    category: 'GEOGRAPHY',
     difficulty: 'EASY',
     provenance: { source: 'original', author: 'GameSphere', reviewedBy: null, reviewedAt: null },
     questions: [question()],
@@ -37,7 +38,7 @@ function quiz(overrides = {}) {
 }
 
 function errorsOf(q) {
-  return validateQuiz(q, 'x.json');
+  return validateQuiz(q, 'a.json');
 }
 
 function writeContent(dir, name, value) {
@@ -83,7 +84,9 @@ function serverQuiz(id, status, content) {
     id,
     status,
     title: content.title.trim(),
+    contentKey: content.contentKey ?? null,
     difficulty,
+    category: { GENERAL_KNOWLEDGE: 0, GEOGRAPHY: 1, HISTORY: 2, SCIENCE: 3, SPORTS: 4, ENTERTAINMENT: 5, TECHNOLOGY: 6, VIDEO_GAMES: 7 }[content.category],
     numberOfQuests: content.questions.length,
     questions: content.questions.map((q, i) => ({
       id: id * 1000 + i + 1,
@@ -107,14 +110,26 @@ test('validateQuiz aceita um quiz valido', () => {
 
 test('validateQuiz: titulo vazio, longo ou com quebra de linha', () => {
   assert.notEqual(errorsOf(quiz({ title: '   ' })).length, 0);
-  assert.notEqual(errorsOf(quiz({ title: `Geografia — ${'a'.repeat(100)}` })).length, 0);
-  assert.notEqual(errorsOf(quiz({ title: 'Geografia — A\nB' })).length, 0);
-  assert.deepEqual(errorsOf(quiz({ title: `Geografia — ${'a'.repeat(100 - 'Geografia — '.length)}` })), []);
+  assert.notEqual(errorsOf(quiz({ title: 'a'.repeat(101) })).length, 0);
+  assert.notEqual(errorsOf(quiz({ title: 'A\nB' })).length, 0);
+  assert.deepEqual(errorsOf(quiz({ title: 'a'.repeat(100) })), []);
 });
 
-test('validateQuiz: titulo tem de comecar pela categoria', () => {
-  assert.notEqual(errorsOf(quiz({ title: 'Capitais da Europa' })).length, 0);
-  assert.notEqual(errorsOf(quiz({ title: 'História — Capitais' })).length, 0);
+test('validateQuiz: o titulo ja nao exige o prefixo da categoria', () => {
+  assert.deepEqual(errorsOf(quiz({ title: 'Capitais da Europa' })), []);
+  assert.deepEqual(errorsOf(quiz({ title: 'História — Capitais' })), []);
+});
+
+test('validateQuiz: category tem de ser um nome do enum', () => {
+  for (const category of ['GENERAL_KNOWLEDGE', 'GEOGRAPHY', 'HISTORY', 'SCIENCE', 'SPORTS', 'ENTERTAINMENT', 'TECHNOLOGY', 'VIDEO_GAMES']) {
+    assert.deepEqual(errorsOf(quiz({ category })), [], category);
+  }
+  assert.notEqual(errorsOf(quiz({ category: undefined })).length, 0);
+  assert.notEqual(errorsOf(quiz({ category: '' })).length, 0);
+  assert.notEqual(errorsOf(quiz({ category: 'Geografia' })).length, 0);
+  assert.notEqual(errorsOf(quiz({ category: 'geography' })).length, 0);
+  assert.notEqual(errorsOf(quiz({ category: 1 })).length, 0);
+  assert.notEqual(errorsOf(quiz({ category: 'toString' })).length, 0);
 });
 
 test('validateQuiz: dificuldade invalida', () => {
@@ -157,7 +172,7 @@ test('validateQuiz: resposta com mais de 500 caracteres ou com quebra de linha',
 test('validateQuiz: caracteres invisiveis e de controlo proibidos', () => {
   assert.notEqual(errorsOf(quiz({ questions: [question({ answers: ['Madrid', 'Lis​boa'] })] })).length, 0);
   assert.notEqual(errorsOf(quiz({ questions: [question({ description: 'Ola\u0000' })] })).length, 0);
-  assert.notEqual(errorsOf(quiz({ title: 'Geografia — A﻿B' })).length, 0);
+  assert.notEqual(errorsOf(quiz({ title: 'A﻿B' })).length, 0);
 });
 
 test('validateQuiz: correctAnswer tem de ser uma das respostas (ordinal)', () => {
@@ -180,7 +195,7 @@ test('validateQuiz: explanation e provenance sao obrigatorias', () => {
 });
 
 test('validateQuiz: erros indicam ficheiro e numero da pergunta', () => {
-  const errors = validateQuiz(quiz({ questions: [question(), question({ correctAnswer: 'Lisboa' })] }), 'meu.json');
+  const errors = validateQuiz(quiz({ contentKey: 'meu', questions: [question(), question({ correctAnswer: 'Lisboa' })] }), 'meu.json');
   assert.equal(errors.length, 1);
   assert.match(errors[0], /meu\.json/);
   assert.match(errors[0], /pergunta 2/i);
@@ -194,14 +209,14 @@ test('toUpsertPayload converte nomes em numeros e descarta campos editoriais', (
       question({ typeOfAnswer: 'TRUEORFALSE', answers: ['Verdadeiro', 'Falso'], correctAnswer: 'Verdadeiro' }),
     ],
   }));
-  assert.equal(payload.title, 'Geografia — Capitais da Europa');
+  assert.equal(payload.title, 'Capitais da Europa');
   assert.equal(payload.difficulty, 1);
   assert.equal(payload.numberOfQuests, 2);
   assert.equal(payload.questions[0].typeOfAnswer, 0);
   assert.equal(payload.questions[1].typeOfAnswer, 1);
   assert.deepEqual(payload.questions[0].answers, ['Madrid', 'Barcelona', 'Sevilha', 'Valência']);
   assert.equal(payload.questions[0].correctAnswer, 'Madrid');
-  assert.equal('category' in payload, false);
+  assert.equal(payload.category, 1);
   assert.equal('provenance' in payload, false);
   assert.equal('explanation' in payload.questions[0], false);
 });
@@ -239,7 +254,7 @@ test('dry-run: JSON malformado e pasta sem ficheiros falham', async () => {
 test('criacao: cria rascunhos com perguntas embebidas e segunda execucao nao duplica', async () => {
   const dir = tmpDir();
   writeContent(dir, 'a.json', quiz());
-  writeContent(dir, 'b.json', quiz({ title: 'Geografia — Rios' }));
+  writeContent(dir, 'b.json', quiz({ contentKey: 'b', title: 'Rios' }));
   const client = fakeClient();
   const { log } = collector();
   assert.equal(await run({ args: [], env: ENV, contentDir: dir, client, log }), 0);
@@ -256,7 +271,7 @@ test('criacao: cria rascunhos com perguntas embebidas e segunda execucao nao dup
 test('criacao: salta quizzes existentes em qualquer estado, incluindo arquivados', async () => {
   const dir = tmpDir();
   writeContent(dir, 'a.json', quiz());
-  const client = fakeClient([{ id: 1, title: 'Geografia — Capitais da Europa', status: 3 }]);
+  const client = fakeClient([{ id: 1, title: 'Capitais da Europa', contentKey: 'a', status: 3 }]);
   assert.equal(await run({ args: [], env: ENV, contentDir: dir, client, log: () => {} }), 0);
   assert.equal(client.state.created.length, 0);
 });
@@ -275,22 +290,22 @@ test('publish: recusa quizzes sem revisao e devolve != 0', async () => {
 test('publish: publica Draft e Unpublished revistos, salta Published e recusa Archived', async () => {
   const dir = tmpDir();
   const reviewed = { source: 'original', author: 'GameSphere', reviewedBy: 'Ana', reviewedAt: '2026-10-25' };
-  writeContent(dir, 'a.json', quiz({ title: 'Geografia — A', provenance: reviewed }));
-  writeContent(dir, 'b.json', quiz({ title: 'Geografia — B', provenance: reviewed }));
-  writeContent(dir, 'c.json', quiz({ title: 'Geografia — C', provenance: reviewed }));
-  writeContent(dir, 'd.json', quiz({ title: 'Geografia — D', provenance: reviewed }));
+  writeContent(dir, 'a.json', quiz({ contentKey: 'a', title: 'A', provenance: reviewed }));
+  writeContent(dir, 'b.json', quiz({ contentKey: 'b', title: 'B', provenance: reviewed }));
+  writeContent(dir, 'c.json', quiz({ contentKey: 'c', title: 'C', provenance: reviewed }));
+  writeContent(dir, 'd.json', quiz({ contentKey: 'd', title: 'D', provenance: reviewed }));
   const client = fakeClient([
-    serverQuiz(1, 0, quiz({ title: 'Geografia — A' })),
-    serverQuiz(2, 2, quiz({ title: 'Geografia — B' })),
-    serverQuiz(3, 1, quiz({ title: 'Geografia — C' })),
-    serverQuiz(4, 3, quiz({ title: 'Geografia — D' })),
+    serverQuiz(1, 0, quiz({ contentKey: 'a', title: 'A' })),
+    serverQuiz(2, 2, quiz({ contentKey: 'b', title: 'B' })),
+    serverQuiz(3, 1, quiz({ contentKey: 'c', title: 'C' })),
+    serverQuiz(4, 3, quiz({ contentKey: 'd', title: 'D' })),
   ]);
   const { log, lines } = collector();
   const code = await run({ args: ['--publish'], env: ENV, contentDir: dir, client, log });
   assert.equal(code, 1);
   assert.deepEqual(client.state.statusChanges, [{ id: 1, status: 1 }, { id: 2, status: 1 }]);
-  assert.match(lines.join('\n'), /RECUSADO "Geografia — D"/);
-  assert.match(lines.join('\n'), /SALTADO "Geografia — C"/);
+  assert.match(lines.join('\n'), /RECUSADO "D"/);
+  assert.match(lines.join('\n'), /SALTADO "C"/);
 });
 
 test('publish: Published sozinho e SALTADO com codigo 0', async () => {
@@ -444,9 +459,10 @@ test('conteudo real (criterio 1): 6 quizzes, 8 perguntas, 3 categorias, EASY e M
   assert.equal(all.length, 6);
   for (const { name, quiz: q } of all) {
     assert.equal(q.questions.length, 8, name);
-    assert.ok(q.title.startsWith(`${q.category} — `), name);
+    assert.ok(!q.title.includes(' — '), name);
   }
-  assert.deepEqual([...new Set(all.map((a) => a.quiz.category))].sort(), ['Ciência', 'Geografia', 'História'].sort());
+  assert.deepEqual([...new Set(all.map((a) => a.quiz.category))].sort(), ['GEOGRAPHY', 'HISTORY', 'SCIENCE']);
+  assert.equal(new Set(all.map((a) => a.quiz.title)).size, all.length);
   const difficulties = new Set(all.map((a) => a.quiz.difficulty));
   assert.ok(difficulties.has('EASY') && difficulties.has('MEDIUM'));
   assert.deepEqual([...difficulties].sort(), ['EASY', 'MEDIUM']);
@@ -458,6 +474,16 @@ test('conteudo real (criterio 1): 6 quizzes, 8 perguntas, 3 categorias, EASY e M
 
 test('conteudo real (criterio 2): todos os ficheiros passam validateQuiz', () => {
   for (const { name, quiz: q } of realQuizzes()) assert.deepEqual(validateQuiz(q, name), [], name);
+});
+
+test('conteudo real (criterio 9): categoria mapeada por ficheiro, titulo sem prefixo de categoria', () => {
+  const byPrefix = { geografia: 'GEOGRAPHY', historia: 'HISTORY', ciencia: 'SCIENCE' };
+  const labels = ['Cultura geral', 'Geografia', 'História', 'Ciência', 'Desporto', 'Entretenimento', 'Tecnologia', 'Videojogos'];
+  for (const { name, quiz: q } of realQuizzes()) {
+    assert.equal(q.category, byPrefix[name.split('-')[0]], name);
+    for (const label of labels) assert.ok(!q.title.startsWith(`${label} —`), `${name}: ${q.title}`);
+    assert.equal(toUpsertPayload(q).category, { GENERAL_KNOWLEDGE: 0, GEOGRAPHY: 1, HISTORY: 2, SCIENCE: 3 }[q.category], name);
+  }
 });
 
 test('conteudo real (criterio 3): explanation e provenance originais, por rever', () => {
@@ -504,11 +530,11 @@ test('publish: reviewedBy so com espacos conta como nao revisto', async () => {
 test('publish: revisto e publicado, mas um nao revisto no mesmo lote faz falhar sem bloquear o revisto', async () => {
   const dir = tmpDir();
   const reviewed = { source: 'original', author: 'G', reviewedBy: 'Ana', reviewedAt: '2026-10-25' };
-  writeContent(dir, 'a.json', quiz({ title: 'Geografia — A', provenance: reviewed }));
-  writeContent(dir, 'b.json', quiz({ title: 'Geografia — B' }));
+  writeContent(dir, 'a.json', quiz({ contentKey: 'a', title: 'A', provenance: reviewed }));
+  writeContent(dir, 'b.json', quiz({ contentKey: 'b', title: 'B' }));
   const client = fakeClient([
-    serverQuiz(1, 0, quiz({ title: 'Geografia — A' })),
-    serverQuiz(2, 0, quiz({ title: 'Geografia — B' })),
+    serverQuiz(1, 0, quiz({ contentKey: 'a', title: 'A' })),
+    serverQuiz(2, 0, quiz({ contentKey: 'b', title: 'B' })),
   ]);
   assert.notEqual(await run({ args: ['--publish'], env: ENV, contentDir: dir, client, log: () => {} }), 0);
   assert.deepEqual(client.state.statusChanges, [{ id: 1, status: 1 }]);
@@ -527,7 +553,7 @@ test('criacao: payload enviado e valido para rascunho (sem status, sem campos ed
 
 test('criacao: listagem pagina para detectar duplicados alem da primeira pagina', async () => {
   const dir = tmpDir();
-  writeContent(dir, 'a.json', quiz({ title: 'Geografia — Tardio' }));
+  writeContent(dir, 'a.json', quiz({ title: 'Tardio' }));
   const fetchImpl = async (url, init = {}) => {
     const u = new URL(url);
     if (u.pathname === '/api/User/login') {
@@ -538,7 +564,7 @@ test('criacao: listagem pagina para detectar duplicados alem da primeira pagina'
       const p = Number(u.searchParams.get('page'));
       return Response.json(p === 1
         ? Array.from({ length: 50 }, (_, i) => ({ id: i + 1, title: `T${i}`, status: 0 }))
-        : [{ id: 99, title: 'Geografia — Tardio', status: 3 }]);
+        : [{ id: 99, title: 'Tardio', contentKey: 'a', status: 3 }]);
     }
     assert.fail('nao deve criar');
   };
@@ -602,9 +628,9 @@ test('validateQuiz: quebra de linha no texto bruto de resposta e correctAnswer f
 });
 
 test('validateQuiz: titulo com U+FEFF inicial falha (Trim do .NET nao o remove)', () => {
-  assert.notEqual(errorsOf(quiz({ title: '﻿Geografia — Capitais da Europa' })).length, 0);
-  assert.notEqual(errorsOf(quiz({ title: 'Geografia — Capitais﻿' })).length, 0);
-  assert.deepEqual(errorsOf(quiz({ title: '  Geografia — Capitais da Europa ' })), []);
+  assert.notEqual(errorsOf(quiz({ title: '﻿Capitais da Europa' })).length, 0);
+  assert.notEqual(errorsOf(quiz({ title: 'Capitais﻿' })).length, 0);
+  assert.deepEqual(errorsOf(quiz({ title: ' Capitais da Europa ' })), []);
 });
 
 test('validateQuiz: unicidade de respostas equivale a OrdinalIgnoreCase', () => {
@@ -633,7 +659,7 @@ test('createApiClient: redirect 307 no login nao e seguido e nao expoe credencia
 test('dry-run: titulos duplicados entre ficheiros falham e indicam os ficheiros', async () => {
   const dir = tmpDir();
   writeContent(dir, 'a.json', quiz());
-  writeContent(dir, 'b.json', quiz());
+  writeContent(dir, 'b.json', quiz({ contentKey: 'b' }));
   const { log, lines } = collector();
   assert.notEqual(await run({ args: ['--dry-run'], env: {}, contentDir: dir, log }), 0);
   const text = lines.join('\n');
@@ -642,39 +668,21 @@ test('dry-run: titulos duplicados entre ficheiros falham e indicam os ficheiros'
   assert.match(text, /b\.json/);
 });
 
-test('publish: com copia Published no servidor salta e nao publica nenhuma copia Draft/Unpublished', async () => {
+test('publish: com o quiz Published no servidor salta e nao publica', async () => {
   const dir = tmpDir();
   const reviewed = { source: 'original', author: 'G', reviewedBy: 'Ana', reviewedAt: '2026-10-25' };
   writeContent(dir, 'a.json', quiz({ provenance: reviewed }));
-  const client = fakeClient([
-    serverQuiz(1, 3, quiz()),
-    serverQuiz(2, 0, quiz()),
-    serverQuiz(5, 2, quiz()),
-    serverQuiz(7, 1, quiz()),
-  ]);
+  const client = fakeClient([serverQuiz(7, 1, quiz())]);
   const { log, lines } = collector();
   assert.equal(await run({ args: ['--publish'], env: ENV, contentDir: dir, client, log }), 0);
   assert.deepEqual(client.state.statusChanges, []);
   assert.match(lines.join('\n'), /SALTADO .*já está publicado \(id 7\)/);
 });
 
-test('publish: sem copia Published escolhe Draft/Unpublished de maior id', async () => {
-  const dir = tmpDir();
-  const reviewed = { source: 'original', author: 'G', reviewedBy: 'Ana', reviewedAt: '2026-10-25' };
-  writeContent(dir, 'a.json', quiz({ provenance: reviewed }));
-  const client = fakeClient([
-    serverQuiz(1, 3, quiz()),
-    serverQuiz(2, 0, quiz()),
-    serverQuiz(5, 2, quiz()),
-  ]);
-  assert.equal(await run({ args: ['--publish'], env: ENV, contentDir: dir, client, log: () => {} }), 0);
-  assert.deepEqual(client.state.statusChanges, [{ id: 5, status: 1 }]);
-});
-
 test('logs mostram o estado pelo nome', async () => {
   const dir = tmpDir();
   writeContent(dir, 'a.json', quiz());
-  const client = fakeClient([{ id: 1, title: 'Geografia — Capitais da Europa', status: 3 }]);
+  const client = fakeClient([{ id: 1, title: 'Capitais da Europa', contentKey: 'a', status: 3 }]);
   const { log, lines } = collector();
   await run({ args: [], env: ENV, contentDir: dir, client, log });
   assert.match(lines.join('\n'), /Archived/);
@@ -784,9 +792,9 @@ test('listQuizzes: limite de 10000 paginas falha com erro claro', async () => {
 test('publish: falha HTTP a meio do lote nao impede os restantes, imprime resumo e devolve 1', async () => {
   const dir = tmpDir();
   const reviewed = { source: 'original', author: 'G', reviewedBy: 'Ana', reviewedAt: '2026-10-25' };
-  const titles = ['Geografia — A', 'Geografia — B', 'Geografia — C'];
-  titles.forEach((title, i) => writeContent(dir, `${i}.json`, quiz({ title, provenance: reviewed })));
-  const client = fakeClient(titles.map((title, i) => serverQuiz(i + 1, 0, quiz({ title }))));
+  const titles = ['A', 'B', 'C'];
+  titles.forEach((title, i) => writeContent(dir, `${i}.json`, quiz({ contentKey: String(i), title, provenance: reviewed })));
+  const client = fakeClient(titles.map((title, i) => serverQuiz(i + 1, 0, quiz({ contentKey: String(i), title }))));
   const original = client.changeStatus;
   client.changeStatus = async (id, status) => {
     if (id === 2) throw new Error('Mudança de estado falhou (HTTP 409)');
@@ -796,24 +804,24 @@ test('publish: falha HTTP a meio do lote nao impede os restantes, imprime resumo
   assert.equal(await run({ args: ['--publish'], env: ENV, contentDir: dir, client, log }), 1);
   assert.deepEqual(client.state.statusChanges, [{ id: 1, status: 1 }, { id: 3, status: 1 }]);
   const text = lines.join('\n');
-  assert.match(text, /FALHOU "Geografia — B": Mudança de estado falhou \(HTTP 409\)/);
+  assert.match(text, /FALHOU "B": Mudança de estado falhou \(HTTP 409\)/);
   assert.match(text, /Publicados: 2, recusados: 0, saltados: 0, falhados: 1\./);
 });
 
 test('criacao: falha HTTP a meio do lote nao impede os restantes, imprime resumo e devolve 1', async () => {
   const dir = tmpDir();
-  ['A', 'B', 'C'].forEach((n, i) => writeContent(dir, `${i}.json`, quiz({ title: `Geografia — ${n}` })));
+  ['A', 'B', 'C'].forEach((n, i) => writeContent(dir, `${i}.json`, quiz({ contentKey: String(i), title: `${n}` })));
   const client = fakeClient();
   const original = client.createQuiz;
   client.createQuiz = async (payload) => {
-    if (payload.title === 'Geografia — B') throw new Error('Criação do quiz falhou (HTTP 409)');
+    if (payload.title === 'B') throw new Error('Criação do quiz falhou (HTTP 409)');
     return original(payload);
   };
   const { log, lines } = collector();
   assert.equal(await run({ args: [], env: ENV, contentDir: dir, client, log }), 1);
   assert.equal(client.state.created.length, 2);
   const text = lines.join('\n');
-  assert.match(text, /FALHOU "Geografia — B": Criação do quiz falhou \(HTTP 409\)/);
+  assert.match(text, /FALHOU "B": Criação do quiz falhou \(HTTP 409\)/);
   assert.match(text, /Criados: 2, saltados: 0, falhados: 1\./);
 });
 
@@ -854,6 +862,7 @@ test('findContentDifference: igual devolve null e cada diferenca e detectada', (
 
   const variant = (overrides) => serverQuiz(1, 0, quiz(overrides));
   assert.match(findContentDifference(base, variant({ difficulty: 'HARD' })), /difficulty/);
+  assert.match(findContentDifference(base, variant({ category: 'HISTORY' })), /category/);
   assert.match(findContentDifference(base, variant({ questions: [question(), question()] })), /número de perguntas/);
   assert.match(findContentDifference(base, variant({ questions: [question({ description: 'Outra?' })] })), /pergunta 1: description/);
   assert.match(findContentDifference(base, variant({ questions: [question({ typeOfAnswer: 'TRUEORFALSE', answers: ['Verdadeiro', 'Falso'], correctAnswer: 'Verdadeiro' })] })), /pergunta 1: typeOfAnswer/);
@@ -864,8 +873,127 @@ test('findContentDifference: igual devolve null e cada diferenca e detectada', (
 
 test('findContentDifference: espacos nas pontas no ficheiro vs texto normalizado do servidor dao null', () => {
   const padded = quiz({
-    title: ' Geografia — Capitais da Europa ',
+    title: 'Capitais da Europa ',
     questions: [question({ description: '  Qual é a capital de Espanha?  ', answers: [' Madrid', 'Barcelona ', 'Sevilha', ' Valência '], correctAnswer: ' Madrid ' })],
   });
   assert.equal(findContentDifference(padded, serverQuiz(1, 0, quiz())), null);
+});
+
+// --- contentKey: identidade estavel dos quizzes curados ---
+
+test('validateQuiz: contentKey e obrigatoria, em slug e igual ao nome do ficheiro', () => {
+  assert.deepEqual(validateQuiz(quiz({ contentKey: 'capitais-da-europa' }), 'capitais-da-europa.json'), []);
+  assert.deepEqual(validateQuiz(quiz({ contentKey: 'a1-b2' }), 'a1-b2.json'), []);
+  assert.deepEqual(validateQuiz(quiz({ contentKey: 'a'.repeat(100) }), `${'a'.repeat(100)}.json`), []);
+  assert.notEqual(errorsOf(quiz({ contentKey: undefined })).length, 0);
+  assert.notEqual(errorsOf(quiz({ contentKey: null })).length, 0);
+  assert.notEqual(errorsOf(quiz({ contentKey: 7 })).length, 0);
+  assert.notEqual(errorsOf(quiz({ contentKey: '' })).length, 0);
+  assert.notEqual(validateQuiz(quiz({ contentKey: 'a'.repeat(101) }), `${'a'.repeat(101)}.json`).length, 0);
+  for (const bad of ['A', 'com espaco', '-a', 'a-', 'a--b', 'a_b', 'ação']) {
+    assert.notEqual(validateQuiz(quiz({ contentKey: bad }), `${bad}.json`).length, 0, bad);
+  }
+});
+
+test('validateQuiz: contentKey diferente do nome do ficheiro falha e indica ambos', () => {
+  const errors = validateQuiz(quiz({ contentKey: 'outra' }), 'a.json');
+  assert.equal(errors.length, 1);
+  assert.match(errors[0], /contentKey/);
+  assert.match(errors[0], /outra/);
+  assert.match(errors[0], /a\.json/);
+});
+
+test('toUpsertPayload envia a contentKey', () => {
+  assert.equal(toUpsertPayload(quiz({ contentKey: 'capitais' })).contentKey, 'capitais');
+});
+
+test('dry-run: contentKey repetida entre ficheiros falha (defesa alem da igualdade com o nome)', async () => {
+  const dir = tmpDir();
+  writeContent(dir, 'a.json', quiz());
+  writeContent(dir, 'b.json', quiz({ contentKey: 'a', title: 'Outro' }));
+  const { log, lines } = collector();
+  assert.notEqual(await run({ args: ['--dry-run'], env: {}, contentDir: dir, log }), 0);
+  assert.match(lines.join('\n'), /b\.json/);
+});
+
+test('criacao: um quiz com a mesma chave e um titulo diferente e saltado (correspondencia so por chave)', async () => {
+  const dir = tmpDir();
+  writeContent(dir, 'a.json', quiz());
+  const client = fakeClient([{ id: 1, title: 'Titulo antigo', contentKey: 'a', status: 0 }]);
+  assert.equal(await run({ args: [], env: ENV, contentDir: dir, client, log: () => {} }), 0);
+  assert.equal(client.state.created.length, 0);
+});
+
+test('criacao: titulo igual com outra chave ou sem chave nao conta como existente; cria e avisa se nao tem chave', async () => {
+  const dir = tmpDir();
+  writeContent(dir, 'a.json', quiz());
+  const client = fakeClient([
+    { id: 1, title: 'Capitais da Europa', contentKey: 'outro-quiz', status: 1 },
+    { id: 2, title: 'Capitais da Europa', contentKey: null, status: 0 },
+    { id: 3, title: ' capitais da europa', status: 0 },
+  ]);
+  const { log, lines } = collector();
+  assert.equal(await run({ args: [], env: ENV, contentDir: dir, client, log }), 0);
+  assert.equal(client.state.created.length, 1);
+  assert.equal(client.state.created[0].contentKey, 'a');
+  const text = lines.join('\n');
+  assert.match(text, /AVISO/);
+  assert.match(text, /id 2/);
+  assert.doesNotMatch(text, /id 1[,)]/);
+});
+
+test('criacao: sem quiz sem chave com o mesmo titulo nao ha aviso', async () => {
+  const dir = tmpDir();
+  writeContent(dir, 'a.json', quiz());
+  const client = fakeClient([{ id: 1, title: 'Capitais da Europa', contentKey: 'outro', status: 0 }]);
+  const { log, lines } = collector();
+  await run({ args: [], env: ENV, contentDir: dir, client, log });
+  assert.doesNotMatch(lines.join('\n'), /AVISO/);
+});
+
+test('publish: com titulo duplicado no servidor publica so o quiz com a chave', async () => {
+  const dir = tmpDir();
+  const reviewed = { source: 'original', author: 'G', reviewedBy: 'Ana', reviewedAt: '2026-10-25' };
+  writeContent(dir, 'a.json', quiz({ provenance: reviewed }));
+  const client = fakeClient([
+    serverQuiz(1, 1, quiz({ contentKey: 'outro' })),
+    serverQuiz(2, 0, quiz({ contentKey: null })),
+    serverQuiz(3, 0, quiz()),
+  ]);
+  const { log, lines } = collector();
+  assert.equal(await run({ args: ['--publish'], env: ENV, contentDir: dir, client, log }), 0);
+  assert.deepEqual(client.state.statusChanges, [{ id: 3, status: 1 }]);
+  assert.match(lines.join('\n'), /AVISO/);
+});
+
+test('publish: sem quiz com a chave recusa, mesmo havendo um com o mesmo titulo e sem chave', async () => {
+  const dir = tmpDir();
+  const reviewed = { source: 'original', author: 'G', reviewedBy: 'Ana', reviewedAt: '2026-10-25' };
+  writeContent(dir, 'a.json', quiz({ provenance: reviewed }));
+  const client = fakeClient([serverQuiz(1, 0, quiz({ contentKey: null }))]);
+  const { log, lines } = collector();
+  assert.equal(await run({ args: ['--publish'], env: ENV, contentDir: dir, client, log }), 1);
+  assert.deepEqual(client.state.statusChanges, []);
+  assert.match(lines.join('\n'), /RECUSADO .*não existe/);
+});
+
+test('findContentDifference: compara tambem categoria e titulo', () => {
+  const base = quiz();
+  assert.match(findContentDifference(base, serverQuiz(1, 0, quiz({ title: 'Outro titulo' }))), /title/);
+  assert.match(findContentDifference(base, serverQuiz(1, 0, quiz({ category: 'HISTORY' }))), /category/);
+  assert.equal(findContentDifference(base, serverQuiz(1, 0, quiz())), null);
+});
+
+test('conteudo real: contentKey igual ao nome do ficheiro e titulo da ciencia renomeado', () => {
+  const all = realQuizzes();
+  for (const { name, quiz: q } of all) assert.equal(q.contentKey, name.replace(/\.json$/, ''), name);
+  assert.equal(new Set(all.map((a) => a.quiz.contentKey)).size, all.length);
+  const science = all.find((a) => a.name === 'ciencia-verdadeiro-ou-falso.json');
+  assert.equal(science.quiz.title, 'Ciência em Verdadeiro ou Falso');
+});
+
+test('README de conteudo documenta a contentKey', () => {
+  const doc = fs.readFileSync(path.join(REAL_DIR, 'README.md'), 'utf8');
+  assert.match(doc, /contentKey/);
+  assert.match(doc, /não pode (ser )?(mudar|alterad|mud)/i);
 });

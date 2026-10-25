@@ -1,6 +1,7 @@
 {
-  "title": "Ciência — Química e Física Básicas",
-  "category": "Ciência",
+  "contentKey": "ciencia-quimica-e-fisica-basicas",
+  "title": "Química e Física Básicas",
+  "category": "SCIENCE",
   "difficulty": "MEDIUM",
   "provenance": {
     "source": "original",

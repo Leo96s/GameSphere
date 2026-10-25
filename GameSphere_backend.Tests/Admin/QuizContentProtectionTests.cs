@@ -218,14 +218,14 @@ public sealed class QuizContentProtectionTests : AdminQuizAdministrationTestBase
             ContentOperation.UpdateQuizTitle => await SendAdminRequestAsync(
                 HttpMethod.Put,
                 $"/api/admin/quizzes/{quizId}",
-                new { title = "Edited title", difficulty = (int)Difficulty.HARD }),
+                new { title = "Edited title", difficulty = (int)Difficulty.HARD, category = (int)QuizCategory.GEOGRAPHY }),
             ContentOperation.UpdateQuizQuestions => await SendAdminRequestAsync(
                 HttpMethod.Put,
                 $"/api/admin/quizzes/{quizId}",
                 new
                 {
                     title = "Edited title",
-                    difficulty = (int)Difficulty.HARD,
+                    difficulty = (int)Difficulty.HARD, category = (int)QuizCategory.GEOGRAPHY,
                     questions = new[] { ValidQuestionPayload("Replaced question?") }
                 }),
             _ => throw new ArgumentOutOfRangeException(nameof(operation))

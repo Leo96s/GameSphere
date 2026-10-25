@@ -3,6 +3,7 @@ using GameSphere_backend.Enums;
 using GameSphere_backend.Models.BackendModels;
 using GameSphere_backend.Models.FrontendModels;
 using GameSphere_backend.ServicesResponses;
+using Microsoft.EntityFrameworkCore;
 
 namespace GameSphere_backend.Services.QuizAdministration;
 
@@ -31,6 +32,13 @@ public sealed class CreateQuizHandler
                 "The authenticated administrator was not found.");
         }
 
+        const string duplicateKeyMessage = "A quiz with this content key already exists.";
+        if (normalized.ContentKey is not null
+            && await _context.Quizzs.AnyAsync(candidate => candidate.ContentKey == normalized.ContentKey))
+        {
+            return QuizAdministrationResponses.Failure<AdminQuizUpsertDto>("Conflict", duplicateKeyMessage);
+        }
+
         await using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
@@ -38,6 +46,8 @@ public sealed class CreateQuizHandler
             {
                 Title = normalized.Title,
                 Difficulty = normalized.Difficulty,
+                Category = normalized.Category!.Value,
+                ContentKey = normalized.ContentKey,
                 Status = QuizStatus.Draft,
                 NumberOfQuests = 0,
                 RegistrationDate = DateTime.UtcNow,
@@ -54,6 +64,11 @@ public sealed class CreateQuizHandler
             await transaction.CommitAsync();
 
             return QuizAdministrationResponses.Success(QuizAdministrationMapper.ToDto(quiz, hasAttempts: false), "Created");
+        }
+        catch (DbUpdateException exception) when (QuizAdministrationDataGuards.IsContentKeyUniqueViolation(exception))
+        {
+            await transaction.RollbackAsync();
+            return QuizAdministrationResponses.Failure<AdminQuizUpsertDto>("Conflict", duplicateKeyMessage);
         }
         catch
         {

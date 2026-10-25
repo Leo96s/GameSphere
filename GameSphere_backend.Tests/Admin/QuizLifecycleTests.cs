@@ -25,7 +25,7 @@ public sealed class QuizLifecycleTests : AdminQuizAdministrationTestBase, IClass
         var createdQuiz = await SendAdminRequestAsync(HttpMethod.Post, "/api/admin/quizzes", new
         {
             title = "Curated geography quiz",
-            difficulty = (int)Difficulty.EASY,
+            difficulty = (int)Difficulty.EASY, category = (int)QuizCategory.GEOGRAPHY,
             questions = new[]
             {
                 new
@@ -51,7 +51,7 @@ public sealed class QuizLifecycleTests : AdminQuizAdministrationTestBase, IClass
         var updatedQuiz = await SendAdminRequestAsync(HttpMethod.Put, $"/api/admin/quizzes/{quizId}", new
         {
             title = "Published geography quiz",
-            difficulty = (int)Difficulty.MEDIUM,
+            difficulty = (int)Difficulty.MEDIUM, category = (int)QuizCategory.GEOGRAPHY,
             questions = new[]
             {
                 new
@@ -138,7 +138,7 @@ public sealed class QuizLifecycleTests : AdminQuizAdministrationTestBase, IClass
         var invalidQuiz = await SendAdminRequestAsync(HttpMethod.Post, "/api/admin/quizzes", new
         {
             title = " ",
-            difficulty = (int)Difficulty.EASY
+            difficulty = (int)Difficulty.EASY, category = (int)QuizCategory.GEOGRAPHY
         });
 
         Assert.Equal(HttpStatusCode.BadRequest, invalidQuiz.StatusCode);

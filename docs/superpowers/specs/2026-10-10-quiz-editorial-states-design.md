@@ -66,6 +66,7 @@ dados internos.
 | Título preenchido | `A quiz title is required.` |
 | Título com no máximo 100 caracteres | `The quiz title cannot exceed 100 characters.` |
 | Dificuldade definida | `The quiz difficulty is invalid.` |
+| Categoria definida | `The quiz category is invalid.` |
 | Pelo menos uma pergunta | `A quiz must have at least one question to be published.` |
 | Cada pergunta passa os validadores existentes (forma, opções, resposta correta) | `Question N: <mensagem do validador>` |
 | Perguntas `TRUEORFALSE` têm exatamente 2 opções | `Question N: A true or false question must have exactly two options.` |

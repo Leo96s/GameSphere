@@ -30,13 +30,28 @@ public sealed class QuizCatalogService : IQuizCatalogService
         _attemptPersistenceService = attemptPersistenceService;
     }
 
-    public async Task<IReadOnlyList<QuizCatalogItemDto>> GetPublishedAsync(int page = 1, int pageSize = 50)
+    public async Task<IReadOnlyList<QuizCatalogItemDto>> GetPublishedAsync(
+        int page = 1,
+        int pageSize = 50,
+        QuizCategory? category = null,
+        Difficulty? difficulty = null)
     {
         page = Math.Clamp(page, 1, 10_000);
         pageSize = Math.Clamp(pageSize, 1, 100);
-        var quizzes = await _context.Quizzs
+        var query = _context.Quizzs
             .AsNoTracking()
-            .Where(quiz => quiz.Status == QuizStatus.Published)
+            .Where(quiz => quiz.Status == QuizStatus.Published);
+        if (category is { } selectedCategory)
+        {
+            query = query.Where(quiz => quiz.Category == selectedCategory);
+        }
+
+        if (difficulty is { } selectedDifficulty)
+        {
+            query = query.Where(quiz => quiz.Difficulty == selectedDifficulty);
+        }
+
+        var quizzes = await query
             .OrderBy(quiz => quiz.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)

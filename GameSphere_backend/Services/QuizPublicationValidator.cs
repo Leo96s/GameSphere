@@ -51,6 +51,11 @@ public sealed class QuizPublicationValidator : IQuizPublicationValidator
             return "The quiz difficulty is invalid.";
         }
 
+        if (!Enum.IsDefined(quiz.Category))
+        {
+            return "The quiz category is invalid.";
+        }
+
         var questions = quiz.Questions?.OrderBy(question => question.Id).ToList() ?? [];
         if (questions.Count == 0)
         {

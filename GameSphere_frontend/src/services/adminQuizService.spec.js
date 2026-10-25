@@ -186,16 +186,31 @@ describe('adminQuizService', () => {
   });
 
   it('valida os detalhes do quiz antes de gravar', () => {
-    expect(validateQuizDetails({ title: '', difficulty: 0 })).toBe('Indica o título do quiz.');
-    expect(validateQuizDetails({ title: '   ', difficulty: 0 })).toBe('Indica o título do quiz.');
-    expect(validateQuizDetails({ difficulty: 0 })).toBe('Indica o título do quiz.');
+    expect(validateQuizDetails({ title: '', difficulty: 0, category: 1 })).toBe('Indica o título do quiz.');
+    expect(validateQuizDetails({ title: '   ', difficulty: 0, category: 1 })).toBe('Indica o título do quiz.');
+    expect(validateQuizDetails({ difficulty: 0, category: 1 })).toBe('Indica o título do quiz.');
     expect(validateQuizDetails()).toBe('Indica o título do quiz.');
-    expect(validateQuizDetails({ title: 'A'.repeat(101), difficulty: 0 }))
+    expect(validateQuizDetails({ title: 'A'.repeat(101), difficulty: 0, category: 1 }))
       .toBe('O título do quiz não pode ter mais de 100 caracteres.');
-    expect(validateQuizDetails({ title: 'Quiz', difficulty: 3 })).toBe('Escolhe uma dificuldade válida.');
-    expect(validateQuizDetails({ title: 'Quiz', difficulty: undefined })).toBe('Escolhe uma dificuldade válida.');
-    expect(validateQuizDetails({ title: 'A'.repeat(100), difficulty: 2 })).toBe('');
-    expect(validateQuizDetails({ title: '  Quiz  ', difficulty: 1 })).toBe('');
+    expect(validateQuizDetails({ title: 'Quiz', difficulty: 3, category: 1 })).toBe('Escolhe uma dificuldade válida.');
+    expect(validateQuizDetails({ title: 'Quiz', difficulty: undefined, category: 1 })).toBe('Escolhe uma dificuldade válida.');
+    expect(validateQuizDetails({ title: 'A'.repeat(100), difficulty: 2, category: 7 })).toBe('');
+    expect(validateQuizDetails({ title: '  Quiz  ', difficulty: 1, category: 0 })).toBe('');
+  });
+
+  it('exige uma categoria válida', () => {
+    expect(validateQuizDetails({ title: 'Quiz', difficulty: 0 })).toBe('Escolhe uma categoria válida.');
+    expect(validateQuizDetails({ title: 'Quiz', difficulty: 0, category: null })).toBe('Escolhe uma categoria válida.');
+    expect(validateQuizDetails({ title: 'Quiz', difficulty: 0, category: '' })).toBe('Escolhe uma categoria válida.');
+    expect(validateQuizDetails({ title: 'Quiz', difficulty: 0, category: 8 })).toBe('Escolhe uma categoria válida.');
+    expect(validateQuizDetails({ title: 'Quiz', difficulty: 0, category: '3' })).toBe('');
+    for (const category of [' ', true, '0x1', '1.5', '-1', ' 1', 1.5]) {
+      expect(validateQuizDetails({ title: 'Quiz', difficulty: 0, category })).toBe('Escolhe uma categoria válida.');
+    }
+    for (const difficulty of [' ', true, '0x1', '1.5', '', null, ' 1', 0.5]) {
+      expect(validateQuizDetails({ title: 'Quiz', difficulty, category: 1 })).toBe('Escolhe uma dificuldade válida.');
+    }
+    expect(validateQuizDetails({ title: 'Quiz', difficulty: '2', category: 1 })).toBe('');
   });
 
   it('valida a pergunta pela ordem enunciado, opções, duplicados e resposta correta', () => {

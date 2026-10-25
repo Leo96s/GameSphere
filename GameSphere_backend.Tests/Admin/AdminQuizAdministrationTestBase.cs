@@ -54,7 +54,7 @@ public abstract class AdminQuizAdministrationTestBase : IAsyncLifetime
         var response = await SendAdminRequestAsync(HttpMethod.Post, "/api/admin/quizzes", new
         {
             title = $"Empty quiz {Guid.NewGuid():N}",
-            difficulty = (int)Difficulty.EASY
+            difficulty = (int)Difficulty.EASY, category = (int)QuizCategory.GEOGRAPHY
         });
         var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
@@ -68,7 +68,7 @@ public abstract class AdminQuizAdministrationTestBase : IAsyncLifetime
         var response = await SendAdminRequestAsync(HttpMethod.Post, "/api/admin/quizzes", new
         {
             title = $"Quiz with content {Guid.NewGuid():N}",
-            difficulty = (int)Difficulty.EASY,
+            difficulty = (int)Difficulty.EASY, category = (int)QuizCategory.GEOGRAPHY,
             questions = new[]
             {
                 new

@@ -19,6 +19,8 @@
         <header class="mt-6">
           <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">{{ quiz.title }}</h1>
           <div class="mt-3 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            <span>{{ quizCategoryLabel(quiz.category) }}</span>
+            <span aria-hidden="true">·</span>
             <span>{{ difficultyLabel(quiz.difficulty) }}</span>
             <span aria-hidden="true">·</span>
             <span :class="statusClass(status)" class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold">{{ quizStatusLabel(status) }}</span>
@@ -63,6 +65,7 @@ import { computed, onMounted, ref, shallowRef } from 'vue';
 import { useRoute } from 'vue-router';
 import QuizQuestionList from '@/components/Quizzes/QuizQuestionList.vue';
 import { useQuizAttempt } from '@/composables/useQuizAttempt';
+import { difficultyLabel, quizCategoryLabel } from '@/enums/quiz';
 import {
   changeQuizStatus,
   getAdminErrorMessage,
@@ -91,7 +94,6 @@ const selectedAnswers = computed(() => Object.fromEntries(
   (attempt.value?.toRequest().answers ?? []).map((answer) => [answer.questionId, answer.selectedAnswer]),
 ));
 
-const difficultyLabel = (difficulty) => ({ 0: 'Fácil', 1: 'Médio', 2: 'Difícil' }[difficulty] ?? 'Sem dificuldade');
 const statusClass = (value) => value === QUIZ_STATUS.PUBLISHED
   ? 'bg-primary/15 text-primary ring-1 ring-primary/25'
   : 'bg-muted text-muted-foreground ring-1 ring-border';

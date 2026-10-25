@@ -49,6 +49,15 @@ public sealed class QuizPublicationValidatorTests
     }
 
     [Fact]
+    public void Quiz_with_an_undefined_category_cannot_be_published()
+    {
+        var quiz = Quiz(Multiple(1));
+        quiz.Category = (QuizCategory)99;
+
+        Assert.Equal("The quiz category is invalid.", CreateValidator().Validate(quiz));
+    }
+
+    [Fact]
     public void Quiz_without_questions_cannot_be_published()
     {
         var empty = Quiz();

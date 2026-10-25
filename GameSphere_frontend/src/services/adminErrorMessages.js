@@ -17,6 +17,10 @@ export const ADMIN_MESSAGES = Object.freeze({
   // Validação de publicação
   'The quiz title cannot exceed 100 characters.': 'O título do quiz não pode ter mais de 100 caracteres.',
   'The quiz difficulty is invalid.': 'A dificuldade do quiz não é válida.',
+  'The quiz category is invalid.': 'A categoria do quiz não é válida.',
+  'The quiz content key is invalid.': 'A chave de conteúdo do quiz não é válida.',
+  'A quiz with this content key already exists.': 'Já existe um quiz com esta chave de conteúdo.',
+  'The quiz content key cannot be changed.': 'A chave de conteúdo do quiz não pode ser alterada.',
   'A quiz must have at least one question to be published.':
     'Um quiz tem de ter pelo menos uma pergunta para ser publicado.',
   'A true or false question must have exactly two options.':

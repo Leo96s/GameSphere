@@ -1,7 +1,13 @@
 import api from './api';
 
-export const listQuizzes = async () => {
-  const response = await api.get('/quizzes');
+export const listQuizzes = async (filters = {}) => {
+  const params = {};
+  if (filters.category !== undefined && filters.category !== null) params.category = filters.category;
+  if (filters.difficulty !== undefined && filters.difficulty !== null) params.difficulty = filters.difficulty;
+
+  const response = Object.keys(params).length > 0
+    ? await api.get('/quizzes', { params })
+    : await api.get('/quizzes');
   return response.data;
 };
 

@@ -19,6 +19,8 @@ internal static class QuizAdministrationMapper
         Id = source.Id,
         Title = source.Title,
         Difficulty = source.Difficulty,
+        Category = source.Category,
+        ContentKey = source.ContentKey,
         NumberOfQuests = source.NumberOfQuests,
         Status = source.Status,
         HasAttempts = hasAttempts,

@@ -117,6 +117,13 @@ namespace GameSphere_backend.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("Category")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ContentKey")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<int>("Difficulty")
                         .HasColumnType("integer");
 
@@ -138,6 +145,10 @@ namespace GameSphere_backend.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ContentKey")
+                        .IsUnique()
+                        .HasFilter("\"ContentKey\" IS NOT NULL");
 
                     b.HasIndex("UserId");
 
