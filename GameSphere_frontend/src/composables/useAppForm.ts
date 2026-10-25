@@ -1,37 +1,49 @@
-import { useForm } from 'vee-validate'
-import { toTypedSchema } from '@vee-validate/zod'
+import { useForm, type TypedSchema } from 'vee-validate'
 import * as z from 'zod'
 
-// Mudamos a tipagem para z.ZodAny ou z.Schema para aceitar ZodEffects (refine)
-export function useAppForm<T extends z.Schema<any>>(schema: T) {
+// Adaptador zod -> vee-validate. Substitui o @vee-validate/zod, que só suporta zod 3.
+// Os erros são agrupados por campo, com caminhos aninhados no formato do vee-validate (a.b[0]).
+export function toTypedSchema<T extends z.ZodType>(schema: T): TypedSchema<z.input<T>, z.output<T>> {
+  return {
+    __type: 'VVTypedSchema',
+    async parse(values) {
+      const result = await schema.safeParseAsync(values)
+      if (result.success) {
+        return { value: result.data, errors: [] }
+      }
+
+      const errors: Record<string, { path: string; errors: string[] }> = {}
+      for (const issue of result.error.issues) {
+        const path = issue.path
+          .map((segment, index) => typeof segment === 'number' ? `[${segment}]` : `${index ? '.' : ''}${String(segment)}`)
+          .join('')
+        errors[path] ??= { path, errors: [] }
+        errors[path].errors.push(issue.message)
+      }
+
+      return { errors: Object.values(errors) }
+    },
+  }
+}
+
+export function useAppForm<T extends z.ZodType>(schema: T) {
 
   if (!schema) {
     console.error("useAppForm: Schema is undefined!");
     return { form: {} as any, clearError: () => {} };
   }
 
-  // 1. Lógica robusta para extrair o 'shape'
-  // Se for um ZodEffects (refine), o shape está dentro de _def.schema.shape
-  // Se for um ZodObject, está em .shape
-  const internalSchema = (schema instanceof z.ZodEffects)
-    ? schema._def.schema
-    : schema;
+  // 1. Extrair o 'shape' para os valores iniciais
+  // No zod 4 o refine não embrulha o schema, por isso um objecto refinado continua a ser ZodObject
+  const shape = schema instanceof z.ZodObject ? schema.shape : undefined;
 
-  const shape = (internalSchema as any).shape;
-
-  // 2. Fallback caso o shape ainda não exista (segurança extra)
+  // 2. Fallback caso o shape não exista (segurança extra)
   if (!shape) {
     console.warn("useAppForm: Could not extract shape from schema.");
   }
 
   const initialValues = shape ? Object.keys(shape).reduce((acc, key) => {
-    let field = shape[key];
-
-    if (field instanceof z.ZodEffects) {
-      field = field._def.schema;
-    }
-
-    if (field instanceof z.ZodBoolean) {
+    if (shape[key] instanceof z.ZodBoolean) {
       acc[key] = false;
     } else {
       acc[key] = '';
