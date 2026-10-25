@@ -1,0 +1,93 @@
+{
+  "title": "Ciência — Verdadeiro ou Falso",
+  "category": "Ciência",
+  "difficulty": "EASY",
+  "provenance": {
+    "source": "original",
+    "author": "GameSphere",
+    "reviewedBy": null,
+    "reviewedAt": null
+  },
+  "questions": [
+    {
+      "description": "A água ferve a 100 °C ao nível do mar.",
+      "typeOfAnswer": "TRUEORFALSE",
+      "answers": [
+        "Verdadeiro",
+        "Falso"
+      ],
+      "correctAnswer": "Verdadeiro",
+      "explanation": "À pressão atmosférica normal, a água ferve a 100 °C."
+    },
+    {
+      "description": "O Sol é um planeta.",
+      "typeOfAnswer": "TRUEORFALSE",
+      "answers": [
+        "Verdadeiro",
+        "Falso"
+      ],
+      "correctAnswer": "Falso",
+      "explanation": "O Sol é uma estrela."
+    },
+    {
+      "description": "O coração humano tem quatro cavidades.",
+      "typeOfAnswer": "TRUEORFALSE",
+      "answers": [
+        "Verdadeiro",
+        "Falso"
+      ],
+      "correctAnswer": "Verdadeiro",
+      "explanation": "Tem duas aurículas e dois ventrículos."
+    },
+    {
+      "description": "A luz viaja mais devagar do que o som.",
+      "typeOfAnswer": "TRUEORFALSE",
+      "answers": [
+        "Verdadeiro",
+        "Falso"
+      ],
+      "correctAnswer": "Falso",
+      "explanation": "A luz é incomparavelmente mais rápida do que o som."
+    },
+    {
+      "description": "Os morcegos são aves.",
+      "typeOfAnswer": "TRUEORFALSE",
+      "answers": [
+        "Verdadeiro",
+        "Falso"
+      ],
+      "correctAnswer": "Falso",
+      "explanation": "Os morcegos são mamíferos."
+    },
+    {
+      "description": "O diamante é feito de carbono.",
+      "typeOfAnswer": "TRUEORFALSE",
+      "answers": [
+        "Verdadeiro",
+        "Falso"
+      ],
+      "correctAnswer": "Verdadeiro",
+      "explanation": "O diamante é uma forma cristalina do carbono."
+    },
+    {
+      "description": "A Terra demora cerca de 365 dias a dar uma volta completa ao Sol.",
+      "typeOfAnswer": "TRUEORFALSE",
+      "answers": [
+        "Verdadeiro",
+        "Falso"
+      ],
+      "correctAnswer": "Verdadeiro",
+      "explanation": "É a duração aproximada de um ano."
+    },
+    {
+      "description": "A Lua produz a sua própria luz.",
+      "typeOfAnswer": "TRUEORFALSE",
+      "answers": [
+        "Verdadeiro",
+        "Falso"
+      ],
+      "correctAnswer": "Falso",
+      "explanation": "A Lua reflete a luz do Sol."
+    }
+  ]
+}

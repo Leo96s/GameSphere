@@ -1,0 +1,109 @@
+{
+  "title": "História — Portugal Essencial",
+  "category": "História",
+  "difficulty": "EASY",
+  "provenance": {
+    "source": "original",
+    "author": "GameSphere",
+    "reviewedBy": null,
+    "reviewedAt": null
+  },
+  "questions": [
+    {
+      "description": "Quem foi o primeiro rei de Portugal?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "D. Afonso Henriques",
+        "D. Dinis",
+        "D. Sancho I",
+        "D. João I"
+      ],
+      "correctAnswer": "D. Afonso Henriques",
+      "explanation": "D. Afonso Henriques foi o primeiro rei e fundador do reino de Portugal."
+    },
+    {
+      "description": "Em que ano chegou Vasco da Gama à Índia por mar?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "1488",
+        "1500",
+        "1498",
+        "1519"
+      ],
+      "correctAnswer": "1498",
+      "explanation": "Vasco da Gama chegou a Calecute em 1498."
+    },
+    {
+      "description": "Que navegador português chegou ao Brasil em 1500?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "Vasco da Gama",
+        "Pedro Álvares Cabral",
+        "Bartolomeu Dias",
+        "Fernão de Magalhães"
+      ],
+      "correctAnswer": "Pedro Álvares Cabral",
+      "explanation": "A armada de Pedro Álvares Cabral chegou ao Brasil em 1500."
+    },
+    {
+      "description": "Em que data ocorreu a Revolução dos Cravos?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "5 de outubro de 1910",
+        "1 de dezembro de 1640",
+        "10 de junho de 1580",
+        "25 de abril de 1974"
+      ],
+      "correctAnswer": "25 de abril de 1974",
+      "explanation": "A Revolução dos Cravos pôs fim ao Estado Novo e abriu caminho à democracia."
+    },
+    {
+      "description": "Que cidade portuguesa foi muito destruída pelo terramoto de 1755?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "Lisboa",
+        "Porto",
+        "Coimbra",
+        "Évora"
+      ],
+      "correctAnswer": "Lisboa",
+      "explanation": "O terramoto de 1 de novembro de 1755 destruiu grande parte de Lisboa."
+    },
+    {
+      "description": "Com que coroa assinou Portugal o Tratado de Tordesilhas, em 1494?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "Inglaterra",
+        "Castela",
+        "França",
+        "Génova"
+      ],
+      "correctAnswer": "Castela",
+      "explanation": "O tratado foi assinado entre D. João II e os Reis Católicos e dividiu as zonas de expansão entre Portugal e Castela."
+    },
+    {
+      "description": "Em que ano foi implantada a República em Portugal?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "1820",
+        "1926",
+        "1910",
+        "1974"
+      ],
+      "correctAnswer": "1910",
+      "explanation": "A República foi implantada em 5 de outubro de 1910."
+    },
+    {
+      "description": "Que rei português venceu a Batalha de Aljubarrota, em 1385?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "D. Afonso V",
+        "D. Manuel I",
+        "D. Pedro I",
+        "D. João I"
+      ],
+      "correctAnswer": "D. João I",
+      "explanation": "D. João I, Mestre de Avis, venceu os castelhanos em Aljubarrota."
+    }
+  ]
+}
