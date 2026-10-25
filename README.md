@@ -3,6 +3,11 @@ O site será uma plataforma interativa focada em **entretenimento e aprendizado 
 
 ---
 
+### **Conteúdo curado de quizzes**
+Os quizzes iniciais são ficheiros JSON versionados em `content/quizzes/`, revistos por uma pessoa e carregados pela API de administração. Ver [content/quizzes/README.md](content/quizzes/README.md).
+
+---
+
 ### **Funcionalidades Principais**  
 
 #### **1. Quizzes Temáticos**  

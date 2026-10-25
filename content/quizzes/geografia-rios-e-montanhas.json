@@ -1,0 +1,109 @@
+{
+  "title": "Geografia — Rios e Montanhas",
+  "category": "Geografia",
+  "difficulty": "MEDIUM",
+  "provenance": {
+    "source": "original",
+    "author": "GameSphere",
+    "reviewedBy": null,
+    "reviewedAt": null
+  },
+  "questions": [
+    {
+      "description": "Qual é o rio mais extenso da Península Ibérica?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "Douro",
+        "Tejo",
+        "Ebro",
+        "Guadiana"
+      ],
+      "correctAnswer": "Tejo",
+      "explanation": "O Tejo tem cerca de 1000 km e nasce em Espanha, na Serra de Albarracín."
+    },
+    {
+      "description": "Que rio atravessa a cidade de Paris?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "Sena",
+        "Loire",
+        "Reno",
+        "Ródano"
+      ],
+      "correctAnswer": "Sena",
+      "explanation": "O Sena atravessa Paris e desagua no Canal da Mancha."
+    },
+    {
+      "description": "Qual é a montanha mais alta do mundo acima do nível do mar?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "K2",
+        "Kangchenjunga",
+        "Evereste",
+        "Mont Blanc"
+      ],
+      "correctAnswer": "Evereste",
+      "explanation": "O Evereste, nos Himalaias, tem cerca de 8849 metros de altitude."
+    },
+    {
+      "description": "Que cordilheira separa a França da Espanha?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "Alpes",
+        "Cárpatos",
+        "Apeninos",
+        "Pirenéus"
+      ],
+      "correctAnswer": "Pirenéus",
+      "explanation": "Os Pirenéus formam a fronteira natural entre a França e a Espanha."
+    },
+    {
+      "description": "Qual é o rio mais longo da Europa?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "Danúbio",
+        "Volga",
+        "Reno",
+        "Elba"
+      ],
+      "correctAnswer": "Volga",
+      "explanation": "O Volga, na Rússia, tem mais de 3500 km e é o maior rio europeu."
+    },
+    {
+      "description": "Qual é o ponto mais alto de Portugal?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "Montanha do Pico",
+        "Serra da Estrela",
+        "Pico Ruivo",
+        "Serra do Marão"
+      ],
+      "correctAnswer": "Montanha do Pico",
+      "explanation": "A Montanha do Pico, nos Açores, tem 2351 metros. A Serra da Estrela (1993 m) é o ponto mais alto de Portugal continental."
+    },
+    {
+      "description": "Que rio atravessa tanto Viena como Budapeste?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "Vístula",
+        "Elba",
+        "Danúbio",
+        "Dniepre"
+      ],
+      "correctAnswer": "Danúbio",
+      "explanation": "O Danúbio atravessa várias capitais europeias, entre elas Viena e Budapeste."
+    },
+    {
+      "description": "Qual é a montanha mais alta dos Alpes?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "Matterhorn",
+        "Mont Blanc",
+        "Monte Rosa",
+        "Eiger"
+      ],
+      "correctAnswer": "Mont Blanc",
+      "explanation": "O Mont Blanc tem cerca de 4806 metros."
+    }
+  ]
+}

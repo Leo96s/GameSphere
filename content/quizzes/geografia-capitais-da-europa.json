@@ -1,0 +1,109 @@
+{
+  "title": "Geografia — Capitais da Europa",
+  "category": "Geografia",
+  "difficulty": "EASY",
+  "provenance": {
+    "source": "original",
+    "author": "GameSphere",
+    "reviewedBy": null,
+    "reviewedAt": null
+  },
+  "questions": [
+    {
+      "description": "Qual é a capital de Portugal?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "Lisboa",
+        "Porto",
+        "Coimbra",
+        "Faro"
+      ],
+      "correctAnswer": "Lisboa",
+      "explanation": "Lisboa é a capital de Portugal e a sua maior cidade."
+    },
+    {
+      "description": "Qual é a capital de Espanha?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "Barcelona",
+        "Sevilha",
+        "Madrid",
+        "Valência"
+      ],
+      "correctAnswer": "Madrid",
+      "explanation": "Madrid é a capital de Espanha."
+    },
+    {
+      "description": "Qual é a capital de França?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "Lyon",
+        "Paris",
+        "Marselha",
+        "Bordéus"
+      ],
+      "correctAnswer": "Paris",
+      "explanation": "Paris é a capital de França e fica junto ao rio Sena."
+    },
+    {
+      "description": "Qual é a capital de Itália?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "Milão",
+        "Nápoles",
+        "Turim",
+        "Roma"
+      ],
+      "correctAnswer": "Roma",
+      "explanation": "Roma é a capital de Itália."
+    },
+    {
+      "description": "Qual é a capital da Alemanha?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "Berlim",
+        "Munique",
+        "Hamburgo",
+        "Frankfurt"
+      ],
+      "correctAnswer": "Berlim",
+      "explanation": "Berlim é a capital da Alemanha."
+    },
+    {
+      "description": "Qual é a capital da Grécia?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "Salónica",
+        "Esparta",
+        "Atenas",
+        "Corinto"
+      ],
+      "correctAnswer": "Atenas",
+      "explanation": "Atenas é a capital da Grécia."
+    },
+    {
+      "description": "Qual é a capital da Áustria?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "Salzburgo",
+        "Viena",
+        "Innsbruck",
+        "Graz"
+      ],
+      "correctAnswer": "Viena",
+      "explanation": "Viena é a capital da Áustria e fica junto ao rio Danúbio."
+    },
+    {
+      "description": "Qual é a capital da Polónia?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "Cracóvia",
+        "Gdansk",
+        "Lodz",
+        "Varsóvia"
+      ],
+      "correctAnswer": "Varsóvia",
+      "explanation": "Varsóvia é a capital da Polónia."
+    }
+  ]
+}

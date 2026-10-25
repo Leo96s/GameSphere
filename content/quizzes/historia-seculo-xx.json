@@ -1,0 +1,109 @@
+{
+  "title": "História — Século XX",
+  "category": "História",
+  "difficulty": "MEDIUM",
+  "provenance": {
+    "source": "original",
+    "author": "GameSphere",
+    "reviewedBy": null,
+    "reviewedAt": null
+  },
+  "questions": [
+    {
+      "description": "Em que ano começou a Primeira Guerra Mundial?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "1912",
+        "1914",
+        "1917",
+        "1919"
+      ],
+      "correctAnswer": "1914",
+      "explanation": "A guerra começou em 1914 e terminou em 1918."
+    },
+    {
+      "description": "Em que ano terminou a Segunda Guerra Mundial?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "1943",
+        "1944",
+        "1945",
+        "1946"
+      ],
+      "correctAnswer": "1945",
+      "explanation": "A guerra terminou em 1945, com a rendição da Alemanha e do Japão."
+    },
+    {
+      "description": "Em que ano caiu o Muro de Berlim?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "1989",
+        "1961",
+        "1985",
+        "1991"
+      ],
+      "correctAnswer": "1989",
+      "explanation": "O Muro caiu a 9 de novembro de 1989. Tinha sido construído em 1961."
+    },
+    {
+      "description": "Que tratado pôs formalmente fim à Primeira Guerra Mundial com a Alemanha?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "Tratado de Tordesilhas",
+        "Tratado de Utreque",
+        "Tratado de Viena",
+        "Tratado de Versalhes"
+      ],
+      "correctAnswer": "Tratado de Versalhes",
+      "explanation": "O Tratado de Versalhes foi assinado em 1919."
+    },
+    {
+      "description": "Quem foi o primeiro ser humano a pisar a Lua?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "Buzz Aldrin",
+        "Neil Armstrong",
+        "Yuri Gagarin",
+        "John Glenn"
+      ],
+      "correctAnswer": "Neil Armstrong",
+      "explanation": "Neil Armstrong pisou a Lua a 20 de julho de 1969, na missão Apollo 11."
+    },
+    {
+      "description": "Quem foi o principal líder dos bolcheviques na Revolução de Outubro de 1917?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "Lenine",
+        "Estaline",
+        "Trotski",
+        "Kerenski"
+      ],
+      "correctAnswer": "Lenine",
+      "explanation": "Lenine liderou os bolcheviques e tornou-se chefe do primeiro governo soviético."
+    },
+    {
+      "description": "Em que ano foi dissolvida a União Soviética?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "1985",
+        "1989",
+        "1991",
+        "1993"
+      ],
+      "correctAnswer": "1991",
+      "explanation": "A União Soviética foi dissolvida em dezembro de 1991."
+    },
+    {
+      "description": "Em que ano passou Portugal a integrar a Comunidade Económica Europeia?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "1974",
+        "1986",
+        "1981",
+        "1992"
+      ],
+      "correctAnswer": "1986",
+      "explanation": "Portugal aderiu à CEE a 1 de janeiro de 1986, juntamente com a Espanha."
+    }
+  ]
+}

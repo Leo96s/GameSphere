@@ -1,0 +1,109 @@
+{
+  "title": "Ciência — Química e Física Básicas",
+  "category": "Ciência",
+  "difficulty": "MEDIUM",
+  "provenance": {
+    "source": "original",
+    "author": "GameSphere",
+    "reviewedBy": null,
+    "reviewedAt": null
+  },
+  "questions": [
+    {
+      "description": "Qual é o símbolo químico do ouro?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "Ag",
+        "Go",
+        "Au",
+        "Or"
+      ],
+      "correctAnswer": "Au",
+      "explanation": "Au vem do latim aurum. Ag é o símbolo da prata."
+    },
+    {
+      "description": "Qual é a fórmula química da água?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "H2O",
+        "CO2",
+        "O2",
+        "NaCl"
+      ],
+      "correctAnswer": "H2O",
+      "explanation": "Cada molécula de água tem dois átomos de hidrogénio e um de oxigénio."
+    },
+    {
+      "description": "Qual é a unidade de força no Sistema Internacional?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "Joule",
+        "Newton",
+        "Watt",
+        "Pascal"
+      ],
+      "correctAnswer": "Newton",
+      "explanation": "O newton (N) mede a força. O joule mede energia e o watt mede potência."
+    },
+    {
+      "description": "Qual é o gás mais abundante na atmosfera da Terra?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "Oxigénio",
+        "Dióxido de carbono",
+        "Árgon",
+        "Azoto"
+      ],
+      "correctAnswer": "Azoto",
+      "explanation": "O azoto representa cerca de 78 % do ar."
+    },
+    {
+      "description": "Qual é o número atómico do carbono?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "6",
+        "8",
+        "12",
+        "14"
+      ],
+      "correctAnswer": "6",
+      "explanation": "O carbono tem 6 protões. O número 12 é a massa atómica aproximada."
+    },
+    {
+      "description": "Qual é o valor de pH de uma solução neutra, a 25 °C?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "0",
+        "10",
+        "7",
+        "14"
+      ],
+      "correctAnswer": "7",
+      "explanation": "Abaixo de 7 a solução é ácida e acima de 7 é básica."
+    },
+    {
+      "description": "Qual é a velocidade aproximada da luz no vácuo?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "30 000 km/s",
+        "300 000 km/s",
+        "150 000 km/s",
+        "3 000 000 km/s"
+      ],
+      "correctAnswer": "300 000 km/s",
+      "explanation": "O valor exato é 299 792 458 m/s (cerca de 299 792 km/s)."
+    },
+    {
+      "description": "Quem formulou a lei da gravitação universal?",
+      "typeOfAnswer": "MULTIPLEOPTION",
+      "answers": [
+        "Galileu Galilei",
+        "Albert Einstein",
+        "Johannes Kepler",
+        "Isaac Newton"
+      ],
+      "correctAnswer": "Isaac Newton",
+      "explanation": "Newton publicou a lei da gravitação universal em 1687."
+    }
+  ]
+}
